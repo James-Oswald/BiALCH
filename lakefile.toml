@@ -1,0 +1,10 @@
+name = "BiALCH"
+version = "0.1.0"
+defaultTargets = ["bialch"]
+
+[[lean_lib]]
+name = "BiALCH"
+
+[[lean_exe]]
+name = "bialch"
+root = "Main"
