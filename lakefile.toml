@@ -8,3 +8,7 @@ name = "BiALCH"
 [[lean_exe]]
 name = "bialch"
 root = "Main"
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
