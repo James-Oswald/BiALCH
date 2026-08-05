@@ -4,7 +4,7 @@ import Mathlib
 
 namespace BiALCH
 
-abbrev V2 := Bool
+abbrev V2 := Prop
 
 inductive V3 where
 | t
@@ -12,9 +12,17 @@ inductive V3 where
 | f
 deriving Repr, DecidableEq
 
-variable {Nc : Type} [DecidableEq Nc] [Repr Nc] [Inhabited Nc] [Fintype Nc]
-variable {Nr : Type} [DecidableEq Nr] [Repr Nr] [Inhabited Nr] [Fintype Nr]
-variable {Ni : Type} [DecidableEq Ni] [Repr Ni] [Inhabited Ni] [Fintype Ni]
+instance : Fintype V3 where
+  elems := {.t, .e, .f}
+  complete x := by cases x <;> simp
+
+-- We can decide membership in a set of pairs
+noncomputable instance (X : Set (V3 × V3)) (x : V3 × V3) : Decidable (x ∈ X) :=
+  Classical.propDecidable _
+
+variable {Nc : Type} [DecidableEq Nc] [Repr Nc] [Inhabited Nc]
+variable {Nr : Type} [DecidableEq Nr] [Repr Nr] [Inhabited Nr]
+variable {Ni : Type} [DecidableEq Ni] [Repr Ni] [Inhabited Ni]
 
 /-- ALCH Concepts -/
 inductive Concept where
@@ -68,77 +76,119 @@ def Sentence.complexity : @Sentence Nc Nr Ni → Nat
 structure Interp where
   Δ : Type
   Δ_inhabited : Inhabited Δ
-  Δ_fintype : Fintype Δ
   individual_map : Ni → Δ
   concept_map : Nc → Δ → V2
   role_map    : Nr → Δ → Δ → V2
 
-def Interp.I (i : @Interp Nc Nr Ni) : @Sentence Nc Nr Ni → V2
-| _ :ₐ ⊤ => true
-| _ :ₐ ⊥ => false
-| a :ₐ .atomic nc => i.concept_map nc (i.individual_map a)
-| a :ₐ ¬ₜC => ¬i.I (a :ₐ C)
-| a :ₐ C1 ⊓ₜ C2 => i.I (a :ₐ C1) ∧ i.I (a :ₐ C2)
-| a :ₐ C1 ⊔ₜ C2 => i.I (a :ₐ C1) ∨ i.I (a :ₐ C2)
-| a :ₐ ∃[r] C => ∃ b, i.I (b :ₐ C) ∧ i.I ((a, b) :ᵣ r)
-| a :ₐ ∀[r] C => ∀ b, i.I (b :ₐ C) → i.I ((a, b) :ᵣ r)
+def Interp.C (i : @Interp Nc Nr Ni) : @Concept Nc Nr -> i.Δ -> V2
+| ⊤, _ => True
+| .bot, _ => False
+| .atomic nc, d => i.concept_map nc d
+| ¬ₜ C, d => ¬ i.C C d
+| C ⊓ₜ D, d => i.C C d ∧ i.C D d
+| C ⊔ₜ D, d => i.C C d ∨ i.C D d
+| ∃[r] C, d => ∃ d', i.C C d' ∧ i.role_map r d d'
+| ∀[r] C, d => ∀ d', i.role_map r d d' → i.C C d'
+
+def Interp.S (i : @Interp Nc Nr Ni) : @Sentence Nc Nr Ni → V2
+|  a :ₐ C => i.C C (i.individual_map a)
 | (a, b) :ᵣ r => i.role_map r (i.individual_map a) (i.individual_map b)
-| C1 ⊑ C2 => ∀ a, i.I (a :ₐ C1) → i.I (a :ₐ C2)
-| C1 ≡ C2 => ∀ a, i.I (a :ₐ C1) ↔ i.I (a :ₐ C2)
-| r1 ⊑ᵣ r2 => ∀ a b, i.I ((a, b) :ᵣ r1) → i.I ((a, b) :ᵣ r2)
-termination_by s => s.complexity
-decreasing_by
-  all_goals simp only [Sentence.complexity, Concept.complexity]; omega
+| C ⊑ D => ∀ d, i.C C d → i.C D d
+| C ≡ D => i.S (C ⊑ D) ∧ i.S (D ⊑ C)
+| r ⊑ᵣ s => ∀ d d', i.role_map r d d' → i.role_map s d d'
+termination_by s => match s with | .equiv _ _ => 1 | _ => 0
 
+def Interp.satisfies (i : @Interp Nc Nr Ni) (s : @Sentence Nc Nr Ni) : Prop :=
+  i.S s
+infix:50 " ⊨ " => Interp.satisfies
 
-postfix:100 "ᴵ " => Interp.I
+def Interp.satisfies_all (i : @Interp Nc Nr Ni) (K : Set (@Sentence Nc Nr Ni)) : Prop :=
+  ∀ s ∈ K, i ⊨ s
+infix:50 " ⊨ " => Interp.satisfies_all
 
-def Interp.satisfies (i : @Interp Nc Nr Ni) (s : @Sentence Nc Nr Ni) : Bool :=
-  i.I s
-
-
-
+def entails (K : Set (@Sentence Nc Nr Ni)) (s : @Sentence Nc Nr Ni) : Prop :=
+  ∀ i : @Interp Nc Nr Ni, i ⊨ K → i ⊨ s
+infix:50 " ⊨ " => entails
 
 -- -- Phase 2: wK and AC Semantics
 
--- /-- Weak Kleene negation -/
--- def wK_neg (v : TruthValue3) : TruthValue3 :=
---   match v with
---   | .t => .f
---   | .u => .u
---   | .f => .t
+def wK_neg : V3 → V3
+| .t => .f
+| .e => .e
+| .f => .t
 
--- /-- Weak Kleene conjunction -/
--- def wK_conj (v1 v2 : TruthValue3) : TruthValue3 :=
---   match v1, v2 with
---   | .t, .t => .t
---   | .t, .u => .u
---   | .t, .f => .f
---   | .u, .t => .u
---   | .u, .u => .u
---   | .u, .f => .u
---   | .f, .t => .f
---   | .f, .u => .u
---   | .f, .f => .f
+prefix :70 "¬ₖ " => wK_neg
 
--- /-- Weak Kleene disjunction -/
--- def wK_disj (v1 v2 : TruthValue3) : TruthValue3 :=
---   match v1, v2 with
---   | .t, .t => .t
---   | .t, .u => .u
---   | .t, .f => .t
---   | .u, .t => .u
---   | .u, .u => .u
---   | .u, .f => .u
---   | .f, .t => .t
---   | .f, .u => .u
---   | .f, .f => .f
+def wK_conj : V3 → V3 → V3
+| .t, .t => .t
+| .t, .e => .e
+| .t, .f => .f
+| .e, .t => .e
+| .e, .e => .e
+| .e, .f => .e
+| .f, .t => .f
+| .f, .e => .e
+| .f, .f => .f
 
--- /-- Restricted Weak Kleene existential quantifier -/
--- def wK_exists (X : Set (TruthValue3 × TruthValue3)) : TruthValue3 :=
---   if X.Exists (λ p => p == ⟨.t, .t⟩) then .t
---   else if X.Forall (λ p => p.1 == .u ∨ p.2 == .u) then .u
---   else .f
+infix :70 " ∧ₖ " => wK_conj
+
+def wK_disj : V3 → V3 → V3
+| .t, .t => .t
+| .t, .e => .e
+| .t, .f => .t
+| .e, .t => .e
+| .e, .e => .e
+| .e, .f => .e
+| .f, .t => .t
+| .f, .e => .e
+| .f, .f => .f
+infix :70 " ∨ₖ " => wK_disj
+
+/-- Restricted Weak Kleene existential quantifier -/
+noncomputable def wK_exists (X : Set (V3 × V3)) : V3 :=
+  if H1: ⟨.t, .t⟩ ∈ X then .t
+  else if H2: ∀ x ∈ X, x.1 = .e ∨ x.2 = .e then .e
+  else if H3: ⟨.t, .t⟩ ∉ X ∧ ∃ x ∈ X, x.1 ≠ .e ∧ x.2 ≠ .e then .f
+  else by grind only
+notation "∃ₖ " X => wK_exists X
+
+
+noncomputable def wK_forall (X : Set (V3 × V3)) : V3 :=
+  if H1: ⟨.t, .f⟩ ∉ X ∧ ⟨.t, .e⟩ ∉ X ∧ ∃ x ∈ X, x.1 ≠ .e ∧ x.2 ≠ .e then .t
+  else if H2: ∀ x ∈ X, x.1 = .e ∨ x.2 = .e then .e
+  else if H3: (⟨.t, .f⟩ ∈ X ∨ ⟨.t, .e⟩ ∈ X) ∧ ∃ x ∈ X, x.1 ≠ .e ∧ x.2 ≠ .e then .f
+  else by grind only
+notation "∀ₖ " X => wK_forall X
+
+def ac_neg (v : V3 × V3) : V3 × V3 :=
+  ⟨v.2, v.1⟩
+prefix:70 "∼ₐ " => ac_neg
+
+def ac_conj (v1 v2 : V3 × V3) : V3 × V3 :=
+  ⟨v1.1 ∧ₖ v2.1, v1.2 ∨ₖ v2.2⟩
+infix :70 " ∧ₐ " => ac_conj
+
+def ac_disj (v1 v2 : V3 × V3) : V3 × V3 :=
+  ⟨v1.1 ∨ₖ v2.1, v1.2 ∧ₖ v2.2⟩
+infix :65 " ∨ₐ " => ac_disj
+
+def pi_sel_aux (v : V3 × V3) (i : Fin 2) : V3 :=
+  if i = 0 then v.1 else v.2
+
+def pi_sel (v : (V3 × V3) × (V3 × V3)) (i j : Fin 2) : V3 × V3 :=
+  ⟨pi_sel_aux v.1 i, pi_sel_aux v.2 j⟩
+
+def pi_sel_img (X : Set ((V3 × V3) × (V3 × V3))) (i j : Fin 2) : Set (V3 × V3) :=
+  { pi_sel v i j | v ∈ X }
+
+noncomputable def ac_exists (X : Set ((V3 × V3) × (V3 × V3))) : V3 × V3 :=
+  ⟨∃ₖ pi_sel_img X 0 0, ∀ₖ pi_sel_img X 0 1⟩
+
+noncomputable def ac_forall (X : Set ((V3 × V3) × (V3 × V3))) : V3 × V3 :=
+  ⟨∀ₖ pi_sel_img X 0 0, ∃ₖ pi_sel_img X 0 1⟩
+
+
+
 
 -- /-- Restricted Weak Kleene universal quantifier -/
 -- def wK_forall (X : Set (TruthValue3 × TruthValue3)) : TruthValue3 :=
