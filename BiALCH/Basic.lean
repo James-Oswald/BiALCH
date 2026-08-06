@@ -4,6 +4,7 @@ import Mathlib
 
 namespace BiALCH
 
+
 abbrev V2 := Prop
 
 inductive V3 where
@@ -22,9 +23,14 @@ abbrev V32 := V3 × V3
 noncomputable instance (X : Set V32) (x : V32) : Decidable (x ∈ X) :=
   Classical.propDecidable _
 
-variable {Nc : Type} [DecidableEq Nc] [Repr Nc] [Inhabited Nc]
-variable {Nr : Type} [DecidableEq Nr] [Repr Nr] [Inhabited Nr]
-variable {Ni : Type} [DecidableEq Ni] [Repr Ni] [Inhabited Ni]
+-- Freshness class for generating fresh names
+class HasFresh (α : Type u) : Type u where
+  fresh : Finset α → α
+  fresh_notMem (s : Finset α) : fresh s ∉ s
+
+variable {Nc : Type} [DecidableEq Nc] [Repr Nc] [Inhabited Nc] [HasFresh Nc]
+variable {Nr : Type} [DecidableEq Nr] [Repr Nr] [Inhabited Nr] [HasFresh Nr]
+variable {Ni : Type} [DecidableEq Ni] [Repr Ni] [Inhabited Ni] [HasFresh Ni]
 
 /-- ALCH Concepts -/
 inductive Concept where
@@ -38,11 +44,6 @@ inductive Concept where
 | univ    : Nr → Concept → Concept
 deriving Inhabited, Repr
 
-def Concept.complexity : @Concept Nc Nr → Nat
-| .top | .bot | .atomic _ => 0
-| .neg C | .exis _ C | .univ _ C => C.complexity + 1
-| .conj C D | .disj C D => C.complexity + D.complexity + 1
-
 instance : Top (@Concept Nc Nr) := ⟨Concept.top⟩
 instance : Bot (@Concept Nc Nr) := ⟨Concept.bot⟩
 infixl:70 " ⊓ₜ " => Concept.conj
@@ -54,26 +55,73 @@ instance : Coe Nc (@Concept Nc Nr) := ⟨Concept.atomic⟩
 
 example (A B: Nc) (R : Nr) : @Concept Nc Nr := A ⊓ₜ ∃[R] B ⊓ₜ (∀[R] ¬ₜA)
 
-/-- ALCH Sentences -/
-inductive Sentence where
-| assert_c : Ni → @Concept Nc Nr → Sentence
-| assert_r : Ni → Ni → Nr → Sentence
-| subsume  : @Concept Nc Nr → @Concept Nc Nr → Sentence
-| equiv    : @Concept Nc Nr → @Concept Nc Nr → Sentence
-| role_inc : Nr → Nr → Sentence
+-- Atomic Role Language
+inductive RoleA where
+| atomic : Nr → RoleA
+
+-- Intersection Role Language
+inductive RoleI where
+| atomic : Nr → RoleI
+| inter : RoleI → RoleI → RoleI
+
+infixl:70 " ⊓ᵣ " => RoleI.inter
+
+/-- Positive Concept Grammar -/
+inductive ConceptP where
+| top     : ConceptP
+| atomic  : Nc → ConceptP
+| conj    : ConceptP → ConceptP → ConceptP
+| disj    : ConceptP → ConceptP → ConceptP
+| exis    : Nr → ConceptP → ConceptP
+| univ    : Nr → ConceptP → ConceptP
+
+instance : Top (@ConceptP Nc Nr) := ⟨ConceptP.top⟩
+infixl:70 " ⊓ₜ " => ConceptP.conj
+infixl:65 " ⊔ₜ " => ConceptP.disj
+notation "∃[" r "]" c:75 => ConceptP.exis r c
+notation "∀[" r "]" c:75 => ConceptP.univ r c
+instance : Coe Nc (@ConceptP Nc Nr) := ⟨ConceptP.atomic⟩
+
+/-- General Sentences -/
+inductive Sentence (C R : Type) where
+| assert_c : Ni → C → Sentence C R
+| assert_r : Ni → Ni → R → Sentence C R
+| subsume  : C → C → Sentence C R
+| equiv    : C → C → Sentence C R
 deriving Repr, Inhabited
 
 notation a " :ₐ " c:50 => Sentence.assert_c a c
 notation "(" a ", " b ")" " :ᵣ " r:50 => Sentence.assert_r a b r
 infix:50 " ⊑ " => Sentence.subsume
 infix:50 " ≡ " => Sentence.equiv
-infix:50 " ⊑ᵣ " => Sentence.role_inc
 
-def Sentence.complexity : @Sentence Nc Nr Ni → Nat
-| .assert_c _ C => C.complexity + 1
-| .assert_r _ _ _ => 0
-| .subsume C D | .equiv C D => C.complexity + D.complexity + 2
-| .role_inc _ _ => 1
+/-- ALCH Sentences -/
+inductive SentenceH (C R: Type) where
+| assert_c : Ni → C → SentenceH C R
+| assert_r : Ni → Ni → R → SentenceH C R
+| subsume  : C → C → SentenceH C R
+| equiv    : C → C → SentenceH C R
+| role_inc : Nr → Nr → SentenceH C R
+deriving Repr, Inhabited
+
+def SentenceH.inames : @SentenceH Nr Ni (@Concept Nc Nr) (@RoleA Nr) → Finset Ni
+| .assert_c a _ => {a}
+| .assert_r a b _ => {a, b}
+| .subsume _ _ => ∅
+| .equiv _ _ => ∅
+| .role_inc _ _ => ∅
+
+
+notation a " :ₐ " c:50 => SentenceH.assert_c a c
+notation "(" a ", " b ")" " :ᵣ " r:50 => SentenceH.assert_r a b r
+infix:50 " ⊑ " => SentenceH.subsume
+infix:50 " ≡ " => SentenceH.equiv
+infix:50 " ⊑ᵣ " => SentenceH.role_inc
+
+-- Base Language ALCH
+abbrev ALCH := @SentenceH Nr Ni (@Concept Nc Nr) (@RoleA Nr)
+-- Intermediate and target Language, ALCH⁺(∩)
+abbrev ALCHPI := @SentenceH Nr Ni (@ConceptP Nc Nr) (@RoleI Nr)
 
 structure Interp where
   Δ : Type
@@ -82,34 +130,36 @@ structure Interp where
   concept_map : Nc → Δ → V2
   role_map    : Nr → Δ → Δ → V2
 
-def Interp.C (i : @Interp Nc Nr Ni) : @Concept Nc Nr -> i.Δ -> V2
+def Interp.C (i : @Interp Nc Nr Ni) : @ConceptP Nc Nr -> i.Δ -> V2
 | ⊤, _ => True
-| .bot, _ => False
 | .atomic nc, d => i.concept_map nc d
-| ¬ₜ C, d => ¬ i.C C d
 | C ⊓ₜ D, d => i.C C d ∧ i.C D d
 | C ⊔ₜ D, d => i.C C d ∨ i.C D d
 | ∃[r] C, d => ∃ d', i.C C d' ∧ i.role_map r d d'
 | ∀[r] C, d => ∀ d', i.role_map r d d' → i.C C d'
 
-def Interp.S (i : @Interp Nc Nr Ni) : @Sentence Nc Nr Ni → V2
-|  a :ₐ C => i.C C (i.individual_map a)
-| (a, b) :ᵣ r => i.role_map r (i.individual_map a) (i.individual_map b)
+def Interp.R (i : @Interp Nc Nr Ni) : @RoleI Nr → i.Δ → i.Δ → V2
+| .atomic r, d₁, d₂ => i.role_map r d₁ d₂
+| .inter r s, d₁, d₂ => i.R r d₁ d₂ ∧ i.R s d₁ d₂
+
+def Interp.S (i : @Interp Nc Nr Ni) : @ALCHPI Nc Nr Ni → V2
+| a :ₐ C => i.C C (i.individual_map a)
+| (a, b) :ᵣ r => i.R r (i.individual_map a) (i.individual_map b)
 | C ⊑ D => ∀ d, i.C C d → i.C D d
 | C ≡ D => i.S (C ⊑ D) ∧ i.S (D ⊑ C)
 | r ⊑ᵣ s => ∀ d d', i.role_map r d d' → i.role_map s d d'
 termination_by s => match s with | .equiv _ _ => 1 | _ => 0
 
-def Interp.satisfies (i : @Interp Nc Nr Ni) (s : @Sentence Nc Nr Ni) : Prop :=
-  i.S s
+def Interp.satisfies (i : @Interp Nc Nr Ni) (φ : @ALCHPI Nc Nr Ni) : Prop :=
+  i.S φ
 infix:50 " ⊨ " => Interp.satisfies
 
-def Interp.satisfies_all (i : @Interp Nc Nr Ni) (K : Set (@Sentence Nc Nr Ni)) : Prop :=
-  ∀ s ∈ K, i ⊨ s
+def Interp.satisfies_all (i : @Interp Nc Nr Ni) (K : Finset (@ALCHPI Nc Nr Ni)) : Prop :=
+  ∀ φ ∈ K, i ⊨ φ
 infix:50 " ⊨ " => Interp.satisfies_all
 
-def entails (K : Set (@Sentence Nc Nr Ni)) (s : @Sentence Nc Nr Ni) : Prop :=
-  ∀ i : @Interp Nc Nr Ni, i ⊨ K → i ⊨ s
+def entails (K : Finset (@ALCHPI Nc Nr Ni)) (φ : @ALCHPI Nc Nr Ni) : Prop :=
+  ∀ i : @Interp Nc Nr Ni, i ⊨ K → i ⊨ φ
 infix:50 " ⊨ " => entails
 
 -- -- Phase 2: wK and AC Semantics
@@ -196,41 +246,43 @@ structure WKInterp  where
   Δ : Type
   Δ_inhabited : Inhabited Δ
   individual_map : Ni → Δ
-  concept_map : @Concept Nc Nr → Δ → V3
+  concept_map : Nc → Δ → V3
   role_map    : Nr → Δ → Δ → V3
 
 /-- Weak Kleene Interpretations On Concepts -/
-noncomputable def WKInterp.C (I : @WKInterp Nc Nr Ni) : @Concept Nc Nr → I.Δ → V3
-| .top, _ => .t
-| .bot, _ => .f
+noncomputable def WKInterp.C (I : @WKInterp Nc Nr Ni) : @ConceptP Nc Nr → I.Δ → V3
+| ⊤, _ => .t
 | .atomic nc, d => I.concept_map nc d
-| ¬ₜ C, d =>  ¬ₖ I.C C d
 | C ⊓ₜ D, d => (I.C C d) ∧ₖ (I.C D d)
 | C ⊔ₜ D, d => (I.C C d) ∨ₖ (I.C D d)
 | ∃[r] C, d => ∃ₖ { ⟨I.role_map r d d', I.C C d'⟩ | d' : I.Δ }
 | ∀[r] C, d => ∀ₖ { ⟨I.role_map r d d', I.C C d'⟩ | d' : I.Δ }
 
+/-- Weak Kleene interpretations of intersection roles. -/
+def WKInterp.R (I : @WKInterp Nc Nr Ni) : @RoleI Nr → I.Δ → I.Δ → V3
+| .atomic r, d₁, d₂ => I.role_map r d₁ d₂
+| .inter r s, d₁, d₂ => I.R r d₁ d₂ ∧ₖ I.R s d₁ d₂
+
 /-- Weak Kleene Interpretations On Sentences -/
-noncomputable def WKInterp.S (I : @WKInterp Nc Nr Ni) : @Sentence Nc Nr Ni → V3
+noncomputable def WKInterp.S (I : @WKInterp Nc Nr Ni) : @ALCHPI Nc Nr Ni → V3
 |  a :ₐ C => I.C C (I.individual_map a)
-| (a, b) :ᵣ r => I.role_map r (I.individual_map a) (I.individual_map b)
+| (a, b) :ᵣ r => I.R r (I.individual_map a) (I.individual_map b)
 | C ⊑ D => ∀ₖ { ⟨I.C C d, I.C D d⟩ | d : I.Δ }
 | C ≡ D => (I.S (C ⊑ D)) ∧ₖ (I.S (D ⊑ C))
 | r ⊑ᵣ s => ∀ₖ { ⟨I.role_map r p.1 p.2, I.role_map s p.1 p.2⟩ | p : I.Δ × I.Δ }
 termination_by s => match s with | .equiv _ _ => 1 | _ => 0
 
-def WKInterp.satisfies (I : @WKInterp Nc Nr Ni) (s : @Sentence Nc Nr Ni) : Prop :=
+def WKInterp.satisfies (I : @WKInterp Nc Nr Ni) (s : @ALCHPI Nc Nr Ni) : Prop :=
   I.S s = .t
 infix:50 " ⊨ₖ " => WKInterp.satisfies
 
-def WKInterp.satisfies_all (I : @WKInterp Nc Nr Ni) (K : Set (@Sentence Nc Nr Ni)) : Prop :=
+def WKInterp.satisfies_all (I : @WKInterp Nc Nr Ni) (K : Set (@ALCHPI Nc Nr Ni)) : Prop :=
   ∀ s ∈ K, I ⊨ₖ s
 infix:50 " ⊨ₖ " => WKInterp.satisfies_all
 
-def entails_wk (K : Set (@Sentence Nc Nr Ni)) (s : @Sentence Nc Nr Ni) : Prop :=
+def entails_wk (K : Set (@ALCHPI Nc Nr Ni)) (s : @ALCHPI Nc Nr Ni) : Prop :=
   ∀ I : @WKInterp Nc Nr Ni, I ⊨ₖ K → I ⊨ₖ s
 infix:50 " ⊨ₖ " => entails_wk
-
 
 structure ACInterp  where
   Δ : Type
@@ -249,143 +301,88 @@ noncomputable def ACInterp.C (I : @ACInterp Nc Nr Ni) : @Concept Nc Nr → I.Δ 
 | ∃[r] C, d => ∃ₐ { ⟨I.role_map r d d', I.C C d'⟩ | d' : I.Δ }
 | ∀[r] C, d => ∀ₐ { ⟨I.role_map r d d', I.C C d'⟩ | d' : I.Δ }
 
-noncomputable def ACInterp.S (I : @ACInterp Nc Nr Ni) : @Sentence Nc Nr Ni → V32
+noncomputable def ACInterp.S (I : @ACInterp Nc Nr Ni) : @ALCH Nc Nr Ni → V32
 |  a :ₐ C => I.C C (I.individual_map a)
-| (a, b) :ᵣ r => I.role_map r (I.individual_map a) (I.individual_map b)
+| (a, b) :ᵣ .atomic r => I.role_map r (I.individual_map a) (I.individual_map b)
 | C ⊑ D => ∀ₐ { ⟨I.C C d, I.C D d⟩ | d : I.Δ }
 | C ≡ D => (I.S (C ⊑ D)) ∧ₐ (I.S (D ⊑ C))
 | r ⊑ᵣ s => ∀ₐ { ⟨I.role_map r p.1 p.2, I.role_map s p.1 p.2⟩ | p : I.Δ × I.Δ }
 termination_by s => match s with | .equiv _ _ => 1 | _ => 0
 
-def ACInterp.satisfies (I : @ACInterp Nc Nr Ni) (s : @Sentence Nc Nr Ni) : Prop :=
+def ACInterp.satisfies (I : @ACInterp Nc Nr Ni) (s : @ALCH Nc Nr Ni) : Prop :=
   (I.S s).1 = .t
 infix:50 " ⊨ₐ " => ACInterp.satisfies
 
-def ACInterp.satisfies_all (I : @ACInterp Nc Nr Ni) (K : Set (@Sentence Nc Nr Ni)) : Prop :=
+def ACInterp.satisfies_all (I : @ACInterp Nc Nr Ni) (K : Set (@ALCH Nc Nr Ni)) : Prop :=
   ∀ s ∈ K, I ⊨ₐ s
 infix:50 " ⊨ₐ " => ACInterp.satisfies_all
 
-def entails_ac (K : Set (@Sentence Nc Nr Ni)) (s : @Sentence Nc Nr Ni) : Prop :=
+def entails_ac (K : Set (@ALCH Nc Nr Ni)) (s : @ALCH Nc Nr Ni) : Prop :=
   ∀ I : @ACInterp Nc Nr Ni, I ⊨ₐ K → I ⊨ₐ s
 infix:50 " ⊨ₐ " => entails_ac
 
+-- noncomputable def StarInterp (I : @WKInterp Nc Nr Ni) : @WKInterp Nc Nr Ni where
+--   Δ := I.Δ
+--   Δ_inhabited := I.Δ_inhabited
+--   individual_map := I.individual_map
+--   concept_map := fun C d => if I.concept_map C d ≠ .e then .t else .e
+--   role_map := fun r d1 d2 => if I.role_map r d1 d2 ≠ .e then .t else .e
 
-
-
-
--- /-- Bilateral ($\mathsf{AC}$) Interpretation -/
--- structure BilateralInterp (Σ : Signature) where
---   domain : Type
---   concept_map : Concept Σ → (domain → BilateralValue)
---   role_map    : Σ.nr → (domain → domain → BilateralValue)
-
--- /-- Recursive evaluation for WK interpretation -/
--- def eval_wk {Σ : Signature} (I : WKInterp Σ) (C : Concept Σ) (a : I.domain) : TruthValue3 :=
---   match C with
---   | .top        => .t
---   | .bot        => .f
---   | .atomic nc  => I.concept_map (.atomic nc) a
---   | .neg C'     => wK_neg (eval_wk I C' a)
---   | .conj C1 C2 => wK_conj (eval_wk I C1 a) (eval_wk I C2 a)
---   | .disj C1 C2 => wK_disj (eval_wk I C1 a) (eval_wk I C2 a)
---   | .exis r C'  =>
---       let X := { ⟨I.role_map r a b, eval_wk I C' b⟩ | b ∈ I.domain }
---       wK_exists X
---   | .univ r C'  =>
---       let X := { ⟨I.role_map r a b, eval_wk I C' b⟩ | b ∈ I.domain }
---       wK_forall X
-
--- /-- Recursive evaluation for Bilateral interpretation -/
--- def eval_bilat {Σ : Signature} (I : BilateralInterp Σ) (C : Concept Σ) (a : I.domain) : BilateralValue :=
---   match C with
---   | .top        => ⟨.t, .u⟩ -- Based on "I(a:top) = <vt, v>" where v is any wK value. Using .u as default.
---   | .bot        => ⟨.u, .t⟩ -- Based on "I(a:bot) = <v, vt>"
---   | .atomic nc  => I.concept_map (.atomic nc) a
---   | .neg C'     => ac_neg (eval_bilat I C' a)
---   | .conj C1 C2 => ac_conj (eval_bilat I C1 a) (eval_bilat I C2 a)
---   | .disj C1 C2 => ac_disj (eval_bilat I C1 a) (eval_bilat I C2 a)
---   | .exis r C'  =>
---       let X := { ⟨eval_bilat_role I r a b, eval_bilat_fixed I C' b⟩ | b ∈ I.domain }
---       ac_exists X
---   | .univ r C'  =>
---       let X := { ⟨eval_bilat_role I r a b, eval_bilat_fixed I C' b⟩ | b ∈ I.domain }
---       ac_forall X
-
--- /-- Wait, the bilateral interpretation requires evaluation of roles as well -/
--- def eval_bilat_role {Σ : Signature} (I : BilateralInterp Σ) (r : Σ.nr) (a b : I.domain) : BilateralValue :=
---   I.role_map r a b
-
--- /-- Corrected recursive evaluation for Bilateral concepts -/
--- def eval_bilat_fixed {Σ : Signature} (I : BilateralInterp Σ) (C : Concept Σ) (a : I.domain) : BilateralValue :=
---   match C with
---   | .top        => ⟨.t, .u⟩
---   | .bot        => ⟨.u, .t⟩
---   | .atomic nc  => I.concept_map (.atomic nc) a
---   | .neg C'     => ac_neg (eval_bilat_fixed I C' a)
---   | .conj C1 C2 => ac_conj (eval_bilat_fixed I C1 a) (eval_bilat_fixed I C2 a)
---   | .disj C1 C2 => ac_disj (eval_bilat_fixed I C1 a) (eval_bilat_fixed I C2 a)
---   | .exis r C'  =>
---       let X := { ⟨eval_bilat_role I r a b, eval_bilat_fixed I C' b⟩ | b ∈ I.domain }
---       ac_exists X
---   | .univ r C'  =>
---       let X := { ⟨eval_bilat_role I r a b, eval_bilat_fixed I C' b⟩ | b ∈ I.domain }
---       ac_forall X
-
--- /-- Satisfaction for Bilateral Logic -/
--- def satisfies_bilat {Σ : Signature} (I : BilateralInterp Σ) (C : Concept Σ) (a : I.domain) : Prop :=
---   (eval_bilat_fixed I C a).1 = .t
-
--- /-- satisfaction for WK logic -/
--- def satisfies_wk {Σ : Signature} (I : WKInterp Σ) (C : Concept Σ) (a : I.domain) : Prop :=
---   eval_wk I C a = .t
-
--- /-- Satisfaction for Sentences in Bilateral Logic -/
--- def satisfies_sentence_bilat {Σ : Signature} (I : BilateralInterp Σ) (S : Sentence Σ) : Prop :=
---   match S with
---   | .assert_c a C     => satisfies_bilat I C a
---   | .assert_r a b r   => (I.role_map r a b).1 = .t
---   | .subsume C D     =>
---       let X := { ⟨eval_bilat_fixed I C a, eval_bilat_fixed I D a⟩ | a ∈ I.domain }
---       (ac_forall X).1 = .t
---   | .equiv C D       =>
---       let X1 := { ⟨eval_bilat_fixed I C a, eval_bilat_fixed I D a⟩ | a ∈ I.domain }
---       let X2 := { ⟨eval_bilat_fixed I D a, eval_bilat_fixed I C a⟩ | a ∈ I.domain }
---       (ac_conj (ac_forall X1) (ac_forall X2)).1 = .t
---   | .role_inc r s    =>
---       let X := { ⟨I.role_map r a b, I.role_map s a b⟩ | a, b ∈ I.domain }
---       (ac_forall X).1 = .t
-
--- /-- Correcting the coordinate access in satisfies_sentence_bilat -/
--- /-- Since ac_forall returns BilateralValue (pair), we use (.1) to get first coord -/
--- -- Phase 5: Formal Verification Theorems
-
--- /-- The star-interpretation mapping TruthValue3 to {t, u} -/
--- def star_val (v : TruthValue3) : TruthValue3 :=
---   if v ≠ .u then .t else .u
-
--- /-- Lemma 1: I*(\varphi) = t iff I(\varphi) \neq e -/
--- theorem lemma_star_meaning {Σ : Signature} (I : WKInterp Σ) (C : Concept Σ) (a : I.domain) :
---   (eval_wk I C a ≠ .u) \iff (eval_wk I C a = .t) := by
---   sorry -- Proof by induction on Concept
-
--- /-- Definition of an AC Knowledge Base -/
--- structure KnowledgeBase (Σ : Signature) where
---   TBox : Set (Sentence Σ)
---   ABox : Set (Sentence Σ)
-
--- /-- Bilateral Entailment -/
--- def entails_bilat {Σ : Signature} (K : KnowledgeBase Σ) (S : Sentence Σ) : Prop :=
---   \forall I : BilateralInterp Σ,
---     ( \forall s \in K.TBox \cup K.ABox, satisfies_sentence_bilat I s ) \implies satisfies_sentence_bilat I S
-
--- /-- Theorem: Faithful Translation from AC to Classical -/
--- theorem theorem_faithful_translation {Σ : Signature} (K : KnowledgeBase Σ) (S : Sentence Σ) :
---   entails_bilat K S \iff
---     ( /* classical entailment for tau-pi translation */ true \land /* classical entailment for mu-pi translation */ true ) := by
+-- lemma StarInterp_lifts (I : @WKInterp Nc Nr Ni) (φ : @ALCHPI Nc Nr Ni) :
+--   (StarInterp I).S φ = if I.S φ ≠ .e then .t else .e := by
 --   sorry
 
--- /-- Daniels emulation set -/
--- def daniels_emulation {Σ : Signature} (K : KnowledgeBase Σ) (S : Sentence Σ) : Set (Sentence Σ) :=
---   { } -- This would contain the equivalences C^mu\pi \equiv C^mu\nu etc.
+structure TauBase where
+  c : Nc → Nc
+  r : Nr → Nr
+  -- These may need to be bijective
+
+structure PiBase where
+  c : Nc → Nc
+  r : Nr → Nr
+  -- These may need to be bijective
+
+def TauBase.R (τ : @TauBase Nc Nr) : @RoleI Nr → @RoleI Nr
+| .atomic r => .atomic (τ.r r)
+| r ⊓ᵣ s => (τ.R r) ⊓ᵣ (τ.R s)
+
+def TauBase.C (τ : @TauBase Nc Nr) : @ConceptP Nc Nr → @ConceptP Nc Nr
+| ⊤ => ⊤
+| .atomic C => τ.c C
+| C ⊓ₜ D => (τ.C C) ⊓ₜ (τ.C D)
+| C ⊔ₜ D => (τ.C C) ⊔ₜ (τ.C D)
+| ∃[r] C => ∃[τ.r r] (τ.C C)
+| ∀[r] C => ∀[τ.r r] (τ.C C)
+
+def ALCHPI.Tau (τ : @TauBase Nc Nr) : @ALCHPI Nc Nr Ni → @ALCHPI Nc Nr Ni
+| a :ₐ C => a :ₐ (τ.C C)
+| (a, b) :ᵣ .atomic r => (a, b) :ᵣ .atomic (τ.r r)
+| C ⊑ D => (τ.C C) ⊑ (τ.C D)
+| C ≡ D => (τ.C C) ≡ (τ.C D)
+| r ⊑ᵣ s => (τ.r r) ⊑ᵣ (τ.r s)
+| (a, b) :ᵣ r ⊓ᵣ s => (a, b) :ᵣ (τ.R r) ⊓ᵣ (τ.R s)
+
+def PiBase.R (π : @PiBase Nc Nr) : @RoleI Nr → @RoleI Nr
+| .atomic r => .atomic (π.r r)
+| r ⊓ᵣ s => (π.R r) ⊓ᵣ (π.R s)
+
+def PiBase.C (π : @PiBase Nc Nr) : @ConceptP Nc Nr → @ConceptP Nc Nr
+| ⊤ => ⊤
+| .atomic C => π.c C
+| C ⊓ₜ D => (π.C C) ⊓ₜ (π.C D)
+| C ⊔ₜ D => (π.C C) ⊓ₜ (π.C D)
+| ∃[r] C => ∃[π.r r] (π.C C)
+| ∀[r] C => ∃[π.r r] (π.C C)
+
+def ALCHPI.Pi (π : @PiBase Nc Nr) (f1 f2 : Ni) : @ALCHPI Nc Nr Ni → @ALCHPI Nc Nr Ni
+| a :ₐ C => a :ₐ (π.C C)
+| (a, b) :ᵣ .atomic r => (a, b) :ᵣ .atomic (π.r r)
+| C ⊑ D => f1 :ₐ (π.C C) ⊓ₜ (π.C D)
+| C ≡ D => f1 :ₐ (π.C C) ⊓ₜ (π.C D)
+| r ⊑ᵣ s => (f1, f2) :ᵣ (.atomic (π.r r)) ⊓ᵣ (.atomic (π.r s))
+| (a, b) :ᵣ r ⊓ᵣ s => (a, b) :ᵣ (π.R r) ⊓ᵣ (π.R s)
+
+def ALCHPI.Pi_all (π : @PiBase Nc Nr) (f1 f2 : Ni) : Finset (@ALCHPI Nc Nr Ni) → Finset (@ALCHPI Nc Nr Ni)
+  sorry
 
 end BiALCH
