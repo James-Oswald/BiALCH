@@ -10,14 +10,16 @@ inductive V3 where
 | t
 | e
 | f
-deriving Repr, DecidableEq
+deriving Inhabited, Repr, DecidableEq
 
 instance : Fintype V3 where
   elems := {.t, .e, .f}
   complete x := by cases x <;> simp
 
+abbrev V32 := V3 × V3
+
 -- We can decide membership in a set of pairs
-noncomputable instance (X : Set (V3 × V3)) (x : V3 × V3) : Decidable (x ∈ X) :=
+noncomputable instance (X : Set V32) (x : V32) : Decidable (x ∈ X) :=
   Classical.propDecidable _
 
 variable {Nc : Type} [DecidableEq Nc] [Repr Nc] [Inhabited Nc]
@@ -145,7 +147,7 @@ def wK_disj : V3 → V3 → V3
 infix :70 " ∨ₖ " => wK_disj
 
 /-- Restricted Weak Kleene existential quantifier -/
-noncomputable def wK_exists (X : Set (V3 × V3)) : V3 :=
+noncomputable def wK_exists (X : Set V32) : V3 :=
   if H1: ⟨.t, .t⟩ ∈ X then .t
   else if H2: ∀ x ∈ X, x.1 = .e ∨ x.2 = .e then .e
   else if H3: ⟨.t, .t⟩ ∉ X ∧ ∃ x ∈ X, x.1 ≠ .e ∧ x.2 ≠ .e then .f
@@ -153,95 +155,123 @@ noncomputable def wK_exists (X : Set (V3 × V3)) : V3 :=
 notation "∃ₖ " X => wK_exists X
 
 
-noncomputable def wK_forall (X : Set (V3 × V3)) : V3 :=
+noncomputable def wK_forall (X : Set V32) : V3 :=
   if H1: ⟨.t, .f⟩ ∉ X ∧ ⟨.t, .e⟩ ∉ X ∧ ∃ x ∈ X, x.1 ≠ .e ∧ x.2 ≠ .e then .t
   else if H2: ∀ x ∈ X, x.1 = .e ∨ x.2 = .e then .e
   else if H3: (⟨.t, .f⟩ ∈ X ∨ ⟨.t, .e⟩ ∈ X) ∧ ∃ x ∈ X, x.1 ≠ .e ∧ x.2 ≠ .e then .f
   else by grind only
 notation "∀ₖ " X => wK_forall X
 
-def ac_neg (v : V3 × V3) : V3 × V3 :=
+def ac_neg (v : V32) : V3 × V3 :=
   ⟨v.2, v.1⟩
 prefix:70 "∼ₐ " => ac_neg
 
-def ac_conj (v1 v2 : V3 × V3) : V3 × V3 :=
+def ac_conj (v1 v2 : V32) : V3 × V3 :=
   ⟨v1.1 ∧ₖ v2.1, v1.2 ∨ₖ v2.2⟩
 infix :70 " ∧ₐ " => ac_conj
 
-def ac_disj (v1 v2 : V3 × V3) : V3 × V3 :=
+def ac_disj (v1 v2 : V32) : V3 × V3 :=
   ⟨v1.1 ∨ₖ v2.1, v1.2 ∧ₖ v2.2⟩
 infix :65 " ∨ₐ " => ac_disj
 
-def pi_sel_aux (v : V3 × V3) (i : Fin 2) : V3 :=
+def pi_sel_aux (v : V32) (i : Fin 2) : V3 :=
   if i = 0 then v.1 else v.2
 
-def pi_sel (v : (V3 × V3) × (V3 × V3)) (i j : Fin 2) : V3 × V3 :=
+def pi_sel (v : V32 × V32) (i j : Fin 2) : V32 :=
   ⟨pi_sel_aux v.1 i, pi_sel_aux v.2 j⟩
 
-def pi_sel_img (X : Set ((V3 × V3) × (V3 × V3))) (i j : Fin 2) : Set (V3 × V3) :=
+def pi_sel_img (X : Set (V32 × V32)) (i j : Fin 2) : Set V32 :=
   { pi_sel v i j | v ∈ X }
 
-noncomputable def ac_exists (X : Set ((V3 × V3) × (V3 × V3))) : V3 × V3 :=
+noncomputable def ac_exists (X : Set (V32 × V32)) : V32 :=
   ⟨∃ₖ pi_sel_img X 0 0, ∀ₖ pi_sel_img X 0 1⟩
+prefix:70 "∃ₐ " => ac_exists
 
-noncomputable def ac_forall (X : Set ((V3 × V3) × (V3 × V3))) : V3 × V3 :=
+noncomputable def ac_forall (X : Set (V32 × V32)) : V32 :=
   ⟨∀ₖ pi_sel_img X 0 0, ∃ₖ pi_sel_img X 0 1⟩
+prefix:70 "∀ₐ " => ac_forall
+
+/-- Weak Kleene Interpretation -/
+structure WKInterp  where
+  Δ : Type
+  Δ_inhabited : Inhabited Δ
+  individual_map : Ni → Δ
+  concept_map : @Concept Nc Nr → Δ → V3
+  role_map    : Nr → Δ → Δ → V3
+
+/-- Weak Kleene Interpretations On Concepts -/
+noncomputable def WKInterp.C (I : @WKInterp Nc Nr Ni) : @Concept Nc Nr → I.Δ → V3
+| .top, _ => .t
+| .bot, _ => .f
+| .atomic nc, d => I.concept_map nc d
+| ¬ₜ C, d =>  ¬ₖ I.C C d
+| C ⊓ₜ D, d => (I.C C d) ∧ₖ (I.C D d)
+| C ⊔ₜ D, d => (I.C C d) ∨ₖ (I.C D d)
+| ∃[r] C, d => ∃ₖ { ⟨I.role_map r d d', I.C C d'⟩ | d' : I.Δ }
+| ∀[r] C, d => ∀ₖ { ⟨I.role_map r d d', I.C C d'⟩ | d' : I.Δ }
+
+/-- Weak Kleene Interpretations On Sentences -/
+noncomputable def WKInterp.S (I : @WKInterp Nc Nr Ni) : @Sentence Nc Nr Ni → V3
+|  a :ₐ C => I.C C (I.individual_map a)
+| (a, b) :ᵣ r => I.role_map r (I.individual_map a) (I.individual_map b)
+| C ⊑ D => ∀ₖ { ⟨I.C C d, I.C D d⟩ | d : I.Δ }
+| C ≡ D => (I.S (C ⊑ D)) ∧ₖ (I.S (D ⊑ C))
+| r ⊑ᵣ s => ∀ₖ { ⟨I.role_map r p.1 p.2, I.role_map s p.1 p.2⟩ | p : I.Δ × I.Δ }
+termination_by s => match s with | .equiv _ _ => 1 | _ => 0
+
+def WKInterp.satisfies (I : @WKInterp Nc Nr Ni) (s : @Sentence Nc Nr Ni) : Prop :=
+  I.S s = .t
+infix:50 " ⊨ₖ " => WKInterp.satisfies
+
+def WKInterp.satisfies_all (I : @WKInterp Nc Nr Ni) (K : Set (@Sentence Nc Nr Ni)) : Prop :=
+  ∀ s ∈ K, I ⊨ₖ s
+infix:50 " ⊨ₖ " => WKInterp.satisfies_all
+
+def entails_wk (K : Set (@Sentence Nc Nr Ni)) (s : @Sentence Nc Nr Ni) : Prop :=
+  ∀ I : @WKInterp Nc Nr Ni, I ⊨ₖ K → I ⊨ₖ s
+infix:50 " ⊨ₖ " => entails_wk
+
+
+structure ACInterp  where
+  Δ : Type
+  Δ_inhabited : Inhabited Δ
+  individual_map : Ni → Δ
+  concept_map : @Concept Nc Nr → Δ → V32
+  role_map    : Nr → Δ → Δ → V32
+
+noncomputable def ACInterp.C (I : @ACInterp Nc Nr Ni) : @Concept Nc Nr → I.Δ → V32
+| .top, _ => ⟨.t, default⟩
+| .bot, _ => ⟨default, .t⟩
+| .atomic nc, d => I.concept_map nc d
+| ¬ₜ C, d =>  ∼ₐ I.C C d
+| C ⊓ₜ D, d => (I.C C d) ∧ₐ (I.C D d)
+| C ⊔ₜ D, d => (I.C C d) ∨ₐ (I.C D d)
+| ∃[r] C, d => ∃ₐ { ⟨I.role_map r d d', I.C C d'⟩ | d' : I.Δ }
+| ∀[r] C, d => ∀ₐ { ⟨I.role_map r d d', I.C C d'⟩ | d' : I.Δ }
+
+noncomputable def ACInterp.S (I : @ACInterp Nc Nr Ni) : @Sentence Nc Nr Ni → V32
+|  a :ₐ C => I.C C (I.individual_map a)
+| (a, b) :ᵣ r => I.role_map r (I.individual_map a) (I.individual_map b)
+| C ⊑ D => ∀ₐ { ⟨I.C C d, I.C D d⟩ | d : I.Δ }
+| C ≡ D => (I.S (C ⊑ D)) ∧ₐ (I.S (D ⊑ C))
+| r ⊑ᵣ s => ∀ₐ { ⟨I.role_map r p.1 p.2, I.role_map s p.1 p.2⟩ | p : I.Δ × I.Δ }
+termination_by s => match s with | .equiv _ _ => 1 | _ => 0
+
+def ACInterp.satisfies (I : @ACInterp Nc Nr Ni) (s : @Sentence Nc Nr Ni) : Prop :=
+  (I.S s).1 = .t
+infix:50 " ⊨ₐ " => ACInterp.satisfies
+
+def ACInterp.satisfies_all (I : @ACInterp Nc Nr Ni) (K : Set (@Sentence Nc Nr Ni)) : Prop :=
+  ∀ s ∈ K, I ⊨ₐ s
+infix:50 " ⊨ₐ " => ACInterp.satisfies_all
+
+def entails_ac (K : Set (@Sentence Nc Nr Ni)) (s : @Sentence Nc Nr Ni) : Prop :=
+  ∀ I : @ACInterp Nc Nr Ni, I ⊨ₐ K → I ⊨ₐ s
+infix:50 " ⊨ₐ " => entails_ac
 
 
 
 
--- /-- Restricted Weak Kleene universal quantifier -/
--- def wK_forall (X : Set (TruthValue3 × TruthValue3)) : TruthValue3 :=
---   let no_bad := not (X.Exists (λ p => p == ⟨.t, .f⟩ ∨ p == ⟨.t, .u⟩))
---   let some_meaningful := X.Exists (λ p => p.1 ≠ .u ∧ p.2 ≠ .u)
---   if no_bad ∧ some_meaningful then .t
---   else if X.Forall (λ p => p.1 == .u ∨ p.2 == .u) then .u
---   else .f
-
--- /-- Bilateral truth values for AC logic -/
--- def BilateralValue := TruthValue3 × TruthValue3
-
--- /-- AC negation -/
--- def ac_neg (v : BilateralValue) : BilateralValue :=
---   ⟨v.2, v.1⟩
-
--- /-- AC conjunction -/
--- def ac_conj (v1 v2 : BilateralValue) : BilateralValue :=
---   ⟨wK_conj v1.1 v2.1, wK_disj v1.2 v2.2⟩
-
--- /-- AC disjunction -/
--- def ac_disj (v1 v2 : BilateralValue) : BilateralValue :=
---   ⟨wK_disj v1.1 v2.1, wK_conj v1.2 v2.2⟩
-
--- /-- Projection helper for bilateral quantifiers -/
--- def pi (i j : Nat) (v1 v2 : BilateralValue) : TruthValue3 :=
---   let coords1 := [v1.1, v1.2]
---   let coords2 := [v2.1, v2.2]
---   match i, j with
---   | 0, 0 => v1.1
---   | 0, 1 => v1.2 -- This is wrong based on paper: "ith coordinate of <u0, v0> and jth coordinate of <u1, v1>"
---   | _, _  => .u
-
--- /-- Let's fix pi to actually be the projection from (v1, v2) to TruthValue3 -/
--- def proj (i j : Nat) (p : BilateralValue × BilateralValue) : TruthValue3 :=
---   match i, j with
---   | 0, 0 => p.1.1
---   | 0, 1 => p.1.2 -- This is also wrong based on paper: "ith coordinate of <u0, v0> and the jth coordinate of <u1, v1>"
---   | _, _  => .u
-
--- -- Phase 3: Interpretations and Satisfaction
-
--- /-- Classical Interpretation -/
--- structure ClassicalInterp (Σ : Signature) where
---   domain : Type
---   concept_map : Concept Σ → (domain → TruthValue2)
---   role_map    : Σ.nr → (domain → domain → TruthValue2)
-
--- /-- Weak Kleene Interpretation -/
--- structure WKInterp (Σ : Signature) where
---   domain : Type
---   concept_map : Concept Σ → (domain → TruthValue3)
---   role_map    : Σ.nr → (domain → domain → TruthValue3)
 
 -- /-- Bilateral ($\mathsf{AC}$) Interpretation -/
 -- structure BilateralInterp (Σ : Signature) where
