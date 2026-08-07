@@ -120,10 +120,20 @@ infix:50 " ≡ " => Sentence.equiv
 inductive SentenceH (C R: Type) where
 | assert_c : Ni → C → SentenceH C R
 | assert_r : Ni → Ni → R → SentenceH C R
+| blank_assert_c : C -> SentenceH C R
+| blank_assert_r : R -> SentenceH C R
 | subsume  : C → C → SentenceH C R
 | equiv    : C → C → SentenceH C R
 | role_inc : Nr → Nr → SentenceH C R
 deriving Repr, Inhabited, DecidableEq, Encodable
+
+notation a " :ₐ " c:50 => SentenceH.assert_c a c
+notation "_:ₐ" => SentenceH.blank_assert_c
+notation "_:ᵣ" => SentenceH.blank_assert_r
+notation "(" a ", " b ")" " :ᵣ " r:50 => SentenceH.assert_r a b r
+infix:50 " ⊑ " => SentenceH.subsume
+infix:50 " ≡ " => SentenceH.equiv
+infix:50 " ⊑ᵣ " => SentenceH.role_inc
 
 /-- A structural linear order obtained from the syntax's injective encoding. -/
 instance SentenceH.instLinearOrder {C R : Type}
@@ -132,6 +142,8 @@ instance SentenceH.instLinearOrder {C R : Type}
 
 def SentenceH.inames {C R : Type} : @SentenceH Nr Ni C R → Finset Ni
 | .assert_c a _ => {a}
+| .blank_assert_c _ => ∅
+| .blank_assert_r _ => ∅
 | .assert_r a b _ => {a, b}
 | .subsume _ _ => ∅
 | .equiv _ _ => ∅
@@ -142,12 +154,6 @@ def FinsetSentenceH.inames {C R : Type} [Encodable C] [Encodable R] :
 | S => (S.sort (fun φ ψ => φ ≤ ψ)).foldl
     (fun acc φ => acc ∪ φ.inames) ∅
 
-
-notation a " :ₐ " c:50 => SentenceH.assert_c a c
-notation "(" a ", " b ")" " :ᵣ " r:50 => SentenceH.assert_r a b r
-infix:50 " ⊑ " => SentenceH.subsume
-infix:50 " ≡ " => SentenceH.equiv
-infix:50 " ⊑ᵣ " => SentenceH.role_inc
 
 -- Base Language ALCH
 abbrev ALCH := @SentenceH Nr Ni (@Concept Nc Nr) (@RoleA Nr)
@@ -175,6 +181,8 @@ def Interp.R (i : @Interp Nc Nr Ni) : @RoleI Nr → i.Δ → i.Δ → V2
 
 def Interp.S (i : @Interp Nc Nr Ni) : @ALCHPI Nc Nr Ni → V2
 | a :ₐ C => i.C C (i.individual_map a)
+| _:ₐ C => ∃ d, i.C C d
+| _:ᵣ r => ∃ d d', i.R r d d'
 | (a, b) :ᵣ r => i.R r (i.individual_map a) (i.individual_map b)
 | C ⊑ D => ∀ d, i.C C d → i.C D d
 | C ≡ D => i.S (C ⊑ D) ∧ i.S (D ⊑ C)
@@ -298,6 +306,8 @@ def WKInterp.R (I : @WKInterp Nc Nr Ni) : @RoleI Nr → I.Δ → I.Δ → V3
 noncomputable def WKInterp.S (I : @WKInterp Nc Nr Ni) : @ALCHPI Nc Nr Ni → V3
 |  a :ₐ C => I.C C (I.individual_map a)
 | (a, b) :ᵣ r => I.R r (I.individual_map a) (I.individual_map b)
+| _:ₐ C => ∃ₖ { ⟨I.C C d⟩ | d : I.Δ }
+| _:ᵣ r => ∃ₖ { ⟨I.R r p.1 p.2⟩ | p : I.Δ × I.Δ }
 | C ⊑ D => ∀ₖ { ⟨I.C C d, I.C D d⟩ | d : I.Δ }
 | C ≡ D => (I.S (C ⊑ D)) ∧ₖ (I.S (D ⊑ C))
 | r ⊑ᵣ s => ∀ₖ { ⟨I.role_map r p.1 p.2, I.role_map s p.1 p.2⟩ | p : I.Δ × I.Δ }
