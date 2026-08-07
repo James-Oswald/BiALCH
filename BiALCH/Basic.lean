@@ -11,7 +11,7 @@ inductive V3 where
 | t
 | e
 | f
-deriving Inhabited, Repr, DecidableEq
+deriving Inhabited, Repr, DecidableEq, Encodable
 
 instance : Fintype V3 where
   elems := {.t, .e, .f}
@@ -28,9 +28,27 @@ class HasFresh (α : Type u) : Type u where
   fresh : Finset α → α
   fresh_notMem (s : Finset α) : fresh s ∉ s
 
-variable {Nc : Type} [DecidableEq Nc] [Repr Nc] [Inhabited Nc] [HasFresh Nc]
-variable {Nr : Type} [DecidableEq Nr] [Repr Nr] [Inhabited Nr] [HasFresh Nr]
-variable {Ni : Type} [DecidableEq Ni] [Repr Ni] [Inhabited Ni] [HasFresh Ni]
+def HasFresh.fresh2 {α : Type u} [HasFresh α] [DecidableEq α] (s : Finset α) : α × α :=
+  let f1 := HasFresh.fresh s
+  let s' := insert f1 s
+  let f2 := HasFresh.fresh s'
+  ⟨f1, f2⟩
+
+lemma HasFresh.fresh2_notMem {α : Type u} [HasFresh α] [DecidableEq α] (s : Finset α) :
+let ⟨f1, f2⟩ := HasFresh.fresh2 s; f1 ∉ s ∧ f2 ∉ s ∧ f1 ≠ f2 := by
+  dsimp [HasFresh.fresh2]
+  refine ⟨HasFresh.fresh_notMem s, ?_, ?_⟩
+  · intro hf2
+    exact HasFresh.fresh_notMem (insert (HasFresh.fresh s) s)
+      (Finset.mem_insert_of_mem hf2)
+  · intro hEq
+    apply HasFresh.fresh_notMem (insert (HasFresh.fresh s) s)
+    rw [← hEq]
+    exact Finset.mem_insert_self _ _
+
+variable {Nc : Type} [DecidableEq Nc] [Repr Nc] [Inhabited Nc] [HasFresh Nc] [Encodable Nc]
+variable {Nr : Type} [DecidableEq Nr] [Repr Nr] [Inhabited Nr] [HasFresh Nr] [Encodable Nr]
+variable {Ni : Type} [DecidableEq Ni] [Repr Ni] [Inhabited Ni] [HasFresh Ni] [Encodable Ni]
 
 /-- ALCH Concepts -/
 inductive Concept where
@@ -42,7 +60,7 @@ inductive Concept where
 | disj    : Concept → Concept → Concept
 | exis    : Nr → Concept → Concept
 | univ    : Nr → Concept → Concept
-deriving Inhabited, Repr
+deriving Inhabited, Repr, DecidableEq, Encodable
 
 instance : Top (@Concept Nc Nr) := ⟨Concept.top⟩
 instance : Bot (@Concept Nc Nr) := ⟨Concept.bot⟩
@@ -58,11 +76,13 @@ example (A B: Nc) (R : Nr) : @Concept Nc Nr := A ⊓ₜ ∃[R] B ⊓ₜ (∀[R] 
 -- Atomic Role Language
 inductive RoleA where
 | atomic : Nr → RoleA
+deriving DecidableEq, Encodable, Repr
 
 -- Intersection Role Language
 inductive RoleI where
 | atomic : Nr → RoleI
 | inter : RoleI → RoleI → RoleI
+deriving DecidableEq, Encodable, Repr
 
 infixl:70 " ⊓ᵣ " => RoleI.inter
 
@@ -74,6 +94,7 @@ inductive ConceptP where
 | disj    : ConceptP → ConceptP → ConceptP
 | exis    : Nr → ConceptP → ConceptP
 | univ    : Nr → ConceptP → ConceptP
+deriving DecidableEq, Encodable
 
 instance : Top (@ConceptP Nc Nr) := ⟨ConceptP.top⟩
 infixl:70 " ⊓ₜ " => ConceptP.conj
@@ -88,7 +109,7 @@ inductive Sentence (C R : Type) where
 | assert_r : Ni → Ni → R → Sentence C R
 | subsume  : C → C → Sentence C R
 | equiv    : C → C → Sentence C R
-deriving Repr, Inhabited
+deriving Repr, Inhabited, DecidableEq, Encodable
 
 notation a " :ₐ " c:50 => Sentence.assert_c a c
 notation "(" a ", " b ")" " :ᵣ " r:50 => Sentence.assert_r a b r
@@ -102,14 +123,24 @@ inductive SentenceH (C R: Type) where
 | subsume  : C → C → SentenceH C R
 | equiv    : C → C → SentenceH C R
 | role_inc : Nr → Nr → SentenceH C R
-deriving Repr, Inhabited
+deriving Repr, Inhabited, DecidableEq, Encodable
 
-def SentenceH.inames : @SentenceH Nr Ni (@Concept Nc Nr) (@RoleA Nr) → Finset Ni
+/-- A structural linear order obtained from the syntax's injective encoding. -/
+instance SentenceH.instLinearOrder {C R : Type}
+    [Encodable C] [Encodable R] : LinearOrder (@SentenceH Nr Ni C R) :=
+  LinearOrder.lift' Encodable.encode Encodable.encode_injective
+
+def SentenceH.inames {C R : Type} : @SentenceH Nr Ni C R → Finset Ni
 | .assert_c a _ => {a}
 | .assert_r a b _ => {a, b}
 | .subsume _ _ => ∅
 | .equiv _ _ => ∅
 | .role_inc _ _ => ∅
+
+def FinsetSentenceH.inames {C R : Type} [Encodable C] [Encodable R] :
+    Finset (@SentenceH Nr Ni C R) → Finset Ni
+| S => (S.sort (fun φ ψ => φ ≤ ψ)).foldl
+    (fun acc φ => acc ∪ φ.inames) ∅
 
 
 notation a " :ₐ " c:50 => SentenceH.assert_c a c
@@ -335,7 +366,8 @@ infix:50 " ⊨ₐ " => entails_ac
 structure TauBase where
   c : Nc → Nc
   r : Nr → Nr
-  -- These may need to be bijective
+  c_injective : Function.Injective c
+  r_injective : Function.Injective r
 
 structure PiBase where
   c : Nc → Nc
@@ -346,6 +378,26 @@ def TauBase.R (τ : @TauBase Nc Nr) : @RoleI Nr → @RoleI Nr
 | .atomic r => .atomic (τ.r r)
 | r ⊓ᵣ s => (τ.R r) ⊓ᵣ (τ.R s)
 
+omit [DecidableEq Nc] [Repr Nc] [Inhabited Nc] [HasFresh Nc]
+    [DecidableEq Nr] [Repr Nr] [Inhabited Nr] [HasFresh Nr] in
+lemma TauBase.R_injective (τ : @TauBase Nc Nr) : Function.Injective τ.R := by
+  intro R
+  induction R with
+  | atomic r =>
+      intro S h
+      cases S with
+      | atomic s =>
+          injection h with hrs
+          exact congrArg RoleI.atomic (τ.r_injective hrs)
+      | inter _ _ => cases h
+  | inter r s ihr ihs =>
+      intro S h
+      cases S with
+      | atomic _ => cases h
+      | inter r' s' =>
+          injection h with hr hs
+          exact congrArg₂ RoleI.inter (ihr hr) (ihs hs)
+
 def TauBase.C (τ : @TauBase Nc Nr) : @ConceptP Nc Nr → @ConceptP Nc Nr
 | ⊤ => ⊤
 | .atomic C => τ.c C
@@ -354,13 +406,99 @@ def TauBase.C (τ : @TauBase Nc Nr) : @ConceptP Nc Nr → @ConceptP Nc Nr
 | ∃[r] C => ∃[τ.r r] (τ.C C)
 | ∀[r] C => ∀[τ.r r] (τ.C C)
 
+omit [DecidableEq Nc] [Repr Nc] [Inhabited Nc] [HasFresh Nc]
+    [DecidableEq Nr] [Repr Nr] [Inhabited Nr] [HasFresh Nr] in
+lemma TauBase.C_injective (τ : @TauBase Nc Nr) : Function.Injective τ.C := by
+  intro C
+  induction C with
+  | top => intro D h; cases D <;> cases h; rfl
+  | atomic c =>
+      intro D h
+      cases D with
+      | atomic d =>
+          injection h with hcd
+          exact congrArg ConceptP.atomic (τ.c_injective hcd)
+      | top | conj _ _ | disj _ _ | exis _ _ | univ _ _ => cases h
+  | conj C D ihC ihD =>
+      intro E h
+      cases E with
+      | conj C' D' =>
+          injection h with hC hD
+          exact congrArg₂ ConceptP.conj (ihC hC) (ihD hD)
+      | top | atomic _ | disj _ _ | exis _ _ | univ _ _ => cases h
+  | disj C D ihC ihD =>
+      intro E h
+      cases E with
+      | disj C' D' =>
+          injection h with hC hD
+          exact congrArg₂ ConceptP.disj (ihC hC) (ihD hD)
+      | top | atomic _ | conj _ _ | exis _ _ | univ _ _ => cases h
+  | exis r C ihC =>
+      intro D h
+      cases D with
+      | exis s D =>
+          injection h with hrs hC
+          exact congrArg₂ ConceptP.exis (τ.r_injective hrs) (ihC hC)
+      | top | atomic _ | conj _ _ | disj _ _ | univ _ _ => cases h
+  | univ r C ihC =>
+      intro D h
+      cases D with
+      | univ s D =>
+          injection h with hrs hC
+          exact congrArg₂ ConceptP.univ (τ.r_injective hrs) (ihC hC)
+      | top | atomic _ | conj _ _ | disj _ _ | exis _ _ => cases h
+
 def ALCHPI.Tau (τ : @TauBase Nc Nr) : @ALCHPI Nc Nr Ni → @ALCHPI Nc Nr Ni
 | a :ₐ C => a :ₐ (τ.C C)
-| (a, b) :ᵣ .atomic r => (a, b) :ᵣ .atomic (τ.r r)
+| (a, b) :ᵣ r => (a, b) :ᵣ τ.R r
 | C ⊑ D => (τ.C C) ⊑ (τ.C D)
 | C ≡ D => (τ.C C) ≡ (τ.C D)
 | r ⊑ᵣ s => (τ.r r) ⊑ᵣ (τ.r s)
-| (a, b) :ᵣ r ⊓ᵣ s => (a, b) :ᵣ (τ.R r) ⊓ᵣ (τ.R s)
+
+omit [DecidableEq Nc] [Repr Nc] [Inhabited Nc] [HasFresh Nc]
+    [DecidableEq Nr] [Repr Nr] [Inhabited Nr] [HasFresh Nr]
+    [DecidableEq Ni] [Repr Ni] [Inhabited Ni] [HasFresh Ni] in
+lemma ALCHPI.Tau_injective (τ : @TauBase Nc Nr) :
+    Function.Injective (ALCHPI.Tau (Ni := Ni) τ) := by
+  intro φ ψ h
+  cases φ with
+  | assert_c a C =>
+      cases ψ with
+      | assert_c b D =>
+          injection h with hab hCD
+          exact congrArg₂ SentenceH.assert_c hab (τ.C_injective hCD)
+      | assert_r _ _ _ | subsume _ _ | equiv _ _ | role_inc _ _ => cases h
+  | assert_r a b r =>
+      cases ψ with
+      | assert_r c d s =>
+          injection h with hac hbd hrs
+          have hrs' := τ.R_injective hrs
+          cases hac
+          cases hbd
+          cases hrs'
+          rfl
+      | assert_c _ _ | subsume _ _ | equiv _ _ | role_inc _ _ => cases h
+  | subsume C D =>
+      cases ψ with
+      | subsume E F =>
+          injection h with hCE hDF
+          exact congrArg₂ SentenceH.subsume (τ.C_injective hCE) (τ.C_injective hDF)
+      | assert_c _ _ | assert_r _ _ _ | equiv _ _ | role_inc _ _ => cases h
+  | equiv C D =>
+      cases ψ with
+      | equiv E F =>
+          injection h with hCE hDF
+          exact congrArg₂ SentenceH.equiv (τ.C_injective hCE) (τ.C_injective hDF)
+      | assert_c _ _ | assert_r _ _ _ | subsume _ _ | role_inc _ _ => cases h
+  | role_inc r s =>
+      cases ψ with
+      | role_inc r' s' =>
+          injection h with hr hs
+          exact congrArg₂ SentenceH.role_inc (τ.r_injective hr) (τ.r_injective hs)
+      | assert_c _ _ | assert_r _ _ _ | subsume _ _ | equiv _ _ => cases h
+
+def ALCHPI.Tau_all (τ : @TauBase Nc Nr) (S : Finset (@ALCHPI Nc Nr Ni)) : Finset (@ALCHPI Nc Nr Ni) :=
+  S.map ⟨ALCHPI.Tau τ, ALCHPI.Tau_injective τ⟩
 
 def PiBase.R (π : @PiBase Nc Nr) : @RoleI Nr → @RoleI Nr
 | .atomic r => .atomic (π.r r)
@@ -374,15 +512,26 @@ def PiBase.C (π : @PiBase Nc Nr) : @ConceptP Nc Nr → @ConceptP Nc Nr
 | ∃[r] C => ∃[π.r r] (π.C C)
 | ∀[r] C => ∃[π.r r] (π.C C)
 
-def ALCHPI.Pi (π : @PiBase Nc Nr) (f1 f2 : Ni) : @ALCHPI Nc Nr Ni → @ALCHPI Nc Nr Ni
-| a :ₐ C => a :ₐ (π.C C)
-| (a, b) :ᵣ .atomic r => (a, b) :ᵣ .atomic (π.r r)
-| C ⊑ D => f1 :ₐ (π.C C) ⊓ₜ (π.C D)
-| C ≡ D => f1 :ₐ (π.C C) ⊓ₜ (π.C D)
-| r ⊑ᵣ s => (f1, f2) :ᵣ (.atomic (π.r r)) ⊓ᵣ (.atomic (π.r s))
-| (a, b) :ᵣ r ⊓ᵣ s => (a, b) :ᵣ (π.R r) ⊓ᵣ (π.R s)
+def ALCHPI.Pi (π : @PiBase Nc Nr) (F : Finset Ni) : @ALCHPI Nc Nr Ni → @ALCHPI Nc Nr Ni × Finset Ni
+| a :ₐ C => (a :ₐ (π.C C), F)
+| (a, b) :ᵣ .atomic r => ((a, b) :ᵣ .atomic (π.r r), F)
+| C ⊑ D => let f1 := HasFresh.fresh F; (f1 :ₐ (π.C C) ⊓ₜ (π.C D), F ∪ {f1})
+| C ≡ D => let f1 := HasFresh.fresh F; (f1 :ₐ (π.C C) ⊓ₜ (π.C D), F ∪ {f1})
+| r ⊑ᵣ s => let ⟨f1,f2⟩ := HasFresh.fresh2 F ; ((f1, f2) :ᵣ (.atomic (π.r r)) ⊓ᵣ (.atomic (π.r s)), F ∪ {f1, f2})
+| (a, b) :ᵣ r ⊓ᵣ s => ((a, b) :ᵣ (π.R r) ⊓ᵣ (π.R s), ∅)
 
-def ALCHPI.Pi_all (π : @PiBase Nc Nr) (f1 f2 : Ni) : Finset (@ALCHPI Nc Nr Ni) → Finset (@ALCHPI Nc Nr Ni)
+
+def ALCHPI.Pi_all (π : @PiBase Nc Nr) (F : Finset Ni) (S : Finset (@ALCHPI Nc Nr Ni)) : Finset (@ALCHPI Nc Nr Ni) × Finset Ni :=
+  S.sort (fun φ ψ => φ ≤ ψ) |>.foldl (fun (acc : Finset (@ALCHPI Nc Nr Ni) × Finset Ni) φ =>
+    let (φ', F') := ALCHPI.Pi π acc.2 φ
+    (acc.1 ∪ {φ'}, F')) (∅, F)
+
+theorem wk_c_faithful (K : Finset (@ALCHPI Nc Nr Ni)) (φ : @ALCHPI Nc Nr Ni) (τ : @TauBase Nc Nr) (π : @PiBase Nc Nr) :
+  let Kτ := ALCHPI.Tau_all τ K
+  let φτ := ALCHPI.Tau τ φ
+  let (Kπ, Fπ) := ALCHPI.Pi_all π (FinsetSentenceH.inames Kτ ∪ φτ.inames) K
+  let (φπ, Fφ) := ALCHPI.Pi π Fπ φτ
+  K ⊨ₖ φ ↔ Kπ ⊨ φπ ∧ Kτ ⊨ φτ := by
   sorry
 
 end BiALCH
