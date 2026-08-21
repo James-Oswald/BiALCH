@@ -306,8 +306,6 @@ def WKInterp.R (I : @WKInterp Nc Nr Ni) : @RoleI Nr → I.Δ → I.Δ → V3
 noncomputable def WKInterp.S (I : @WKInterp Nc Nr Ni) : @ALCHPI Nc Nr Ni → V3
 |  a :ₐ C => I.C C (I.individual_map a)
 | (a, b) :ᵣ r => I.R r (I.individual_map a) (I.individual_map b)
-| _:ₐ C => ∃ₖ { ⟨I.C C d⟩ | d : I.Δ }
-| _:ᵣ r => ∃ₖ { ⟨I.R r p.1 p.2⟩ | p : I.Δ × I.Δ }
 | C ⊑ D => ∀ₖ { ⟨I.C C d, I.C D d⟩ | d : I.Δ }
 | C ≡ D => (I.S (C ⊑ D)) ∧ₖ (I.S (D ⊑ C))
 | r ⊑ᵣ s => ∀ₖ { ⟨I.role_map r p.1 p.2, I.role_map s p.1 p.2⟩ | p : I.Δ × I.Δ }
@@ -362,16 +360,41 @@ def entails_ac (K : Set (@ALCH Nc Nr Ni)) (s : @ALCH Nc Nr Ni) : Prop :=
   ∀ I : @ACInterp Nc Nr Ni, I ⊨ₐ K → I ⊨ₐ s
 infix:50 " ⊨ₐ " => entails_ac
 
--- noncomputable def StarInterp (I : @WKInterp Nc Nr Ni) : @WKInterp Nc Nr Ni where
---   Δ := I.Δ
---   Δ_inhabited := I.Δ_inhabited
---   individual_map := I.individual_map
---   concept_map := fun C d => if I.concept_map C d ≠ .e then .t else .e
---   role_map := fun r d1 d2 => if I.role_map r d1 d2 ≠ .e then .t else .e
+noncomputable def StarInterp (I : @WKInterp Nc Nr Ni) : @WKInterp Nc Nr Ni where
+  Δ := I.Δ
+  Δ_inhabited := I.Δ_inhabited
+  individual_map := I.individual_map
+  concept_map := fun C d => if I.concept_map C d ≠ .e then .t else .e
+  role_map := fun r d1 d2 => if I.role_map r d1 d2 ≠ .e then .t else .e
 
 -- lemma StarInterp_lifts (I : @WKInterp Nc Nr Ni) (φ : @ALCHPI Nc Nr Ni) :
 --   (StarInterp I).S φ = if I.S φ ≠ .e then .t else .e := by
 --   sorry
+
+/-- `StarInterp_lifts` is false for the restricted universal semantics.
+
+At `false`, the pair of values for `A` and `B` is `(f, f)`; at `true`, it is
+`(f, e)`.  Thus `I.S (A ⊑ B) = t`.  After applying `StarInterp`, the pairs
+become `(t, t)` and `(t, e)`, so the same subsumption has value `f`, rather than
+the `t` predicted by `StarInterp_lifts`. -/
+theorem not_StarInterp_lifts :
+    let I : @WKInterp Bool Unit Unit :=
+      { Δ := Bool
+        Δ_inhabited := inferInstance
+        individual_map := fun _ => false
+        concept_map := fun C d =>
+          match C, d with
+          | false, _ => .f
+          | true, false => .f
+          | true, true => .e
+        role_map := fun _ _ _ => .f }
+    let φ : @ALCHPI Bool Unit Unit :=
+      (ConceptP.atomic false) ⊑ (ConceptP.atomic true)
+    (StarInterp I).S φ ≠ if I.S φ ≠ .e then .t else .e := by
+  dsimp
+  simp only [WKInterp.S, WKInterp.C, StarInterp, wK_forall]
+  simp
+  split_ifs <;> decide
 
 structure TauBase where
   c : Nc → Nc
