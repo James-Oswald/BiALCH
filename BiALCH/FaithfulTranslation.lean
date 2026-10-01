@@ -54,6 +54,10 @@ def orK : V3 → V3 → V3
   | .f, .f => .f
   | _, _ => .t
 
+prefix:70 "¬ₖ " => negK
+infixl:70 " ∧ₖ " => andK
+infixl:65 " ∨ₖ " => orK
+
 /-- Restricted quantifiers on indexed families; agreement with the paper below. -/
 noncomputable def existsK {D : Type} (r c : D → V3) : V3 := by
   classical
@@ -64,6 +68,9 @@ noncomputable def forallK {D : Type} (r c : D → V3) : V3 := by
   exact if ∃ x, r x ≠ .e ∧ c x ≠ .e then
     if ∀ x, r x = .t → c x = .t then .t else .f
     else .e
+
+notation "∃ₖ[" r "]" c:75 => existsK r c
+notation "∀ₖ[" r "]" c:75 => forallK r c
 
 @[simp] theorem negK_t (v : V3) : negK v = .t ↔ v ≠ .e ∧ v ≠ .t := by
   cases v <;> decide
@@ -80,25 +87,25 @@ noncomputable def forallK {D : Type} (r c : D → V3) : V3 := by
   cases v <;> cases w <;> decide
 
 @[simp] theorem existsK_t {D} (r c : D → V3) :
-    existsK r c = .t ↔ ∃ x, r x = .t ∧ c x = .t := by
+    ∃ₖ[r] c = .t ↔ ∃ x, r x = .t ∧ c x = .t := by
   classical
   unfold existsK
   split_ifs <;> simp_all
 @[simp] theorem existsK_m {D} (r c : D → V3) :
-    existsK r c ≠ .e ↔ ∃ x, r x ≠ .e ∧ c x ≠ .e := by
+    ∃ₖ[r] c ≠ .e ↔ ∃ x, r x ≠ .e ∧ c x ≠ .e := by
   classical
   unfold existsK
   split_ifs <;> simp_all
   obtain ⟨x, hx, hy⟩ := ‹∃ x, r x = .t ∧ c x = .t›
   exact ⟨x, by simp [hx], by simp [hy]⟩
 @[simp] theorem forallK_t {D} (r c : D → V3) :
-    forallK r c = .t ↔ (∀ x, r x = .t → c x = .t) ∧
+    ∀ₖ[r] c = .t ↔ (∀ x, r x = .t → c x = .t) ∧
       ∃ x, r x ≠ .e ∧ c x ≠ .e := by
   classical
   unfold forallK
   split_ifs <;> simp_all
 @[simp] theorem forallK_m {D} (r c : D → V3) :
-    forallK r c ≠ .e ↔ ∃ x, r x ≠ .e ∧ c x ≠ .e := by
+    ∀ₖ[r] c ≠ .e ↔ ∃ x, r x ≠ .e ∧ c x ≠ .e := by
   classical
   unfold forallK
   split_ifs <;> simp_all
@@ -165,6 +172,33 @@ inductive Sentence (Nc Nr Ni : Type) where
   | equiv : Concept Nc Nr → Concept Nc Nr → Sentence Nc Nr Ni
   | rsub : Nr → Nr → Sentence Nc Nr Ni
 
+instance : Top (Concept Nc Nr) := ⟨.top⟩
+instance : Bot (Concept Nc Nr) := ⟨.bot⟩
+instance : Coe Nc (Concept Nc Nr) := ⟨Concept.atom⟩
+notation "⟦" a "⟧ₜ" => Concept.atom a
+infixl:70 " ⊓ₜ " => Concept.conj
+infixl:65 " ⊔ₜ " => Concept.disj
+notation "¬ₜ " c:75 => Concept.neg c
+notation "∃[" r "]" c:75 => Concept.ex r c
+notation "∀[" r "]" c:75 => Concept.all r c
+
+notation a " :ₐ " c:50 => Sentence.isa a c
+notation "(" a ", " b ")" " :ᵣ " r:50 => Sentence.edge a b r
+infix:50 " ⊑ " => Sentence.sub
+infix:50 " ≡ " => Sentence.equiv
+infix:50 " ⊑ᵣ " => Sentence.rsub
+
+example (A B : Nc) (r : Nr) : Concept Nc Nr :=
+  A ⊓ₜ (∃[r] B) ⊓ₜ (∀[r] ¬ₜ A)
+
+example (a : Ni) (A : Nc) (r : Nr) : Sentence Nc Nr Ni :=
+  (a :ₐ (A ⊓ₜ (∃[r] A)))
+
+example (a b : Ni) (r : Nr) : Sentence Nc Nr Ni :=
+  (a, b) :ᵣ r
+
+example (r s : Nr) : Sentence Nc Nr Ni := r ⊑ᵣ s
+
 /-- Nonempty domains; no unique-name assumption. -/
 structure Model (Nc Nr Ni V : Type) where
   D : Type
@@ -175,33 +209,34 @@ structure Model (Nc Nr Ni V : Type) where
 variable {Nc Nr Ni : Type}
 
 noncomputable def evalK (I : Model Nc Nr Ni V3) : Concept Nc Nr → I.D → V3
-  | .top, _ => .t
-  | .bot, _ => .f
-  | .atom a, x => I.atom a x
-  | .neg c, x => negK (evalK I c x)
-  | .conj c d, x => andK (evalK I c x) (evalK I d x)
-  | .disj c d, x => orK (evalK I c x) (evalK I d x)
-  | .ex r c, x => existsK (I.role r x) (evalK I c)
-  | .all r c, x => forallK (I.role r x) (evalK I c)
+  | ⊤, _ => .t
+  | ⊥, _ => .f
+  | ⟦a⟧ₜ, x => I.atom a x
+  | ¬ₜ c, x => ¬ₖ (evalK I c x)
+  | c ⊓ₜ d, x => evalK I c x ∧ₖ evalK I d x
+  | c ⊔ₜ d, x => evalK I c x ∨ₖ evalK I d x
+  | ∃[r] c, x => ∃ₖ[I.role r x] (evalK I c)
+  | ∀[r] c, x => ∀ₖ[I.role r x] (evalK I c)
+
 noncomputable def sentenceK (I : Model Nc Nr Ni V3) : Sentence Nc Nr Ni → V3
-  | .isa a c => evalK I c (I.individual a)
-  | .edge a b r => I.role r (I.individual a) (I.individual b)
-  | .sub c d => forallK (evalK I c) (evalK I d)
-  | .equiv c d => andK (forallK (evalK I c) (evalK I d))
-      (forallK (evalK I d) (evalK I c))
-  | .rsub r s => forallK (fun p : I.D × I.D => I.role r p.1 p.2)
+  | a :ₐ c => evalK I c (I.individual a)
+  | (a, b) :ᵣ r => I.role r (I.individual a) (I.individual b)
+  | c ⊑ d => ∀ₖ[evalK I c] (evalK I d)
+  | c ≡ d => (∀ₖ[evalK I c] (evalK I d)) ∧ₖ
+      (∀ₖ[evalK I d] (evalK I c))
+  | r ⊑ᵣ s => ∀ₖ[(fun p : I.D × I.D => I.role r p.1 p.2)]
       (fun p => I.role s p.1 p.2)
 
 -- Ordinary classical semantics, independent of source values.
 def evalC (J : Model Nc Nr Ni Prop) : Concept Nc Nr → J.D → Prop
-  | .top, _ => True
-  | .bot, _ => False
-  | .atom a, x => J.atom a x
-  | .neg c, x => ¬ evalC J c x
-  | .conj c d, x => evalC J c x ∧ evalC J d x
-  | .disj c d, x => evalC J c x ∨ evalC J d x
-  | .ex r c, x => ∃ y, J.role r x y ∧ evalC J c y
-  | .all r c, x => ∀ y, J.role r x y → evalC J c y
+  | ⊤, _ => True
+  | ⊥, _ => False
+  | ⟦a⟧ₜ, x => J.atom a x
+  | ¬ₜ c, x => ¬ evalC J c x
+  | c ⊓ₜ d, x => evalC J c x ∧ evalC J d x
+  | c ⊔ₜ d, x => evalC J c x ∨ evalC J d x
+  | ∃[r] c, x => ∃ y, J.role r x y ∧ evalC J c y
+  | ∀[r] c, x => ∀ y, J.role r x y → evalC J c y
 
 /-- `both` is ordinary meta-level conjunction. -/
 inductive Query (Nc Nr Ni : Type) where
@@ -213,14 +248,22 @@ inductive Query (Nc Nr Ni : Type) where
   | overlap : Nr → Nr → Query Nc Nr Ni
   | both : Query Nc Nr Ni → Query Nc Nr Ni → Query Nc Nr Ni
 
+notation a " :ₐᵠ " c:50 => Query.isa a c
+notation "(" a ", " b ")" " :ᵣᵠ " r:50 => Query.edge a b r
+infix:50 " ⊑ᵠ " => Query.sub
+infix:50 " ⊑ᵣᵠ " => Query.rsub
+notation "∃ᵠ " c:75 => Query.some c
+infix:70 " ⋈ᵠ " => Query.overlap
+infixl:65 " ∧ᵠ " => Query.both
+
 def holds (J : Model Nc Nr Ni Prop) : Query Nc Nr Ni → Prop
-  | .isa a c => evalC J c (J.individual a)
-  | .edge a b r => J.role r (J.individual a) (J.individual b)
-  | .sub c d => ∀ x, evalC J c x → evalC J d x
-  | .rsub r s => ∀ x y, J.role r x y → J.role s x y
-  | .some c => ∃ x, evalC J c x
-  | .overlap r s => ∃ x y, J.role r x y ∧ J.role s x y
-  | .both p q => holds J p ∧ holds J q
+  | a :ₐᵠ c => evalC J c (J.individual a)
+  | (a, b) :ᵣᵠ r => J.role r (J.individual a) (J.individual b)
+  | c ⊑ᵠ d => ∀ x, evalC J c x → evalC J d x
+  | r ⊑ᵣᵠ s => ∀ x y, J.role r x y → J.role s x y
+  | ∃ᵠ c => ∃ x, evalC J c x
+  | r ⋈ᵠ s => ∃ x y, J.role r x y ∧ J.role s x y
+  | p ∧ᵠ q => holds J p ∧ holds J q
 
 inductive Bit where
   | truth | meaningful
@@ -230,37 +273,37 @@ abbrev TM (Nc Nr Ni : Type) := Model (Nc × Bit) (Nr × Bit) Ni Prop
 
 /-- Truth and meaningfulness concepts are computed together. -/
 def translateC : Concept Nc Nr → TC Nc Nr × TC Nc Nr
-  | .top => (.top, .top)
-  | .bot => (.bot, .top)
-  | .atom a => (.atom (a, .truth), .atom (a, .meaningful))
-  | .neg c => let (t, m) := translateC c; (.conj m (.neg t), m)
-  | .conj c d => let (t, m) := translateC c; let (u, n) := translateC d
-                (.conj t u, .conj m n)
-  | .disj c d => let (t, m) := translateC c; let (u, n) := translateC d
-                (.conj (.disj t u) (.conj m n), .conj m n)
-  | .ex r c => let (t, m) := translateC c
-               (.ex (r, .truth) t, .ex (r, .meaningful) m)
-  | .all r c => let (t, m) := translateC c
-                (.conj (.all (r, .truth) t) (.ex (r, .meaningful) m),
-                  .ex (r, .meaningful) m)
+  | ⊤ => (⊤, ⊤)
+  | ⊥ => (⊥, ⊤)
+  | ⟦a⟧ₜ => (⟦(a, Bit.truth)⟧ₜ, ⟦(a, Bit.meaningful)⟧ₜ)
+  | ¬ₜ c => let (t, m) := translateC c; (m ⊓ₜ (¬ₜ t), m)
+  | c ⊓ₜ d => let (t, m) := translateC c; let (u, n) := translateC d
+                (t ⊓ₜ u, m ⊓ₜ n)
+  | c ⊔ₜ d => let (t, m) := translateC c; let (u, n) := translateC d
+                ((t ⊔ₜ u) ⊓ₜ (m ⊓ₜ n), m ⊓ₜ n)
+  | (∃[r] c) => let (t, m) := translateC c
+               (∃[(r, .truth)] t, ∃[(r, .meaningful)] m)
+  | (∀[r] c) => let (t, m) := translateC c
+                ((∀[(r, Bit.truth)]t) ⊓ₜ (∃[(r, Bit.meaningful)] m),
+                  ∃[(r, .meaningful)] m)
 
 def translateS : Sentence Nc Nr Ni → Query (Nc × Bit) (Nr × Bit) Ni
-  | .isa a c => .isa a (translateC c).1
-  | .edge a b r => .edge a b (r, .truth)
-  | .sub c d => .both (.sub (translateC c).1 (translateC d).1)
-      (.some (.conj (translateC c).2 (translateC d).2))
-  | .equiv c d => .both
-      (.both (.sub (translateC c).1 (translateC d).1)
-        (.some (.conj (translateC c).2 (translateC d).2)))
-      (.both (.sub (translateC d).1 (translateC c).1)
-        (.some (.conj (translateC d).2 (translateC c).2)))
-  | .rsub r s => .both (.rsub (r, .truth) (s, .truth))
-      (.overlap (r, .meaningful) (s, .meaningful))
+  | a :ₐ c => a :ₐᵠ (translateC c).1
+  | (a, b) :ᵣ r => (a, b) :ᵣᵠ (r, .truth)
+  | c ⊑ d => ((translateC c).1 ⊑ᵠ (translateC d).1) ∧ᵠ
+      (∃ᵠ ((translateC c).2 ⊓ₜ (translateC d).2))
+  | c ≡ d =>
+      (((translateC c).1 ⊑ᵠ (translateC d).1) ∧ᵠ
+        (∃ᵠ ((translateC c).2 ⊓ₜ (translateC d).2))) ∧ᵠ
+      (((translateC d).1 ⊑ᵠ (translateC c).1) ∧ᵠ
+        (∃ᵠ ((translateC d).2 ⊓ₜ (translateC c).2)))
+  | r ⊑ᵣ s => ((r, .truth) ⊑ᵣᵠ (s, .truth)) ∧ᵠ
+      ((r, .meaningful) ⋈ᵠ (s, .meaningful))
 
 /-- Syntactic bridge axioms; all hold in the same classical model. -/
 def Bridge : Set (Query (Nc × Bit) (Nr × Bit) Ni) :=
-  { q | (∃ a, q = .sub (.atom (a, .truth)) (.atom (a, .meaningful))) ∨
-        (∃ r, q = .rsub (r, .truth) (r, .meaningful)) }
+  { q | (∃ a, q = (⟦(a, Bit.truth)⟧ₜ ⊑ᵠ ⟦(a, Bit.meaningful)⟧ₜ)) ∨
+        (∃ r, q = ((r, .truth) ⊑ᵣᵠ (r, .meaningful))) }
 def Coherent (J : TM Nc Nr Ni) : Prop :=
   (∀ a x, J.atom (a, .truth) x → J.atom (a, .meaningful) x) ∧
   (∀ r x y, J.role (r, .truth) x y → J.role (r, .meaningful) x y)
@@ -396,36 +439,41 @@ def coord (v : V32) : Side → V3
   | .negative => v.2
 
 def negA (v : V32) : V32 := (v.2, v.1)
-def andA (v w : V32) : V32 := (andK v.1 w.1, orK v.2 w.2)
-def orA (v w : V32) : V32 := (orK v.1 w.1, andK v.2 w.2)
+def andA (v w : V32) : V32 := (v.1 ∧ₖ w.1, v.2 ∨ₖ w.2)
+def orA (v w : V32) : V32 := (v.1 ∨ₖ w.1, v.2 ∧ₖ w.2)
+prefix:70 "∼ₐ " => negA
+infixl:70 " ∧ₐ " => andA
+infixl:65 " ∨ₐ " => orA
 noncomputable def existsA {D : Type} (r c : D → V32) : V32 :=
-  (existsK (fun x => (r x).1) (fun x => (c x).1),
-   forallK (fun x => (r x).1) (fun x => (c x).2))
+  (∃ₖ[(fun x => (r x).1)] (fun x => (c x).1),
+   ∀ₖ[(fun x => (r x).1)] (fun x => (c x).2))
 noncomputable def forallA {D : Type} (r c : D → V32) : V32 :=
-  (forallK (fun x => (r x).1) (fun x => (c x).1),
-   existsK (fun x => (r x).1) (fun x => (c x).2))
+  (∀ₖ[(fun x => (r x).1)] (fun x => (c x).1),
+   ∃ₖ[(fun x => (r x).1)] (fun x => (c x).2))
+notation "∃ₐ[" r "]" c:75 => existsA r c
+notation "∀ₐ[" r "]" c:75 => forallA r c
 
 structure ACModel (Nc Nr Ni : Type) extends Model Nc Nr Ni V32 where
   topNegative : D → V3
   bottomPositive : D → V3
 
 noncomputable def evalA (I : ACModel Nc Nr Ni) : Concept Nc Nr → I.D → V32
-  | .top, x => (.t, I.topNegative x)
-  | .bot, x => (I.bottomPositive x, .t)
-  | .atom a, x => I.atom a x
-  | .neg c, x => negA (evalA I c x)
-  | .conj c d, x => andA (evalA I c x) (evalA I d x)
-  | .disj c d, x => orA (evalA I c x) (evalA I d x)
-  | .ex r c, x => existsA (I.role r x) (evalA I c)
-  | .all r c, x => forallA (I.role r x) (evalA I c)
+  | ⊤, x => (.t, I.topNegative x)
+  | ⊥, x => (I.bottomPositive x, .t)
+  | ⟦a⟧ₜ, x => I.atom a x
+  | ¬ₜ c, x => ∼ₐ (evalA I c x)
+  | c ⊓ₜ d, x => evalA I c x ∧ₐ evalA I d x
+  | c ⊔ₜ d, x => evalA I c x ∨ₐ evalA I d x
+  | ∃[r] c, x => ∃ₐ[I.role r x] (evalA I c)
+  | ∀[r] c, x => ∀ₐ[I.role r x] (evalA I c)
 
 noncomputable def sentenceA (I : ACModel Nc Nr Ni) : Sentence Nc Nr Ni → V32
-  | .isa a c => evalA I c (I.individual a)
-  | .edge a b r => I.role r (I.individual a) (I.individual b)
-  | .sub c d => forallA (evalA I c) (evalA I d)
-  | .equiv c d => andA (forallA (evalA I c) (evalA I d))
-      (forallA (evalA I d) (evalA I c))
-  | .rsub r s => forallA (fun p : I.D × I.D => I.role r p.1 p.2)
+  | a :ₐ c => evalA I c (I.individual a)
+  | (a, b) :ᵣ r => I.role r (I.individual a) (I.individual b)
+  | c ⊑ d => ∀ₐ[evalA I c] (evalA I d)
+  | c ≡ d => (∀ₐ[evalA I c] (evalA I d)) ∧ₐ
+      (∀ₐ[evalA I d] (evalA I c))
+  | r ⊑ᵣ s => ∀ₐ[(fun p : I.D × I.D => I.role r p.1 p.2)]
       (fun p => I.role s p.1 p.2)
 
 /-- A disjoint namespace supplies fresh symbols without any freshness assumptions. -/
@@ -435,28 +483,28 @@ inductive ACAtom (Nc : Type) where
   | bottomPositive
 
 def polarize : Concept Nc Nr → Side → Concept (ACAtom Nc) Nr
-  | .top, .positive => .top
-  | .top, .negative => .atom .topNegative
-  | .bot, .positive => .atom .bottomPositive
-  | .bot, .negative => .top
-  | .atom a, side => .atom (.signed a side)
-  | .neg c, .positive => polarize c .negative
-  | .neg c, .negative => polarize c .positive
-  | .conj c d, .positive => .conj (polarize c .positive) (polarize d .positive)
-  | .conj c d, .negative => .disj (polarize c .negative) (polarize d .negative)
-  | .disj c d, .positive => .disj (polarize c .positive) (polarize d .positive)
-  | .disj c d, .negative => .conj (polarize c .negative) (polarize d .negative)
-  | .ex r c, .positive => .ex r (polarize c .positive)
-  | .ex r c, .negative => .all r (polarize c .negative)
-  | .all r c, .positive => .all r (polarize c .positive)
-  | .all r c, .negative => .ex r (polarize c .negative)
+  | ⊤, .positive => ⊤
+  | ⊤, .negative => ⟦.topNegative⟧ₜ
+  | ⊥, .positive => ⟦.bottomPositive⟧ₜ
+  | ⊥, .negative => ⊤
+  | ⟦a⟧ₜ, side => ⟦.signed a side⟧ₜ
+  | (¬ₜ c), .positive => polarize c .negative
+  | (¬ₜ c), .negative => polarize c .positive
+  | c ⊓ₜ d, .positive => polarize c .positive ⊓ₜ polarize d .positive
+  | c ⊓ₜ d, .negative => polarize c .negative ⊔ₜ polarize d .negative
+  | c ⊔ₜ d, .positive => polarize c .positive ⊔ₜ polarize d .positive
+  | c ⊔ₜ d, .negative => polarize c .negative ⊓ₜ polarize d .negative
+  | ∃[r] c, .positive => ∃[r] polarize c .positive
+  | ∃[r] c, .negative => ∀[r] polarize c .negative
+  | ∀[r] c, .positive => ∀[r] polarize c .positive
+  | ∀[r] c, .negative => ∃[r] polarize c .negative
 
 def projectSentence : Sentence Nc Nr Ni → Sentence (ACAtom Nc) Nr Ni
-  | .isa a c => .isa a (polarize c .positive)
-  | .edge a b r => .edge a b r
-  | .sub c d => .sub (polarize c .positive) (polarize d .positive)
-  | .equiv c d => .equiv (polarize c .positive) (polarize d .positive)
-  | .rsub r s => .rsub r s
+  | a :ₐ c => a :ₐ (polarize c .positive)
+  | (a, b) :ᵣ r => (a, b) :ᵣ r
+  | c ⊑ d => polarize c .positive ⊑ polarize d .positive
+  | c ≡ d => polarize c .positive ≡ polarize d .positive
+  | r ⊑ᵣ s => r ⊑ᵣ s
 
 /-- Negative role coordinates do not occur in support of any source sentence.
 Both concept coordinates are retained, including those of arbitrary negations. -/
@@ -566,22 +614,22 @@ infinite. Duplicated axioms are harmless and can be removed in an implementation
 -/
 
 def atomBridge (a : Nc) : Query (Nc × Bit) (Nr × Bit) Ni :=
-  .sub (.atom (a, .truth)) (.atom (a, .meaningful))
+  ⟦(a, .truth)⟧ₜ ⊑ᵠ ⟦(a, .meaningful)⟧ₜ
 def roleBridge (r : Nr) : Query (Nc × Bit) (Nr × Bit) Ni :=
-  .rsub (r, .truth) (r, .meaningful)
+  (r, .truth) ⊑ᵣᵠ (r, .meaningful)
 
 def conceptBridges : Concept Nc Nr → List (Query (Nc × Bit) (Nr × Bit) Ni)
-  | .top | .bot => []
-  | .atom a => [atomBridge a]
-  | .neg c => conceptBridges c
-  | .conj c d | .disj c d => conceptBridges c ++ conceptBridges d
-  | .ex r c | .all r c => roleBridge r :: conceptBridges c
+  | ⊤ | ⊥ => []
+  | ⟦a⟧ₜ => [atomBridge a]
+  | ¬ₜ c => conceptBridges c
+  | c ⊓ₜ d | c ⊔ₜ d => conceptBridges c ++ conceptBridges d
+  | ∃[r] c | ∀[r] c => roleBridge r :: conceptBridges c
 
 def sentenceBridges : Sentence Nc Nr Ni → List (Query (Nc × Bit) (Nr × Bit) Ni)
-  | .isa _ c => conceptBridges c
-  | .edge _ _ r => [roleBridge r]
-  | .sub c d | .equiv c d => conceptBridges c ++ conceptBridges d
-  | .rsub r s => [roleBridge r, roleBridge s]
+  | _ :ₐ c => conceptBridges c
+  | (_, _) :ᵣ r => [roleBridge r]
+  | c ⊑ d | c ≡ d => conceptBridges c ++ conceptBridges d
+  | r ⊑ᵣ s => [roleBridge r, roleBridge s]
 
 /-- Structural lemma under exactly the bridges used by this concept. -/
 theorem concept_decode_local (J : TM Nc Nr Ni) (c : Concept Nc Nr)
@@ -731,26 +779,26 @@ theorem ac_finite_entailment_iff (K : List (Sentence Nc Nr Ni)) (s : Sentence Nc
 
 /-- Reviewer 2's inconsistent weak Kleene KB entails every sentence. -/
 theorem wk_bottom_entails (a : Ni) (s : Sentence Nc Nr Ni) :
-    EntailsK {Sentence.isa a .bot} s := by
+    EntailsK {a :ₐ ⊥} s := by
   intro I h
-  have hb := h (.isa a .bot) (Set.mem_singleton _)
+  have hb := h (a :ₐ ⊥) (Set.mem_singleton _)
   simp [sentenceK, evalK] at hb
 
 /-- The repaired target also entails every translated query in that case. -/
 theorem translated_bottom_entails (a : Ni) (s : Sentence Nc Nr Ni) :
-    EntailsC {q | q ∈ compileWK [.isa a .bot] s} (translateS s) := by
+    EntailsC {q | q ∈ compileWK [a :ₐ ⊥] s} (translateS s) := by
   apply (wk_finite_entailment_iff _ _).1
   simpa using wk_bottom_entails a s
 
 /-- A meaningful pair (f,f) is a legitimate universal witness. -/
 theorem universal_false_false :
-    forallK (fun _ : Unit => V3.f) (fun _ => V3.f) = .t := by
+    ∀ₖ[(fun _ : Unit => V3.f)] (fun _ => V3.f) = .t := by
   simp [forallK]
 
 /-- Without a jointly meaningful witness the restricted universal is e,
 even though there is no true antecedent and the classical universal is true. -/
 theorem universal_unknown_guard :
-    forallK (fun _ : Unit => V3.e) (fun _ => V3.t) = .e := by
+    ∀ₖ[(fun _ : Unit => V3.e)] (fun _ => V3.t) = .e := by
   simp [forallK]
 
 /-- The atomwise star construction from the old argument does not lift. -/
@@ -761,8 +809,8 @@ def starValue : V3 → V3
 theorem star_counterexample :
     let r : Bool → V3 := fun _ => .f
     let c : Bool → V3 := fun b => if b then .e else .f
-    forallK r c = .t ∧
-      forallK (fun b => starValue (r b)) (fun b => starValue (c b)) = .f := by
+    ∀ₖ[r] c = .t ∧
+      ∀ₖ[(fun b => starValue (r b))] (fun b => starValue (c b)) = .f := by
   simp [forallK, starValue, Bool.exists_bool, Bool.forall_bool]
 
 /-- A named individual need not be the witness of an existential query. -/
@@ -774,8 +822,8 @@ def unnamedWitness : Model Unit Unit Unit Prop where
   role := fun _ _ _ => False
 
 theorem existential_is_not_a_fresh_named_query :
-    holds unnamedWitness (.some (.atom ())) ∧
-      ¬ holds unnamedWitness (.isa () (.atom ())) := by
+    holds unnamedWitness (∃ᵠ ⟦()⟧ₜ) ∧
+      ¬ holds unnamedWitness (() :ₐᵠ ⟦()⟧ₜ) := by
   simp [holds, evalC, unnamedWitness]
 
 /-- Inconsistent support and refutation of A do not force support of B. -/
@@ -789,10 +837,10 @@ def inconsistentAC : ACModel Bool Unit Unit where
   bottomPositive := fun _ => .f
 
 def contradictionKB : List (Sentence Bool Unit Unit) :=
-  [.isa () (.atom true), .isa () (.neg (.atom true))]
+  [() :ₐ ⟦true⟧ₜ, () :ₐ (¬ₜ ⟦true⟧ₜ)]
 
 theorem ac_nonexplosive :
-    ¬ EntailsA {p | p ∈ contradictionKB} (.isa () (.atom false)) := by
+    ¬ EntailsA {p | p ∈ contradictionKB} (() :ₐ ⟦false⟧ₜ) := by
   intro h
   have hp : ∀ p ∈ ({p | p ∈ contradictionKB} : Set (Sentence Bool Unit Unit)),
       (sentenceA inconsistentAC p).1 = .t := by
@@ -805,8 +853,8 @@ theorem ac_nonexplosive :
 
 /-- The classical encoding preserves this failure of explosion. -/
 theorem translated_ac_nonexplosive :
-    ¬ EntailsC {q | q ∈ compileAC contradictionKB (.isa () (.atom false))}
-      (translateAC (.isa () (.atom false))) :=
+    ¬ EntailsC {q | q ∈ compileAC contradictionKB (() :ₐ ⟦false⟧ₜ)}
+      (translateAC (() :ₐ ⟦false⟧ₜ)) :=
   mt (ac_finite_entailment_iff _ _).2 ac_nonexplosive
 
 /-!

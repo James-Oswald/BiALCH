@@ -302,23 +302,27 @@ Extending the sentence gammer of $\mathcal{ALC}$ with role inclusions $r \sqsubs
 
 % We present now present the classical semantics in terms of the most expressive language we use in this work $\mathcal{ALCH}(\cap)$, less expressive variants can be obtained by just removing any interpretation conditions that contain a feature not present in the given language.  
 
-\begin{definition}[Classical Interpretations]\label{def:ALC-Interp-Non-Standard}\footnote{This is a nonstandard representation of interpretations, using the characteristic function of standard interpretations readers familiar with \cite{DBLP:conf/dlog/2003handbook} will know. This representation is meant to better prepare the reader for our later non-classical interpretations in Definitions \ref{def:wK-Interp} and \ref{def:Bilateral-Interp}.} Let $\mathcal{V}_2 = \{\vt,\vf\}$ be the set of classical truth values and let $L$ be our language. An $L$-interpretation consists of a nonempty domain $\Delta^{\mathcal{I}}$ and interpretation function $\mathcal{I}$ from $L$ formulae to $\mathcal{V}_2$ such that the following hold depending on $L$: For $\mathcal{ALC}$ Languages:
-\begin{itemize}
-		\item $\mathcal{I}(a\isa\top)=\vt$ and $\mathcal{I}(a\isa\bot)=\vf$
-		\item $\mathcal{I}(a\isa C)\in\mathcal{V}_{2}$ and $\mathcal{I}(\langle a,b\rangle\isa r)\in\mathcal{V}_{2}$
-        \item $\mathcal{I}(a\isa\neg C)=\lnot\mathcal{I}(a\isa C)$ (not in $\cdot^+$ languages)
-		\item $\mathcal{I}(a\isa C\sqcap D)=\mathcal{I}(a\isa C)\land\mathcal{I}(a\isa D)$
-		\item $\mathcal{I}(a\isa C\sqcup D)=\mathcal{I}(a\isa C)\lor\mathcal{I}(a\isa D)$
-		\item $\mathcal{I}(a\isa\exists r.C) =\exists {b\in\Delta^{\mathcal{I}}}, \left( \mathcal{I}(\langle a,b\rangle\isa r) \land \mathcal{I}(b\isa C) \right)$ \item $\mathcal{I}(a\isa\forall r.C) =\forall {b\in\Delta^{\mathcal{I}}}, \left( \mathcal{I}(\langle a,b\rangle\isa r) \rightarrow \mathcal{I}(b\isa C) \right)$ \item $\mathcal{I}(C\sqsubseteq D) =\forall{a\in\Delta^{\mathcal{I}}}, \left( \mathcal{I}(a\isa C) \rightarrow \mathcal{I}(a\isa D) \right)$ \item $\mathcal{I}(C\equiv D) =\mathcal{I}(C\sqsubseteq D) \land \mathcal{I}(D\sqsubseteq C)$
-    \end{itemize}
-    \noindent For $\mathcal{H}$ languages:
-    \begin{itemize}
-        \item $\mathcal{I}(r \sqsubseteq s) = \forall a,b \in \Delta^\mathcal{I}, \mathcal{I}(\langle a, b\rangle : r) \rightarrow \mathcal{I}(\langle a, b\rangle : s)$
-	\end{itemize}
-    \noindent For $(\cap)$ languages:
-    \begin{itemize}
-        \item $\mathcal{I}(\langle a, b\rangle : r \sqcap s) = \mathcal{I}(\langle a, b\rangle : r) \land \mathcal{I}(\langle a, b\rangle : s)$
-    \end{itemize}
+\begin{definition}[Classical Interpretations]\label{def:ALC-Interp-Non-Standard}
+Let $\Delta^{\mathcal{I}}$ be a nonempty domain. An interpretation consists of an individual assignment $a\mapsto a^{\mathcal{I}}\in\Delta^{\mathcal{I}}$, a concept interpretation $C^{\mathcal{I}}:\Delta^{\mathcal{I}}\to\mathcal{V}_{2}$ for each atomic concept $C$, and a role interpretation $r^{\mathcal{I}}:\Delta^{\mathcal{I}}\times\Delta^{\mathcal{I}}\to\mathcal{V}_{2}$ for each atomic role $r$. Extend the concept interpretation to complex concepts by the following clauses, for $x,y\in\Delta^{\mathcal{I}}$:
+\begin{align*}
+\top^{\mathcal{I}}(x)&=\vt\\
+\bot^{\mathcal{I}}(x)&=\vf\\
+(\neg C)^{\mathcal{I}}(x)&=\lnot C^{\mathcal{I}}(x)\\
+(C\sqcap D)^{\mathcal{I}}(x)&=C^{\mathcal{I}}(x)\land D^{\mathcal{I}}(x)\\
+(C\sqcup D)^{\mathcal{I}}(x)&=C^{\mathcal{I}}(x)\lor D^{\mathcal{I}}(x)\\
+(\exists r.C)^{\mathcal{I}}(x)&=\exists y,\ r^{\mathcal{I}}(x,y)\land C^{\mathcal{I}}(y)\\
+(\forall r.C)^{\mathcal{I}}(x)&=\forall y,\ r^{\mathcal{I}}(x,y)\rightarrow C^{\mathcal{I}}(y).
+\end{align*}
+For role intersections, $(r\sqcap s)^{\mathcal{I}}(x,y)=r^{\mathcal{I}}(x,y)\land s^{\mathcal{I}}(x,y)$. Negation is omitted in the positive languages, and role intersection is omitted when it is not in the language.
+
+The value $\mathcal{I}(\varphi)$ of a sentence is defined using the individual assignment and the domain-indexed concept and role interpretations:
+\begin{align*}
+\mathcal{I}(a\isa C)&=C^{\mathcal{I}}(a^{\mathcal{I}})\\
+\mathcal{I}(\langle a,b\rangle\isa r)&=r^{\mathcal{I}}(a^{\mathcal{I}},b^{\mathcal{I}})\\
+\mathcal{I}(C\sqsubseteq D)&=\forall x\in\Delta^{\mathcal{I}},\ C^{\mathcal{I}}(x)\rightarrow D^{\mathcal{I}}(x)\\
+\mathcal{I}(C\equiv D)&=\mathcal{I}(C\sqsubseteq D)\land\mathcal{I}(D\sqsubseteq C)\\
+\mathcal{I}(r\sqsubseteq s)&=\forall x,y\in\Delta^{\mathcal{I}},\ r^{\mathcal{I}}(x,y)\rightarrow s^{\mathcal{I}}(x,y).
+\end{align*}
 \end{definition}
 
 \begin{definition}[Satisfaction]\label{def:ALC-Sat}
@@ -403,20 +407,25 @@ The $\mathsf{AC}$ restricted quantifiers $\ddot{\exists}$ and $\ddot{\forall}$ a
 We begin by presenting the description logic  $\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ which we will use as an intermediate step in our translations. $\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ uses the language of classical $\mathcal{ALCH(\cap)}$ but for semantics uses the following $\mathsf{wK}$ interpretations:
 
 \begin{definition}[$\mathsf{wK}$ Interpretations]\label{def:wK-Interp}
-An $\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ interpretation is a function $\mathcal{I}$ that maps $\mathcal{ALCH^+(\cap)}$ sentences to $\mathcal{V}_3$, paired with domain $\Delta^{\mathcal{I}}$, such that:
-	\begin{itemize}
-		\item $\mathcal{I}(a:\top)=\mathfrak{t}$ and $\mathcal{I}(a : \bot) = \vf$ for all $a\in\Delta^{\mathcal{I}}$.
-		\item $\mathcal{I}(a\isa C)\in\mathcal{V}_{3}$ and $\mathcal{I}(\langle a,b\rangle\isa r)\in\mathcal{V}_{3}$
-		% \item $\mathcal{I}(a\isa\neg C)=\mathop{\dot{\strongneg}}\mathcal{I}(a\isa C)$
-		\item $\mathcal{I}(a\isa C\sqcap D)=\mathcal{I}(a\isa C)\mathrel{\dot{\wedge}}\mathcal{I}(a\isa D)$
-		\item $\mathcal{I}(a\isa C\sqcup D)=\mathcal{I}(a\isa C)\mathrel{\dot{\vee}}\mathcal{I}(a\isa D)$
-		\item $\mathcal{I}(a\isa \exists r.C)=\mathop{\dot{\exists}}(\lbrace\langle\mathcal{I}(\langle a,b\rangle\isa r),\mathcal{I}(b\isa C)\rangle\mid b\in \Delta^{\mathcal{I}}\rbrace)$
-		\item $\mathcal{I}(a\isa \forall r.C)=\mathop{\dot{\forall}}(\lbrace\langle\mathcal{I}(\langle a,b\rangle\isa r),\mathcal{I}(b\isa C)\rangle\mid b\in \Delta^{\mathcal{I}}\rbrace)$
-		\item $\mathcal{I}(C\sqsubseteq D)=\mathop{\dot{\forall}}(\lbrace\langle\mathcal{I}(a\isa C),\mathcal{I}(a\isa D)\rangle\mid a\in \Delta^{\mathcal{I}}\rbrace)$
-		\item $\mathcal{I}(C\equiv D)=\mathcal{I}(C\sqsubseteq D)\mathrel{\dot{\wedge}}\mathcal{I}(D\sqsubseteq C)$
-        \item $\mathcal{I}(r \sqsubseteq s) = \mathop{\dot{\forall}}(\lbrace\langle\mathcal{I}(\langle a,b\rangle\isa r),\mathcal{I}(\langle a,b\rangle\isa s)\rangle\mid a,b\in \Delta^{\mathcal{I}}\rbrace)$
-        \item $\mathcal{I}(\langle a, b\rangle : r \sqcap s) = \mathcal{I}(\langle a, b\rangle : r) \mathrel{\dot{\wedge}} \mathcal{I}(\langle a, b\rangle : s)$
-	\end{itemize}
+An $\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ interpretation consists of a nonempty domain $\Delta^{\mathcal{I}}$, an individual assignment $a\mapsto a^{\mathcal{I}}\in\Delta^{\mathcal{I}}$, an atomic concept interpretation $C^{\mathcal{I}}:\Delta^{\mathcal{I}}\to\mathcal{V}_{3}$ for each atomic concept $C$, and an atomic role interpretation $r^{\mathcal{I}}:\Delta^{\mathcal{I}}\times\Delta^{\mathcal{I}}\to\mathcal{V}_{3}$ for each atomic role $r$. Extend $C^{\mathcal{I}}$ recursively to concepts and $r^{\mathcal{I}}$ to roles. Write $\Delta=\Delta^{\mathcal{I}}$. For all $x,y\in\Delta$:
+\begin{align*}
+\top^{\mathcal{I}}(x)&=\vt\\
+\bot^{\mathcal{I}}(x)&=\vf\\
+(C\sqcap D)^{\mathcal{I}}(x)&=C^{\mathcal{I}}(x)\mathrel{\dot{\wedge}}D^{\mathcal{I}}(x)\\
+(C\sqcup D)^{\mathcal{I}}(x)&=C^{\mathcal{I}}(x)\mathrel{\dot{\vee}}D^{\mathcal{I}}(x)\\
+(\exists r.C)^{\mathcal{I}}(x)&=\dot{\exists}\bigl(\{\langle r^{\mathcal{I}}(x,y),C^{\mathcal{I}}(y)\rangle\}_{y\in\Delta}\bigr)\\
+(\forall r.C)^{\mathcal{I}}(x)&=\dot{\forall}\bigl(\{\langle r^{\mathcal{I}}(x,y),C^{\mathcal{I}}(y)\rangle\}_{y\in\Delta}\bigr)\\
+(r\sqcap s)^{\mathcal{I}}(x,y)&=r^{\mathcal{I}}(x,y)\mathrel{\dot{\wedge}}s^{\mathcal{I}}(x,y).
+\end{align*}
+The indexed braces denote the set of pairs obtained as $y$ ranges over the domain. Sentence values are:
+\begin{align*}
+\mathcal{I}(a\isa C)&=C^{\mathcal{I}}(a^{\mathcal{I}})\\
+\mathcal{I}(\langle a,b\rangle\isa r)&=r^{\mathcal{I}}(a^{\mathcal{I}},b^{\mathcal{I}})\\
+\mathcal{I}(C\sqsubseteq D)&=\dot{\forall}\bigl(\{\langle C^{\mathcal{I}}(x),D^{\mathcal{I}}(x)\rangle\}_{x\in\Delta}\bigr)\\
+\mathcal{I}(C\equiv D)&=\mathcal{I}(C\sqsubseteq D)\mathrel{\dot{\wedge}}\mathcal{I}(D\sqsubseteq C)\\
+\mathcal{I}(r\sqsubseteq s)&=\dot{\forall}\bigl(\{(r^{\mathcal{I}}(x,y),s^{\mathcal{I}}(x,y)):(x,y)\in\Delta^2\}\bigr).
+\end{align*}
+The restricted quantifiers take these sets of pairs as in Definition~8. Weak Kleene satisfaction and entailment use the condition $\mathcal{I}(\varphi)=\vt$, as in Definitions~\ref{def:ALC-Sat} and~\ref{def:ALC-Ent}.
 \end{definition}
 \noindent From this, the definitions of \textsf{wK} satisfaction $\mathcal{I}\models_{\mathcal{ALCH^+(\cap)}_\mathsf{wK}}\varphi$ and entailment $\mathcal{K}\models_{\mathcal{ALCH^+(\cap)}_\mathsf{wK}}\varphi$ are defined identically to the classical versions Definitions \ref{def:ALC-Sat} and \ref{def:ALC-Ent} using $\mathsf{wK}$ Interpretations.
 % \begin{definition}[$\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ Satisfaction]\label{def:wK-Sat}
@@ -429,20 +438,28 @@ An $\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ interpretation is a function $\mathcal{I
 With our intermediate language defined, we now turn to defining the description logics $\mathcal{ALCH}_\mathsf{AC}$ and $\mathcal{ALCH}_{\mathsf{S}^*}$. They are both defined using $\mathcal{ALCH}$ as their underlying language. For their semantics we make use of our AC connectives and quantifiers from Definitions \ref{def:AC-connectives} and \ref{def:AC-quantifiers}.
 
 \begin{definition}[$\mathsf{AC}$ Interpretations]\label{def:Bilateral-Interp}
-	An $\mathcal{ALCH}_\mathsf{AC}$ interpretation is a function $\mathcal{I}$ from $\mathcal{ALCH}$ sentences to $\mathcal{V}_{3}^{2}$ paired with domain $\Delta^{\mathcal{I}}$, such that:
-	
-	\begin{itemize}
-		\item $\mathcal{I}(a\isa\top)=\langle\vt,v\rangle$ and $\mathcal{I}(a\isa\bot)=\langle v,\vt\rangle$ for some $v\in\mathcal{V}_{3}$
-		\item $\mathcal{I}(a\isa C)\in\mathcal{V}_{3}^{2}$ and $\mathcal{I}(\langle a,b\rangle\isa r)\in\mathcal{V}_{3}^{2}$
-		\item $\mathcal{I}(a\isa\neg C)=\mathop{\ddot{\strongneg}}\mathcal{I}(a\isa C)$
-		\item $\mathcal{I}(a\isa C\sqcap D)=\mathcal{I}(a\isa C)\mathrel{\ddot{\wedge}}\mathcal{I}(a\isa D)$
-		\item $\mathcal{I}(a\isa C\sqcup D)=\mathcal{I}(a\isa C)\mathrel{\ddot{\vee}}\mathcal{I}(a\isa D)$
-		\item $\mathcal{I}(a\isa \exists r.C)=\mathop{\ddot{\exists}}(\lbrace\langle\mathcal{I}(\langle a,b\rangle\isa r),\mathcal{I}(b\isa C)\rangle\mid b\in \Delta^{\mathcal{I}}\rbrace)$
-		\item $\mathcal{I}(a\isa \forall r.C)=\mathop{\ddot{\forall}}(\lbrace\langle\mathcal{I}(\langle a,b\rangle\isa r),\mathcal{I}(b\isa C)\rangle\mid b\in \Delta^{\mathcal{I}}\rbrace)$
-		\item $\mathcal{I}(C\sqsubseteq D)=\mathop{\ddot{\forall}}(\lbrace\langle\mathcal{I}(a\isa C),\mathcal{I}(a\isa D)\rangle\mid a\in \Delta^{\mathcal{I}}\rbrace)$
-		\item $\mathcal{I}(C\equiv D)=\mathcal{I}(C\sqsubseteq D)\mathrel{\ddot{\wedge}}\mathcal{I}(D\sqsubseteq C)$
-        \item $\mathcal{I}(r\sqsubseteq s)=\ddot{\forall}(\lbrace \langle\mathcal{I}(\langle a,b\rangle:r),\mathcal{I}(\langle a,b\rangle:s)\rangle\mid a,b\in\Delta\rbrace)$
-	\end{itemize}
+An $\mathcal{ALCH}_\mathsf{AC}$ interpretation consists of a nonempty domain $\Delta^{\mathcal{I}}$, an individual assignment $a\mapsto a^{\mathcal{I}}\in\Delta^{\mathcal{I}}$, an atomic concept interpretation $C^{\mathcal{I}}:\Delta^{\mathcal{I}}\to\mathcal{V}_{3}^{2}$ for each atomic concept $C$, and an atomic role interpretation $r^{\mathcal{I}}:\Delta^{\mathcal{I}}\times\Delta^{\mathcal{I}}\to\mathcal{V}_{3}^{2}$ for each atomic role $r$. Extend these interpretations recursively using the AC truth functions of Definition~\ref{def:AC-connectives}. Write $\Delta=\Delta^{\mathcal{I}}$. For every $x\in\Delta$, the constants satisfy
+\[
+\top^{\mathcal{I}}(x)=\langle\vt,v_x\rangle,\qquad
+\bot^{\mathcal{I}}(x)=\langle v_x,\vt\rangle
+\]
+for some $v_x\in\mathcal{V}_{3}$. The remaining concept clauses, for $x,y\in\Delta$, are:
+\begin{align*}
+(\neg C)^{\mathcal{I}}(x)&=\ddot{\strongneg}(C^{\mathcal{I}}(x))\\
+(C\sqcap D)^{\mathcal{I}}(x)&=C^{\mathcal{I}}(x)\mathrel{\ddot{\wedge}}D^{\mathcal{I}}(x)\\
+(C\sqcup D)^{\mathcal{I}}(x)&=C^{\mathcal{I}}(x)\mathrel{\ddot{\vee}}D^{\mathcal{I}}(x)\\
+(\exists r.C)^{\mathcal{I}}(x)&=\ddot{\exists}\bigl(\{\langle r^{\mathcal{I}}(x,y),C^{\mathcal{I}}(y)\rangle\}_{y\in\Delta}\bigr)\\
+(\forall r.C)^{\mathcal{I}}(x)&=\ddot{\forall}\bigl(\{\langle r^{\mathcal{I}}(x,y),C^{\mathcal{I}}(y)\rangle\}_{y\in\Delta}\bigr).
+\end{align*}
+Sentence values use domain elements only after applying the individual assignment:
+\begin{align*}
+\mathcal{I}(a\isa C)&=C^{\mathcal{I}}(a^{\mathcal{I}})\\
+\mathcal{I}(\langle a,b\rangle\isa r)&=r^{\mathcal{I}}(a^{\mathcal{I}},b^{\mathcal{I}})\\
+\mathcal{I}(C\sqsubseteq D)&=\ddot{\forall}\bigl(\{\langle C^{\mathcal{I}}(x),D^{\mathcal{I}}(x)\rangle\}_{x\in\Delta}\bigr)\\
+\mathcal{I}(C\equiv D)&=\mathcal{I}(C\sqsubseteq D)\mathrel{\ddot{\wedge}}\mathcal{I}(D\sqsubseteq C)\\
+\mathcal{I}(r\sqsubseteq s)&=\ddot{\forall}\bigl(\{(r^{\mathcal{I}}(x,y),s^{\mathcal{I}}(x,y)):(x,y)\in\Delta^2\}\bigr).
+\end{align*}
+The restricted quantifiers are those in Definition~\ref{def:AC-quantifiers}.
 \end{definition}
 
 \begin{definition}[$\mathcal{ALCH}_\mathsf{AC}$ Satisfaction]\label{def:AC-Sat}
@@ -467,9 +484,9 @@ The latter requirement prevents an atomwise replacement of meaningful values by 
 In the classical target, $\_:C$ is satisfied when some element of the domain satisfies $C$. Likewise, $\langle\_,\_\rangle:R$ is satisfied when some pair of domain elements satisfies $R$. Thus:
 \begin{align*}
 \mathcal{I}\models\_:C
- &\quad\text{iff}\quad \exists a\in\Delta^{\mathcal{I}},\ \mathcal{I}(a:C)=\vt,\\
+ &\quad\text{iff}\quad \exists x\in\Delta^{\mathcal{I}},\ C^{\mathcal{I}}(x)=\vt,\\
 \mathcal{I}\models\langle\_,\_\rangle:R
- &\quad\text{iff}\quad \exists a,b\in\Delta^{\mathcal{I}},\ \mathcal{I}(\langle a,b\rangle:R)=\vt.
+ &\quad\text{iff}\quad \exists x,y\in\Delta^{\mathcal{I}},\ R^{\mathcal{I}}(x,y)=\vt.
 \end{align*}
 Each assertion has its own existential scope. In particular, the two roles in $\langle\_,\_\rangle:r\sqcap s$ must hold of the same pair. Different assertions need not use distinct witnesses. Satisfaction of sets of target assertions and entailment are defined as in Definitions~\ref{def:ALC-Sat} and~\ref{def:ALC-Ent}, with these two additional kinds of assertion.
 \end{definition}
