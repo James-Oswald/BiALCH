@@ -1,8 +1,8 @@
 # Agent guidance
 
-Keep context small. Start with only the Lean source file(s) named by the task:
-`Basic.lean`, `DirectTranslation.lean`, and `FaithfulTranslation.lean`. Read other
-files only when the task requires them. For paper work, prefer `PAPER.md`; read
+Keep context small. For active Lean work, start with `src/DirectTranslation.lean`.
+`src/Basic.lean` and `src/FaithfulTranslation.lean` are reference-only; read them
+only when the task requires them. For paper work, prefer `paper/PAPER.md`; read
 `Reviews.md` or TeX sources only when specifically needed.
 
 ## Never inspect generated build output
@@ -21,5 +21,7 @@ files only when the task requires them. For paper work, prefer `PAPER.md`; read
   inspect only the relevant declarations and nearby code.
 - Do not read TeX sources, bibliography/style files, or paper build configuration
   for Lean-code tasks.
-- Make the smallest change that satisfies the task. Run `lake build` when the
-  user asks for verification or a change affects Lean definitions or proofs.
+- Make the smallest change that satisfies the task.
+- Always run both `lake build` and `make paper` after making any repository
+  change, including changes that only move files or update documentation or
+  build configuration.

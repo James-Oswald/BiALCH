@@ -2,7 +2,7 @@
 
 - `source-revised.tex`: standalone revision of `source.tex`; the original is preserved.
 - `refs-revised.bib`: cited entries from `refs.bib`, without duplicate keys.
-- `FaithfulTranslation.lean`: the separately available formal development.
+- `../src/FaithfulTranslation.lean`: a reference-only formal development.
 
 The revision retains the original title, section structure, introduction,
 motivating example, background definitions, and discussion. The original
@@ -13,7 +13,7 @@ There are no references to Lean or its declarations in the manuscript.
 
 ## Build
 
-From this directory:
+From the repository root:
 
 ```sh
 make paper

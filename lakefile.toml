@@ -4,10 +4,12 @@ defaultTargets = ["BiALCH"]
 
 [[lean_lib]]
 name = "BiALCH"
-roots = ["BiALCH", "DirectTranslation", "FaithfulTranslation"]
+srcDir = "src"
+roots = ["BiALCH", "DirectTranslation"]
 
 [[lean_exe]]
 name = "bialch"
+srcDir = "src"
 root = "Main"
 
 [[require]]
