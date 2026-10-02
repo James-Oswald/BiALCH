@@ -1,9 +1,9 @@
 # Agent guidance
 
 Keep context small. For active Lean work, start with `src/DirectTranslation.lean`.
-`src/Basic.lean` and `src/FaithfulTranslation.lean` are reference-only; read them
-only when the task requires them. For paper work, prefer `paper/PAPER.md`; read
-`Reviews.md` or TeX sources only when specifically needed.
+Files under `reference/` are reference-only; read them only when the task
+requires them. For paper work, prefer `paper/PAPER.md`; read `Reviews.md` or TeX
+sources only when specifically needed.
 
 ## Never inspect generated build output
 

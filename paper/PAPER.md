@@ -2,7 +2,7 @@
 
 - `source-revised.tex`: standalone revision of `source.tex`; the original is preserved.
 - `refs-revised.bib`: cited entries from `refs.bib`, without duplicate keys.
-- `../src/FaithfulTranslation.lean`: a reference-only formal development.
+- `../reference/FaithfulTranslation.lean`: a reference-only formal development.
 
 The revision retains the original title, section structure, introduction,
 motivating example, background definitions, and discussion. The original

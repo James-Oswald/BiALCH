@@ -14,111 +14,94 @@ not established in this file.
 namespace DirectTranslation
 
 inductive V3 where
-  | t
-  | e
-  | f
-  deriving DecidableEq, Repr
+| t
+| e
+| f
+deriving DecidableEq, Repr
+
+instance : Fintype V3 where
+  elems := {.t, .e, .f}
+  complete x := by cases x <;> simp
+
+abbrev V32 := V3 × V3
+
+-- We can decide membership in a set of pairs
+noncomputable instance (X : Set V32) (x : V32) : Decidable (x ∈ X) :=
+  Classical.propDecidable _
 
 notation "𝔱" => V3.t
 notation "𝔢" => V3.e
 notation "𝔣" => V3.f
 
-abbrev V32 := V3 × V3
 
 def negK : V3 → V3
-  | 𝔱 => 𝔣
-  | 𝔢 => 𝔢
-  | 𝔣 => 𝔱
+| 𝔱 => 𝔣
+| 𝔢 => 𝔢
+| 𝔣 => 𝔱
 
 def andK : V3 → V3 → V3
-  | 𝔢, _
-  | _, 𝔢 => 𝔢
-  | 𝔱, 𝔱 => 𝔱
-  | _, _ => 𝔣
+| 𝔢, _
+| _, 𝔢 => 𝔢
+| 𝔱, 𝔱 => 𝔱
+| _, _ => 𝔣
 
 def orK : V3 → V3 → V3
-  | 𝔢, _
-  | _, 𝔢 => 𝔢
-  | 𝔣, 𝔣 => 𝔣
-  | _, _ => 𝔱
+| 𝔢, _
+| _, 𝔢 => 𝔢
+| 𝔣, 𝔣 => 𝔣
+| _, _ => 𝔱
 
 prefix:70 "¬ₖ " => negK
 infixl:70 " ∧ₖ " => andK
 infixl:65 " ∨ₖ " => orK
 
-/-- Restricted quantifiers on indexed families; agreement with the paper below. -/
-noncomputable def existsK {D : Type} (r c : D → V3) : V3 := by
+/-- The paper's restricted existential quantifier, including its stated case order. -/
+noncomputable def paperExists (X : Set V32) : V3 :=
+  if H1: ⟨𝔱, 𝔱⟩ ∈ X then
+    𝔱
+  else if H2: ∀ x ∈ X, x.1 = 𝔢 ∨ x.2 = 𝔢 then
+    𝔢
+  else if H3: ⟨𝔱, 𝔱⟩ ∉ X ∧ ∃ x ∈ X, x.1 ≠ 𝔢 ∧ x.2 ≠ 𝔢 then
+    𝔣
+  else by grind only -- Impossible case
+
+/-- The paper's restricted universal quantifier, including its stated case order. -/
+noncomputable def paperForall (X : Set V32) : V3 :=
+  if H1: ⟨𝔱, 𝔣⟩ ∉ X ∧ ⟨𝔱, 𝔢⟩ ∉ X ∧ ∃ x ∈ X, x.1 ≠ 𝔢 ∧ x.2 ≠ 𝔢 then
+    .t
+  else if H2: ∀ x ∈ X, x.1 = 𝔢 ∨ x.2 = 𝔢 then
+    𝔢
+  else if H3: (⟨𝔱, 𝔣⟩ ∈ X ∨ ⟨𝔱, 𝔢⟩ ∈ X) ∧ ∃ x ∈ X, x.1 ≠ 𝔢 ∧ x.2 ≠ 𝔢 then
+    𝔣
+  else by grind only
+
+/-- Apply the paper's set-based quantifier to the indexed family of value pairs. -/
+noncomputable def existsK {D : Type} (r c : D → V3) : V3 :=
+  paperExists (Set.range (fun x => (r x, c x)))
+
+noncomputable def forallK {D : Type} (r c : D → V3) : V3 :=
+  paperForall (Set.range (fun x => (r x, c x)))
+
+notation "∃ₖ[" r "]" c:75 => existsK r c
+notation "∀ₖ[" r "]" c:75 => forallK r c
+
+/-! The following indexed-family characterizations are used only to state and
+prove convenient truth/meaningfulness lemmas. The semantic operators above are
+defined by the paper's set clauses. -/
+private noncomputable def existsKIndexed {D : Type} (r c : D → V3) : V3 := by
   classical
   exact if ∃ x, r x = 𝔱 ∧ c x = 𝔱 then 𝔱
     else if ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 then 𝔣
     else 𝔢
 
-noncomputable def forallK {D : Type} (r c : D → V3) : V3 := by
+private noncomputable def forallKIndexed {D : Type} (r c : D → V3) : V3 := by
   classical
   exact if ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 then
     if ∀ x, r x = 𝔱 → c x = 𝔱 then 𝔱 else 𝔣
     else 𝔢
 
-notation "∃ₖ[" r "]" c:75 => existsK r c
-notation "∀ₖ[" r "]" c:75 => forallK r c
-
-@[simp] theorem negK_t (v : V3) : negK v = 𝔱 ↔ v ≠ 𝔢 ∧ v ≠ 𝔱 := by
-  cases v <;> decide
-@[simp] theorem negK_m (v : V3) : negK v ≠ 𝔢 ↔ v ≠ 𝔢 := by
-  cases v <;> decide
-@[simp] theorem andK_t (v w : V3) : andK v w = 𝔱 ↔ v = 𝔱 ∧ w = 𝔱 := by
-  cases v <;> cases w <;> decide
-@[simp] theorem andK_m (v w : V3) : andK v w ≠ 𝔢 ↔ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
-  cases v <;> cases w <;> decide
-@[simp] theorem orK_t (v w : V3) :
-    orK v w = 𝔱 ↔ (v = 𝔱 ∨ w = 𝔱) ∧ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
-  cases v <;> cases w <;> decide
-@[simp] theorem orK_m (v w : V3) : orK v w ≠ 𝔢 ↔ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
-  cases v <;> cases w <;> decide
-
-@[simp] theorem existsK_t {D} (r c : D → V3) :
-    ∃ₖ[r] c = 𝔱 ↔ ∃ x, r x = 𝔱 ∧ c x = 𝔱 := by
-  classical
-  unfold existsK
-  split_ifs <;> simp_all
-@[simp] theorem existsK_m {D} (r c : D → V3) :
-    ∃ₖ[r] c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-  classical
-  unfold existsK
-  split_ifs <;> simp_all
-  obtain ⟨x, hx, hy⟩ := ‹∃ x, r x = 𝔱 ∧ c x = 𝔱›
-  exact ⟨x, by simp [hx], by simp [hy]⟩
-@[simp] theorem forallK_t {D} (r c : D → V3) :
-    ∀ₖ[r] c = 𝔱 ↔ (∀ x, r x = 𝔱 → c x = 𝔱) ∧
-      ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-  classical
-  unfold forallK
-  split_ifs <;> simp_all
-@[simp] theorem forallK_m {D} (r c : D → V3) :
-    ∀ₖ[r] c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-  classical
-  unfold forallK
-  split_ifs <;> simp_all
-
-/-- Definition 8's literal cases, with `𝔢` extending them to the empty set. -/
-noncomputable def paperExists (X : Set V32) : V3 := by
-  classical
-  exact if (𝔱, 𝔱) ∈ X then 𝔱
-    else if ∀ p ∈ X, p.1 = 𝔢 ∨ p.2 = 𝔢 then 𝔢
-    else if ∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢 then 𝔣
-    else 𝔢
-
-noncomputable def paperForall (X : Set V32) : V3 := by
-  classical
-  exact if ((𝔱, 𝔣) ∉ X ∧ (𝔱, 𝔢) ∉ X) ∧
-      (∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) then 𝔱
-    else if ∀ p ∈ X, p.1 = 𝔢 ∨ p.2 = 𝔢 then 𝔢
-    else if (∃ p ∈ X, (p.1 = 𝔱 ∧ p.2 = 𝔣) ∨ (p.1 = 𝔱 ∧ p.2 = 𝔢)) ∧
-        (∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) then 𝔣
-    else 𝔢
-
-theorem existsK_paper {D} (r c : D → V3) :
-    existsK r c = paperExists (Set.range (fun x => (r x, c x))) := by
+private theorem existsKIndexed_paper {D} (r c : D → V3) :
+    existsKIndexed r c = paperExists (Set.range (fun x => (r x, c x))) := by
   classical
   have hm : (∀ p ∈ Set.range (fun x => (r x, c x)), p.1 = 𝔢 ∨ p.2 = 𝔢) ↔
       ¬ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
@@ -128,11 +111,11 @@ theorem existsK_paper {D} (r c : D → V3) :
       ∃ x, r x = 𝔱 ∧ c x = 𝔱 := by simp
   have hw : (∃ p ∈ Set.range (fun x => (r x, c x)), p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) ↔
       ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by simp
-  simp only [existsK, paperExists, ht, hm, hw]
-  split_ifs <;> rfl
+  unfold existsKIndexed paperExists
+  split_ifs <;> first | rfl | grind only
 
-theorem forallK_paper {D} (r c : D → V3) :
-    forallK r c = paperForall (Set.range (fun x => (r x, c x))) := by
+private theorem forallKIndexed_paper {D} (r c : D → V3) :
+    forallKIndexed r c = paperForall (Set.range (fun x => (r x, c x))) := by
   classical
   have hm : (∀ p ∈ Set.range (fun x => (r x, c x)), p.1 = 𝔢 ∨ p.2 = 𝔢) ↔
       ¬ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
@@ -151,10 +134,15 @@ theorem forallK_paper {D} (r c : D → V3) :
       cases hcx : c x <;> simp_all
     · intro h
       constructor <;> intro x hx <;> simp [h x hx]
-  have hv : (∃ p ∈ Set.range (fun x => (r x, c x)),
-      (p.1 = 𝔱 ∧ p.2 = 𝔣) ∨ (p.1 = 𝔱 ∧ p.2 = 𝔢)) ↔
+  have htrue : ((𝔱, 𝔣) ∉ Set.range (fun x => (r x, c x)) ∧
+      (𝔱, 𝔢) ∉ Set.range (fun x => (r x, c x)) ∧
+      ∃ p ∈ Set.range (fun x => (r x, c x)), p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) ↔
+      (∀ x, r x = 𝔱 → c x = 𝔱) ∧ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
+    rw [← and_assoc, ht, hw]
+  have hv : ((𝔱, 𝔣) ∈ Set.range (fun x => (r x, c x)) ∨
+      (𝔱, 𝔢) ∈ Set.range (fun x => (r x, c x))) ↔
       ∃ x, r x = 𝔱 ∧ c x ≠ 𝔱 := by
-    simp [Set.mem_range]
+    simp only [Set.mem_range, Prod.mk.injEq, ← exists_or]
     constructor
     · rintro ⟨x, (⟨hr, hf⟩ | ⟨hr, he⟩)⟩
       · exact ⟨x, hr, by simp [hf]⟩
@@ -164,8 +152,79 @@ theorem forallK_paper {D} (r c : D → V3) :
       | t => simp [hcx] at hc
       | e => exact ⟨x, Or.inr ⟨hr, hcx⟩⟩
       | f => exact ⟨x, Or.inl ⟨hr, hcx⟩⟩
-  simp only [forallK, paperForall, ht, hm, hw, hv]
+  unfold forallKIndexed paperForall
+  split_ifs <;> first | rfl | grind only
+
+private theorem existsKIndexed_t {D} (r c : D → V3) :
+    existsKIndexed r c = 𝔱 ↔ ∃ x, r x = 𝔱 ∧ c x = 𝔱 := by
+  classical
+  unfold existsKIndexed
   split_ifs <;> simp_all
+
+private theorem existsKIndexed_m {D} (r c : D → V3) :
+    existsKIndexed r c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
+  classical
+  unfold existsKIndexed
+  split_ifs <;> simp_all
+  obtain ⟨x, hx, hy⟩ := ‹∃ x, r x = 𝔱 ∧ c x = 𝔱›
+  exact ⟨x, by simp [hx], by simp [hy]⟩
+
+private theorem forallKIndexed_t {D} (r c : D → V3) :
+    forallKIndexed r c = 𝔱 ↔ (∀ x, r x = 𝔱 → c x = 𝔱) ∧
+      ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
+  classical
+  unfold forallKIndexed
+  split_ifs <;> simp_all
+
+private theorem forallKIndexed_m {D} (r c : D → V3) :
+    forallKIndexed r c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
+  classical
+  unfold forallKIndexed
+  split_ifs <;> simp_all
+
+@[simp] theorem negK_t (v : V3) : negK v = 𝔱 ↔ v ≠ 𝔢 ∧ v ≠ 𝔱 := by
+  cases v <;> decide
+@[simp] theorem negK_m (v : V3) : negK v ≠ 𝔢 ↔ v ≠ 𝔢 := by
+  cases v <;> decide
+@[simp] theorem andK_t (v w : V3) : andK v w = 𝔱 ↔ v = 𝔱 ∧ w = 𝔱 := by
+  cases v <;> cases w <;> decide
+@[simp] theorem andK_m (v w : V3) : andK v w ≠ 𝔢 ↔ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
+  cases v <;> cases w <;> decide
+@[simp] theorem orK_t (v w : V3) :
+    orK v w = 𝔱 ↔ (v = 𝔱 ∨ w = 𝔱) ∧ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
+  cases v <;> cases w <;> decide
+@[simp] theorem orK_m (v w : V3) : orK v w ≠ 𝔢 ↔ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
+  cases v <;> cases w <;> decide
+
+@[simp] theorem existsK_t {D} (r c : D → V3) :
+    ∃ₖ[r] c = 𝔱 ↔ ∃ x, r x = 𝔱 ∧ c x = 𝔱 := by
+  change paperExists (Set.range (fun x => (r x, c x))) = 𝔱 ↔ _
+  rw [← existsKIndexed_paper]
+  exact existsKIndexed_t r c
+@[simp] theorem existsK_m {D} (r c : D → V3) :
+    ∃ₖ[r] c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
+  change paperExists (Set.range (fun x => (r x, c x)) ) ≠ 𝔢 ↔ _
+  rw [← existsKIndexed_paper]
+  exact existsKIndexed_m r c
+@[simp] theorem forallK_t {D} (r c : D → V3) :
+    ∀ₖ[r] c = 𝔱 ↔ (∀ x, r x = 𝔱 → c x = 𝔱) ∧
+      ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
+  change paperForall (Set.range (fun x => (r x, c x))) = 𝔱 ↔ _
+  rw [← forallKIndexed_paper]
+  exact forallKIndexed_t r c
+@[simp] theorem forallK_m {D} (r c : D → V3) :
+    ∀ₖ[r] c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
+  change paperForall (Set.range (fun x => (r x, c x))) ≠ 𝔢 ↔ _
+  rw [← forallKIndexed_paper]
+  exact forallKIndexed_m r c
+
+theorem existsK_paper {D} (r c : D → V3) :
+    existsK r c = paperExists (Set.range (fun x => (r x, c x))) := by
+  rfl
+
+theorem forallK_paper {D} (r c : D → V3) :
+    forallK r c = paperForall (Set.range (fun x => (r x, c x))) := by
+  rfl
 
 inductive Concept (Nc Nr : Type) where
   | top | bot
