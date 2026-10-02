@@ -14,20 +14,33 @@ not established in this file.
 namespace DirectTranslation
 
 inductive V3 where
-  | t | e | f
+  | t
+  | e
+  | f
   deriving DecidableEq, Repr
+
+notation "𝔱" => V3.t
+notation "𝔢" => V3.e
+notation "𝔣" => V3.f
+
 abbrev V32 := V3 × V3
 
 def negK : V3 → V3
-  | .t => .f | .e => .e | .f => .t
+  | 𝔱 => 𝔣
+  | 𝔢 => 𝔢
+  | 𝔣 => 𝔱
+
 def andK : V3 → V3 → V3
-  | .e, _ | _, .e => .e
-  | .t, .t => .t
-  | _, _ => .f
+  | 𝔢, _
+  | _, 𝔢 => 𝔢
+  | 𝔱, 𝔱 => 𝔱
+  | _, _ => 𝔣
+
 def orK : V3 → V3 → V3
-  | .e, _ | _, .e => .e
-  | .f, .f => .f
-  | _, _ => .t
+  | 𝔢, _
+  | _, 𝔢 => 𝔢
+  | 𝔣, 𝔣 => 𝔣
+  | _, _ => 𝔱
 
 prefix:70 "¬ₖ " => negK
 infixl:70 " ∧ₖ " => andK
@@ -36,90 +49,100 @@ infixl:65 " ∨ₖ " => orK
 /-- Restricted quantifiers on indexed families; agreement with the paper below. -/
 noncomputable def existsK {D : Type} (r c : D → V3) : V3 := by
   classical
-  exact if ∃ x, r x = .t ∧ c x = .t then .t
-    else if ∃ x, r x ≠ .e ∧ c x ≠ .e then .f else .e
+  exact if ∃ x, r x = 𝔱 ∧ c x = 𝔱 then 𝔱
+    else if ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 then 𝔣
+    else 𝔢
+
 noncomputable def forallK {D : Type} (r c : D → V3) : V3 := by
   classical
-  exact if ∃ x, r x ≠ .e ∧ c x ≠ .e then
-    if ∀ x, r x = .t → c x = .t then .t else .f
-    else .e
+  exact if ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 then
+    if ∀ x, r x = 𝔱 → c x = 𝔱 then 𝔱 else 𝔣
+    else 𝔢
 
 notation "∃ₖ[" r "]" c:75 => existsK r c
 notation "∀ₖ[" r "]" c:75 => forallK r c
 
-@[simp] theorem negK_t (v : V3) : negK v = .t ↔ v ≠ .e ∧ v ≠ .t := by
+@[simp] theorem negK_t (v : V3) : negK v = 𝔱 ↔ v ≠ 𝔢 ∧ v ≠ 𝔱 := by
   cases v <;> decide
-@[simp] theorem negK_m (v : V3) : negK v ≠ .e ↔ v ≠ .e := by
+@[simp] theorem negK_m (v : V3) : negK v ≠ 𝔢 ↔ v ≠ 𝔢 := by
   cases v <;> decide
-@[simp] theorem andK_t (v w : V3) : andK v w = .t ↔ v = .t ∧ w = .t := by
+@[simp] theorem andK_t (v w : V3) : andK v w = 𝔱 ↔ v = 𝔱 ∧ w = 𝔱 := by
   cases v <;> cases w <;> decide
-@[simp] theorem andK_m (v w : V3) : andK v w ≠ .e ↔ v ≠ .e ∧ w ≠ .e := by
+@[simp] theorem andK_m (v w : V3) : andK v w ≠ 𝔢 ↔ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
   cases v <;> cases w <;> decide
 @[simp] theorem orK_t (v w : V3) :
-    orK v w = .t ↔ (v = .t ∨ w = .t) ∧ v ≠ .e ∧ w ≠ .e := by
+    orK v w = 𝔱 ↔ (v = 𝔱 ∨ w = 𝔱) ∧ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
   cases v <;> cases w <;> decide
-@[simp] theorem orK_m (v w : V3) : orK v w ≠ .e ↔ v ≠ .e ∧ w ≠ .e := by
+@[simp] theorem orK_m (v w : V3) : orK v w ≠ 𝔢 ↔ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
   cases v <;> cases w <;> decide
 
 @[simp] theorem existsK_t {D} (r c : D → V3) :
-    ∃ₖ[r] c = .t ↔ ∃ x, r x = .t ∧ c x = .t := by
+    ∃ₖ[r] c = 𝔱 ↔ ∃ x, r x = 𝔱 ∧ c x = 𝔱 := by
   classical
   unfold existsK
   split_ifs <;> simp_all
 @[simp] theorem existsK_m {D} (r c : D → V3) :
-    ∃ₖ[r] c ≠ .e ↔ ∃ x, r x ≠ .e ∧ c x ≠ .e := by
+    ∃ₖ[r] c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
   classical
   unfold existsK
   split_ifs <;> simp_all
-  obtain ⟨x, hx, hy⟩ := ‹∃ x, r x = .t ∧ c x = .t›
+  obtain ⟨x, hx, hy⟩ := ‹∃ x, r x = 𝔱 ∧ c x = 𝔱›
   exact ⟨x, by simp [hx], by simp [hy]⟩
 @[simp] theorem forallK_t {D} (r c : D → V3) :
-    ∀ₖ[r] c = .t ↔ (∀ x, r x = .t → c x = .t) ∧
-      ∃ x, r x ≠ .e ∧ c x ≠ .e := by
+    ∀ₖ[r] c = 𝔱 ↔ (∀ x, r x = 𝔱 → c x = 𝔱) ∧
+      ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
   classical
   unfold forallK
   split_ifs <;> simp_all
 @[simp] theorem forallK_m {D} (r c : D → V3) :
-    ∀ₖ[r] c ≠ .e ↔ ∃ x, r x ≠ .e ∧ c x ≠ .e := by
+    ∀ₖ[r] c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
   classical
   unfold forallK
   split_ifs <;> simp_all
 
-/-- Definition 8's literal cases, including a harmless empty-set extension. -/
+/-- Definition 8's literal cases, with `𝔢` extending them to the empty set. -/
 noncomputable def paperExists (X : Set V32) : V3 := by
   classical
-  exact if (.t, .t) ∈ X then .t
-    else if ∀ p ∈ X, p.1 = .e ∨ p.2 = .e then .e else .f
+  exact if (𝔱, 𝔱) ∈ X then 𝔱
+    else if ∀ p ∈ X, p.1 = 𝔢 ∨ p.2 = 𝔢 then 𝔢
+    else if ∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢 then 𝔣
+    else 𝔢
+
 noncomputable def paperForall (X : Set V32) : V3 := by
   classical
-  exact if ((.t, .f) ∉ X ∧ (.t, .e) ∉ X) ∧
-      (∃ p ∈ X, p.1 ≠ .e ∧ p.2 ≠ .e) then .t
-    else if ∀ p ∈ X, p.1 = .e ∨ p.2 = .e then .e else .f
+  exact if ((𝔱, 𝔣) ∉ X ∧ (𝔱, 𝔢) ∉ X) ∧
+      (∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) then 𝔱
+    else if ∀ p ∈ X, p.1 = 𝔢 ∨ p.2 = 𝔢 then 𝔢
+    else if (∃ p ∈ X, (p.1 = 𝔱 ∧ p.2 = 𝔣) ∨ (p.1 = 𝔱 ∧ p.2 = 𝔢)) ∧
+        (∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) then 𝔣
+    else 𝔢
 
 theorem existsK_paper {D} (r c : D → V3) :
     existsK r c = paperExists (Set.range (fun x => (r x, c x))) := by
   classical
-  have hm : (∀ p ∈ Set.range (fun x => (r x, c x)), p.1 = .e ∨ p.2 = .e) ↔
-      ¬ ∃ x, r x ≠ .e ∧ c x ≠ .e := by
+  have hm : (∀ p ∈ Set.range (fun x => (r x, c x)), p.1 = 𝔢 ∨ p.2 = 𝔢) ↔
+      ¬ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
     simp only [Set.forall_mem_range, not_exists, not_and, not_not]
     exact forall_congr' (fun x => or_iff_not_imp_left)
-  have ht : ((V3.t, V3.t) ∈ Set.range (fun x => (r x, c x))) ↔
-      ∃ x, r x = .t ∧ c x = .t := by simp
-  simp only [existsK, paperExists, ht, hm]
+  have ht : ((𝔱, 𝔱) ∈ Set.range (fun x => (r x, c x))) ↔
+      ∃ x, r x = 𝔱 ∧ c x = 𝔱 := by simp
+  have hw : (∃ p ∈ Set.range (fun x => (r x, c x)), p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) ↔
+      ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by simp
+  simp only [existsK, paperExists, ht, hm, hw]
   split_ifs <;> rfl
 
 theorem forallK_paper {D} (r c : D → V3) :
     forallK r c = paperForall (Set.range (fun x => (r x, c x))) := by
   classical
-  have hm : (∀ p ∈ Set.range (fun x => (r x, c x)), p.1 = .e ∨ p.2 = .e) ↔
-      ¬ ∃ x, r x ≠ .e ∧ c x ≠ .e := by
+  have hm : (∀ p ∈ Set.range (fun x => (r x, c x)), p.1 = 𝔢 ∨ p.2 = 𝔢) ↔
+      ¬ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
     simp only [Set.forall_mem_range, not_exists, not_and, not_not]
     exact forall_congr' (fun x => or_iff_not_imp_left)
-  have hw : (∃ p ∈ Set.range (fun x => (r x, c x)), p.1 ≠ .e ∧ p.2 ≠ .e) ↔
-      ∃ x, r x ≠ .e ∧ c x ≠ .e := by simp
-  have ht : ((V3.t, V3.f) ∉ Set.range (fun x => (r x, c x)) ∧
-      (V3.t, V3.e) ∉ Set.range (fun x => (r x, c x))) ↔
-      ∀ x, r x = .t → c x = .t := by
+  have hw : (∃ p ∈ Set.range (fun x => (r x, c x)), p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) ↔
+      ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by simp
+  have ht : ((𝔱, 𝔣) ∉ Set.range (fun x => (r x, c x)) ∧
+      (𝔱, 𝔢) ∉ Set.range (fun x => (r x, c x))) ↔
+      ∀ x, r x = 𝔱 → c x = 𝔱 := by
     simp only [Set.mem_range, Prod.mk.injEq, not_exists, not_and]
     constructor
     · rintro ⟨hf, he⟩ x hx
@@ -128,7 +151,20 @@ theorem forallK_paper {D} (r c : D → V3) :
       cases hcx : c x <;> simp_all
     · intro h
       constructor <;> intro x hx <;> simp [h x hx]
-  simp only [forallK, paperForall, ht, hm, hw]
+  have hv : (∃ p ∈ Set.range (fun x => (r x, c x)),
+      (p.1 = 𝔱 ∧ p.2 = 𝔣) ∨ (p.1 = 𝔱 ∧ p.2 = 𝔢)) ↔
+      ∃ x, r x = 𝔱 ∧ c x ≠ 𝔱 := by
+    simp [Set.mem_range]
+    constructor
+    · rintro ⟨x, (⟨hr, hf⟩ | ⟨hr, he⟩)⟩
+      · exact ⟨x, hr, by simp [hf]⟩
+      · exact ⟨x, hr, by simp [he]⟩
+    · rintro ⟨x, hr, hc⟩
+      cases hcx : c x with
+      | t => simp [hcx] at hc
+      | e => exact ⟨x, Or.inr ⟨hr, hcx⟩⟩
+      | f => exact ⟨x, Or.inl ⟨hr, hcx⟩⟩
+  simp only [forallK, paperForall, ht, hm, hw, hv]
   split_ifs <;> simp_all
 
 inductive Concept (Nc Nr : Type) where
@@ -184,8 +220,8 @@ structure Model (Nc Nr Ni V : Type) where
 variable {Nc Nr Ni : Type}
 
 noncomputable def evalK (I : Model Nc Nr Ni V3) : Concept Nc Nr → I.D → V3
-  | ⊤, _ => .t
-  | ⊥, _ => .f
+  | ⊤, _ => 𝔱
+  | ⊥, _ => 𝔣
   | ⟦a⟧ₜ, x => I.atom a x
   | ¬ₜ c, x => ¬ₖ (evalK I c x)
   | c ⊓ₜ d, x => evalK I c x ∧ₖ evalK I d x
@@ -241,8 +277,8 @@ structure ACModel (Nc Nr Ni : Type) extends Model Nc Nr Ni V32 where
   bottomPositive : D → V3
 
 noncomputable def evalA (I : ACModel Nc Nr Ni) : Concept Nc Nr → I.D → V32
-  | ⊤, x => (.t, I.topNegative x)
-  | ⊥, x => (I.bottomPositive x, .t)
+  | ⊤, x => (𝔱, I.topNegative x)
+  | ⊥, x => (I.bottomPositive x, 𝔱)
   | ⟦a⟧ₜ, x => I.atom a x
   | ¬ₜ c, x => ∼ₐ (evalA I c x)
   | c ⊓ₜ d, x => evalA I c x ∧ₐ evalA I d x
@@ -269,7 +305,7 @@ def sentenceC (J : Model Nc Nr Ni Prop) : Sentence Nc Nr Ni → Prop
 
 /-- A self-inclusion already requires a meaningful instance. -/
 theorem self_inclusion_truth (I : ACModel Nc Nr Ni) (c : Concept Nc Nr) :
-    (sentenceA I (c ⊑ c)).1 = .t ↔ ∃ x, (evalA I c x).1 ≠ .e := by
+    (sentenceA I (c ⊑ c)).1 = 𝔱 ↔ ∃ x, (evalA I c x).1 ≠ 𝔢 := by
   simp [sentenceA, forallA]
 
 /-!
@@ -340,13 +376,13 @@ noncomputable def decodeExample (J : Model Unit Unit Unit Prop) :
     D := J.D
     inhabited := J.inhabited
     individual := J.individual
-    atom := fun a x => (if J.atom a x then .f else .e, .e)
-    role := fun _ _ _ => (.e, .e)
-    topNegative := fun _ => .e
-    bottomPositive := fun _ => .e }
+    atom := fun a x => (if J.atom a x then 𝔣 else 𝔢, 𝔢)
+    role := fun _ _ _ => (𝔢, 𝔢)
+    topNegative := fun _ => 𝔢
+    bottomPositive := fun _ => 𝔢 }
 
 theorem decoded_self_inclusion (J : Model Unit Unit Unit Prop) :
-    (sentenceA (decodeExample J) (⟦()⟧ₜ ⊑ ⟦()⟧ₜ)).1 = .t ↔
+    (sentenceA (decodeExample J) (⟦()⟧ₜ ⊑ ⟦()⟧ₜ)).1 = 𝔱 ↔
       ∃ x, J.atom () x := by
   classical
   rw [self_inclusion_truth]
@@ -358,7 +394,7 @@ theorem no_modelwise_inclusion_translation :
     ¬ ∃ T : Set (Sentence Unit Unit Unit),
       ∀ J : Model Unit Unit Unit Prop,
         (∀ s ∈ T, sentenceC J s) ↔
-          (sentenceA (decodeExample J) (⟦()⟧ₜ ⊑ ⟦()⟧ₜ)).1 = .t := by
+          (sentenceA (decodeExample J) (⟦()⟧ₜ ⊑ ⟦()⟧ₜ)).1 = 𝔱 := by
   rintro ⟨T, hT⟩
   apply no_theory_defines_nonempty
   exact ⟨T, fun J => (hT J).trans (decoded_self_inclusion J)⟩

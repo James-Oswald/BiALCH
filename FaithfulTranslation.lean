@@ -38,74 +38,114 @@ closure claim is made here.
 
 namespace FaithfulTranslation
 
+/--
+Type of three weak Kleene (WK) truth values
+-/
 inductive V3 where
-  | t | e | f
-  deriving DecidableEq, Repr
+| t
+| e
+| f
+deriving DecidableEq, Repr
+
+notation "𝔱" => V3.t
+notation "𝔢" => V3.e
+notation "𝔣" => V3.f
+
 abbrev V32 := V3 × V3
 
+/--
+Weak Kleene truth tables
+-/
 def negK : V3 → V3
-  | .t => .f | .e => .e | .f => .t
+| 𝔱 => .f
+| 𝔢 => 𝔢
+| 𝔣 => 𝔱
+
 def andK : V3 → V3 → V3
-  | .e, _ | _, .e => .e
-  | .t, .t => .t
-  | _, _ => .f
+| 𝔢, _
+| _, 𝔢 => 𝔢
+| 𝔱, 𝔱 => 𝔱
+| _, _ => 𝔣
+
 def orK : V3 → V3 → V3
-  | .e, _ | _, .e => .e
-  | .f, .f => .f
-  | _, _ => .t
+| 𝔢, _
+| _, 𝔢 => 𝔢
+| 𝔣, 𝔣 => 𝔣
+| _, _ => 𝔱
 
 prefix:70 "¬ₖ " => negK
 infixl:70 " ∧ₖ " => andK
 infixl:65 " ∨ₖ " => orK
 
-/-- Restricted quantifiers on indexed families; agreement with the paper below. -/
+/--
+Restricted WK quantifiers on indexed families;
+agreement with the paper below.
+-/
 noncomputable def existsK {D : Type} (r c : D → V3) : V3 := by
   classical
-  exact if ∃ x, r x = .t ∧ c x = .t then .t
-    else if ∃ x, r x ≠ .e ∧ c x ≠ .e then .f else .e
+  exact if ∃ x, r x = 𝔱 ∧ c x = 𝔱 then 𝔱
+    else if ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 then 𝔣 else 𝔢
+
 noncomputable def forallK {D : Type} (r c : D → V3) : V3 := by
   classical
-  exact if ∃ x, r x ≠ .e ∧ c x ≠ .e then
-    if ∀ x, r x = .t → c x = .t then .t else .f
-    else .e
+  exact if ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 then
+    if ∀ x, r x = 𝔱 → c x = 𝔱 then 𝔱 else 𝔣
+    else 𝔢
 
 notation "∃ₖ[" r "]" c:75 => existsK r c
 notation "∀ₖ[" r "]" c:75 => forallK r c
 
-@[simp] theorem negK_t (v : V3) : negK v = .t ↔ v ≠ .e ∧ v ≠ .t := by
-  cases v <;> decide
-@[simp] theorem negK_m (v : V3) : negK v ≠ .e ↔ v ≠ .e := by
-  cases v <;> decide
-@[simp] theorem andK_t (v w : V3) : andK v w = .t ↔ v = .t ∧ w = .t := by
-  cases v <;> cases w <;> decide
-@[simp] theorem andK_m (v w : V3) : andK v w ≠ .e ↔ v ≠ .e ∧ w ≠ .e := by
-  cases v <;> cases w <;> decide
-@[simp] theorem orK_t (v w : V3) :
-    orK v w = .t ↔ (v = .t ∨ w = .t) ∧ v ≠ .e ∧ w ≠ .e := by
-  cases v <;> cases w <;> decide
-@[simp] theorem orK_m (v w : V3) : orK v w ≠ .e ↔ v ≠ .e ∧ w ≠ .e := by
-  cases v <;> cases w <;> decide
+@[simp] theorem negK_t (A : V3) :
+¬ₖA = 𝔱 ↔ A ≠ 𝔢 ∧ A ≠ 𝔱 := by
+  cases A <;> decide
+
+@[simp] theorem negK_f (A : V3) :
+¬ₖA = 𝔣 ↔ A = 𝔱 := by
+  cases A <;> decide
+
+@[simp] theorem negK_m (A : V3) :
+¬ₖA ≠ 𝔢 ↔ A ≠ 𝔢 := by
+  cases A <;> decide
+
+@[simp] theorem andK_t (A B : V3) :
+A ∧ₖ B = 𝔱 ↔ A = 𝔱 ∧ B = 𝔱 := by
+  cases A <;> cases B <;> decide
+
+@[simp] theorem andK_m (A B : V3) :
+A ∧ₖ B ≠ 𝔢 ↔ A ≠ 𝔢 ∧ B ≠ 𝔢 := by
+  cases A <;> cases B <;> decide
+
+@[simp] theorem orK_t (A B : V3) :
+A ∨ₖ B = 𝔱 ↔ (A = 𝔱 ∨ B = 𝔱) ∧ A ≠ 𝔢 ∧ B ≠ 𝔢 := by
+  cases A <;> cases B <;> decide
+
+@[simp] theorem orK_m (A B : V3) :
+A ∨ₖ B ≠ 𝔢 ↔ A ≠ 𝔢 ∧ B ≠ 𝔢 := by
+  cases A <;> cases B <;> decide
 
 @[simp] theorem existsK_t {D} (r c : D → V3) :
-    ∃ₖ[r] c = .t ↔ ∃ x, r x = .t ∧ c x = .t := by
+    ∃ₖ[r] c = 𝔱 ↔ ∃ x, r x = 𝔱 ∧ c x = 𝔱 := by
   classical
   unfold existsK
   split_ifs <;> simp_all
+
 @[simp] theorem existsK_m {D} (r c : D → V3) :
-    ∃ₖ[r] c ≠ .e ↔ ∃ x, r x ≠ .e ∧ c x ≠ .e := by
+    ∃ₖ[r] c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
   classical
   unfold existsK
   split_ifs <;> simp_all
-  obtain ⟨x, hx, hy⟩ := ‹∃ x, r x = .t ∧ c x = .t›
+  obtain ⟨x, hx, hy⟩ := ‹∃ x, r x = 𝔱 ∧ c x = 𝔱›
   exact ⟨x, by simp [hx], by simp [hy]⟩
+
 @[simp] theorem forallK_t {D} (r c : D → V3) :
-    ∀ₖ[r] c = .t ↔ (∀ x, r x = .t → c x = .t) ∧
-      ∃ x, r x ≠ .e ∧ c x ≠ .e := by
+    ∀ₖ[r] c = 𝔱 ↔ (∀ x, r x = 𝔱 → c x = 𝔱) ∧
+      ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
   classical
   unfold forallK
   split_ifs <;> simp_all
+
 @[simp] theorem forallK_m {D} (r c : D → V3) :
-    ∀ₖ[r] c ≠ .e ↔ ∃ x, r x ≠ .e ∧ c x ≠ .e := by
+    ∀ₖ[r] c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
   classical
   unfold forallK
   split_ifs <;> simp_all
@@ -113,38 +153,44 @@ notation "∀ₖ[" r "]" c:75 => forallK r c
 /-- Definition 8's literal cases, including a harmless empty-set extension. -/
 noncomputable def paperExists (X : Set V32) : V3 := by
   classical
-  exact if (.t, .t) ∈ X then .t
-    else if ∀ p ∈ X, p.1 = .e ∨ p.2 = .e then .e else .f
+  exact if (𝔱, 𝔱) ∈ X then
+    𝔱
+  else if ∀ p ∈ X, p.1 = 𝔢 ∨ p.2 = 𝔢 then
+    𝔢
+  else
+    𝔣
+
 noncomputable def paperForall (X : Set V32) : V3 := by
   classical
-  exact if ((.t, .f) ∉ X ∧ (.t, .e) ∉ X) ∧
-      (∃ p ∈ X, p.1 ≠ .e ∧ p.2 ≠ .e) then .t
-    else if ∀ p ∈ X, p.1 = .e ∨ p.2 = .e then .e else .f
+  exact if ((𝔱, 𝔣) ∉ X ∧ (𝔱, 𝔢) ∉ X) ∧ (∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) then
+    𝔱
+  else if ∀ p ∈ X, p.1 = 𝔢 ∨ p.2 = 𝔢
+  then 𝔢 else 𝔣
 
 theorem existsK_paper {D} (r c : D → V3) :
     existsK r c = paperExists (Set.range (fun x => (r x, c x))) := by
   classical
-  have hm : (∀ p ∈ Set.range (fun x => (r x, c x)), p.1 = .e ∨ p.2 = .e) ↔
-      ¬ ∃ x, r x ≠ .e ∧ c x ≠ .e := by
+  have hm : (∀ p ∈ Set.range (fun x => (r x, c x)), p.1 = 𝔢 ∨ p.2 = 𝔢) ↔
+      ¬ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
     simp only [Set.forall_mem_range, not_exists, not_and, not_not]
     exact forall_congr' (fun x => or_iff_not_imp_left)
   have ht : ((V3.t, V3.t) ∈ Set.range (fun x => (r x, c x))) ↔
-      ∃ x, r x = .t ∧ c x = .t := by simp
+      ∃ x, r x = 𝔱 ∧ c x = 𝔱 := by simp
   simp only [existsK, paperExists, ht, hm]
   split_ifs <;> rfl
 
 theorem forallK_paper {D} (r c : D → V3) :
     forallK r c = paperForall (Set.range (fun x => (r x, c x))) := by
   classical
-  have hm : (∀ p ∈ Set.range (fun x => (r x, c x)), p.1 = .e ∨ p.2 = .e) ↔
-      ¬ ∃ x, r x ≠ .e ∧ c x ≠ .e := by
+  have hm : (∀ p ∈ Set.range (fun x => (r x, c x)), p.1 = 𝔢 ∨ p.2 = 𝔢) ↔
+      ¬ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
     simp only [Set.forall_mem_range, not_exists, not_and, not_not]
     exact forall_congr' (fun x => or_iff_not_imp_left)
-  have hw : (∃ p ∈ Set.range (fun x => (r x, c x)), p.1 ≠ .e ∧ p.2 ≠ .e) ↔
-      ∃ x, r x ≠ .e ∧ c x ≠ .e := by simp
-  have ht : ((V3.t, V3.f) ∉ Set.range (fun x => (r x, c x)) ∧
-      (V3.t, V3.e) ∉ Set.range (fun x => (r x, c x))) ↔
-      ∀ x, r x = .t → c x = .t := by
+  have hw : (∃ p ∈ Set.range (fun x => (r x, c x)), p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) ↔
+      ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by simp
+  have ht : ((𝔱, 𝔣) ∉ Set.range (fun x => (r x, c x)) ∧
+      (𝔱, 𝔢) ∉ Set.range (fun x => (r x, c x))) ↔
+      ∀ x, r x = 𝔱 → c x = 𝔱 := by
     simp only [Set.mem_range, Prod.mk.injEq, not_exists, not_and]
     constructor
     · rintro ⟨hf, he⟩ x hx

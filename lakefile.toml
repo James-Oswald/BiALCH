@@ -1,9 +1,10 @@
 name = "BiALCH"
 version = "0.1.0"
-defaultTargets = ["bialch"]
+defaultTargets = ["BiALCH"]
 
 [[lean_lib]]
 name = "BiALCH"
+roots = ["BiALCH", "DirectTranslation", "FaithfulTranslation"]
 
 [[lean_exe]]
 name = "bialch"
