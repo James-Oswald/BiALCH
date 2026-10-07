@@ -280,10 +280,11 @@ inductive Concept (σ : Signature) (R : Type) where
 | all : R → Concept σ R → Concept σ R
 deriving Repr
 
-inductive ALCHUI_Role (σ : Signature) where
-| atom : σ.Nr → ALCHUI_Role σ
-| universal : ALCHUI_Role σ
-| inter : ALCHUI_Role σ -> ALCHUI_Role σ -> ALCHUI_Role σ
+inductive ALCHRU_Role (σ : Signature) where
+| atom : σ.Nr → ALCHRU_Role σ
+| universal : ALCHRU_Role σ
+| inter : ALCHRU_Role σ -> ALCHRU_Role σ -> ALCHRU_Role σ
+notation "ℛᵁ" => ALCHRU_Role
 
 inductive Sentence (σ : Signature) (R : Type) where
 | isa : σ.Ni → Concept σ R → Sentence σ R
@@ -294,10 +295,14 @@ inductive Sentence (σ : Signature) (R : Type) where
 deriving Repr
 
 abbrev ALCH_Concept (σ : Signature) := Concept σ σ.Nr
-abbrev ALCHUI_Concept (σ : Signature) := Concept σ (ALCHUI_Role σ)
+notation "𝒞" => ALCH_Concept
+abbrev ALCHRU_Concept (σ : Signature) := Concept σ (ALCHRU_Role σ)
+notation "𝒞ᵁ" => ALCHRU_Concept
 
 abbrev ALCH_Sentence (σ : Signature) := Sentence σ σ.Nr
-abbrev ALCHUI_Sentence (σ : Signature) := Sentence σ (ALCHUI_Role σ)
+notation "Φ" => ALCH_Sentence
+abbrev ALCHRU_Sentence (σ : Signature) := Sentence σ (ALCHRU_Role σ)
+notation "Φᵁ" => ALCHRU_Sentence
 
 variable {σ : Signature}
 
@@ -313,9 +318,9 @@ notation "∃[" r "]" c:75 => Concept.ex r c
 notation "∀[" r "]" c:75 => Concept.all r c
 
 -- Role Notations
-notation "[" r "]ᵣ" => ALCHUI_Role.atom r
-infixl:70 " ⊓ᵣ " => ALCHUI_Role.inter
-notation "𝒰" => ALCHUI_Role.universal
+notation "[" r "]ᵣ" => ALCHRU_Role.atom r
+infixl:70 " ⊓ᵣ " => ALCHRU_Role.inter
+notation "𝒰" => ALCHRU_Role.universal
 
 -- Sentence Notations
 notation a " :ₐ " c:50 => Sentence.isa a c
@@ -325,23 +330,23 @@ infix:50 " ≡ " => Sentence.equiv
 infix:50 " ⊑ᵣ " => Sentence.rsub
 
 -- ALCH Examples
-example (A B : σ.Nc) (r : σ.Nr) : ALCH_Concept σ :=
+example (A B : σ.Nc) (r : σ.Nr) : 𝒞 σ :=
   A ⊓ₜ (∃[r] B) ⊓ₜ (∀[r] ¬ₜ A)
 
-example (a : σ.Ni) (A : σ.Nc) (r : σ.Nr) : ALCH_Sentence σ :=
+example (a : σ.Ni) (A : σ.Nc) (r : σ.Nr) : Φ σ :=
   (a :ₐ (A ⊓ₜ (∃[r] A)))
 
-example (a b : σ.Ni) (r : σ.Nr) : ALCH_Sentence σ :=
+example (a b : σ.Ni) (r : σ.Nr) : Φ σ :=
   (a, b) :ᵣ r
 
-example (r s : σ.Nr) : ALCH_Sentence σ := r ⊑ᵣ s
+example (r s : σ.Nr) : Φ σ := r ⊑ᵣ s
 
--- ALCHUI Examples with compound roles and universal roles
+-- ALCHRU Examples with compound roles and universal roles
 
-example (A B : σ.Nc) (r s : ALCHUI_Role σ) : ALCHUI_Concept σ :=
+example (A B : σ.Nc) (r s : ALCHRU_Role σ) : 𝒞ᵁ σ :=
   A ⊓ₜ (∃[r ⊓ᵣ s] B) ⊓ₜ (∀[𝒰] A)
 
-instance : Coe σ.Nr (ALCHUI_Role σ) := ⟨ALCHUI_Role.atom⟩
+instance : Coe σ.Nr (ALCHRU_Role σ) := ⟨ALCHRU_Role.atom⟩
 
 
 /-- Nonempty domains; no unique-name assumption. -/
@@ -354,10 +359,13 @@ structure Interpretation (σ : Signature) (V : Type) where
 
 -- Classical Interpretations use the two-valued Boolean domain (Prop)
 abbrev CInterpretation (σ : Signature) := Interpretation σ Prop
+notation "ℐᶜ" => CInterpretation
 -- Weak Kleene Interpretations use the three-valued Kleene domain (V3)
 abbrev WKInterpretation (σ : Signature) := Interpretation σ V3
+notation "ℐᵂᴷ" => WKInterpretation
 -- Anylitic Containment use pairs of three-valued Kleene domains (V32)
 abbrev ACInterpretation (σ : Signature) := Interpretation σ V32
+notation "ℐᴬᶜ" => ACInterpretation
 
 notation r "^ᵃʳ" I => Interpretation.roleValuation I r
 notation a "^ᵃᶜ" I => Interpretation.atomicConceptValuation I a
@@ -366,15 +374,16 @@ notation a "^ⁱ" I => (I).individualValuation a
 
 -- Classical Semantics
 
-def roleC (I : CInterpretation σ) : ALCHUI_Role σ → I.D → I.D → Prop
+-- Classical Role Evaluation for ALCHRU
+def roleC (I : ℐᶜ σ) : ℛᵁ σ → I.D → I.D → Prop
 | [r]ᵣ, x, y => (r^ᵃʳI) x y
 | 𝒰, _, _ => True
 | r ⊓ᵣ s, x, y => roleC I r x y ∧ roleC I s x y
 
 notation r "^ʳᶜ" I => roleC I r
 
--- Concept evaluation function for classical semantics
-def evalC (I : CInterpretation σ) : ALCHUI_Concept σ → I.D → Prop
+-- Classical Concept Evaluation on ALCHRU concepts
+def evalC (I : ℐᶜ σ) : 𝒞ᵁ σ → I.D → Prop
 | ⊤, _ => True
 | ⊥, _ => False
 | [a]ₐ, x => (a^ᵃᶜ I) x
@@ -386,22 +395,28 @@ def evalC (I : CInterpretation σ) : ALCHUI_Concept σ → I.D → Prop
 
 notation c "^ᶜᶜ" I => evalC I c
 
-/-- Classical sentence semantics, with no additional query constructors. -/
-def sentenceC (I : CInterpretation σ) : ALCHUI_Sentence σ → Prop
+/--
+Classical sentence semantics for ALCHRU.
+-/
+def sentenceC (I : ℐᶜ σ) : Φᵁ σ → Prop
 | a :ₐ c => (c^ᶜᶜ I) (a^ⁱ I)
 | (a, b) :ᵣ r => (r^ʳᶜ I) (a^ⁱ I) (b^ⁱ I)
-| c ⊑ d => ∀ x,  (c^ᶜᶜ I) x → (d^ᶜᶜ I) x
+| c ⊑ d => ∀ x, (c^ᶜᶜ I) x → (d^ᶜᶜ I) x
 | c ≡ d => ∀ x, (c^ᶜᶜ I) x ↔ (d^ᶜᶜ I) x
 | r ⊑ᵣ s => ∀ x y, (r^ʳᶜ I) x y → (s^ʳᶜ I) x y
 
 notation  I "⊨ᶜₘ " S => sentenceC I S
 
-def entailmentC (Γ Δ : List (ALCHUI_Sentence σ)) : Prop :=
+def entailmentC (Γ Δ : List (Φᵁ σ)) : Prop :=
   ∀ I, (∀ ψ ∈ Γ, I ⊨ᶜₘ ψ) → (∀ φ ∈ Δ, I ⊨ᶜₘ φ)
 
 notation  Γ " ⊨ᶜ " Δ => entailmentC Γ Δ
 
-noncomputable def evalK (I : WKInterpretation σ) : ALCH_Concept σ → I.D → V3
+
+/--
+Weak Kleene concept semantics for ALCHRU.
+-/
+noncomputable def evalK (I : ℐᵂᴷ σ) : 𝒞 σ → I.D → V3
 | ⊤, _ => 𝔱
 | ⊥, _ => 𝔣
 | [a]ₐ, x => (a^ᵃᶜ I) x
@@ -413,24 +428,27 @@ noncomputable def evalK (I : WKInterpretation σ) : ALCH_Concept σ → I.D → 
 
 notation c "^ᶜᴷ" I => evalK I c
 
-noncomputable def sentenceK (I : WKInterpretation σ) : ALCH_Sentence σ → V3
+/--
+Weak Kleene sentence semantics for ALCHRU.
+-/
+noncomputable def sentenceK (I : ℐᵂᴷ σ) : Φ σ → V3
 | a :ₐ c => (c^ᶜᴷ I) (a^ⁱ I)
 | (a, b) :ᵣ r => (r^ᵃʳ I) (a^ⁱ I) (b^ⁱ I)
 | c ⊑ d => ∀ₖ[c^ᶜᴷ I] (d^ᶜᴷ I)
 | c ≡ d => (∀ₖ[c^ᶜᴷ I] (d^ᶜᴷ I)) ∧ₖ (∀ₖ[d^ᶜᴷ I] (c^ᶜᴷ I))
 | r ⊑ᵣ s => ∀ₖ[(λ p : I.D × I.D => (r^ᵃʳ I) p.1 p.2)] (λ p => (s^ᵃʳ I) p.1 p.2)
 
-def satisfiesK (I : WKInterpretation σ) (φ : ALCH_Sentence σ) : Prop :=
+def satisfiesK (I : ℐᵂᴷ σ) (φ : Φ σ) : Prop :=
   (sentenceK I φ) = 𝔱
 
 notation  I "⊨ᴷₘ " S => satisfiesK I S
 
-def entailmentK (Γ Δ : List (ALCH_Sentence σ)) : Prop :=
-  ∀ (I : WKInterpretation σ), (∀ ψ ∈ Γ, I ⊨ᴷₘ ψ) → (∀ φ ∈ Δ, I ⊨ᴷₘ φ)
+def entailmentK (Γ Δ : List (Φ σ)) : Prop :=
+  ∀ (I : ℐᵂᴷ σ), (∀ ψ ∈ Γ, I ⊨ᴷₘ ψ) → (∀ φ ∈ Δ, I ⊨ᴷₘ φ)
 
 notation  Γ " ⊨ᴷ " Δ => entailmentK Γ Δ
 
-noncomputable def evalA (I : ACInterpretation σ) : ALCH_Concept σ → I.D → V32
+noncomputable def evalA (I : ℐᴬᶜ σ) : 𝒞 σ → I.D → V32
 | ⊤, _ => (𝔱, 𝔣)
 | ⊥, _ => (𝔣, 𝔱)
 | [a]ₐ, x => (a^ᵃᶜ I) x
@@ -442,20 +460,20 @@ noncomputable def evalA (I : ACInterpretation σ) : ALCH_Concept σ → I.D → 
 
 notation c "^ᶜᴬ" I => evalA I c
 
-noncomputable def sentenceA (I : ACInterpretation σ) : ALCH_Sentence σ → V32
+noncomputable def sentenceA (I : ℐᴬᶜ σ) : Φ σ → V32
 | a :ₐ c => (c^ᶜᴬ I) (a^ⁱ I)
 | (a, b) :ᵣ r => (r^ᵃʳ I) (a^ⁱ I) (b^ⁱ I)
 | c ⊑ d => ∀ₐ[c^ᶜᴬ I] (d^ᶜᴬ I)
 | c ≡ d => (∀ₐ[c^ᶜᴬ I] (d^ᶜᴬ I)) ∧ₐ (∀ₐ[d^ᶜᴬ I] (c^ᶜᴬ I))
 | r ⊑ᵣ s => ∀ₐ[(λ p : I.D × I.D => (r^ᵃʳ I) p.1 p.2)] (λ p => (s^ᵃʳ I) p.1 p.2)
 
-def satisfiesA (I : ACInterpretation σ) (φ : ALCH_Sentence σ) : Prop :=
+def satisfiesA (I : ℐᴬᶜ σ) (φ : Φ σ) : Prop :=
   (sentenceA I φ).1 = 𝔱
 
 notation  I "⊨ᴬₘ " S => satisfiesA I S
 
-def entailmentA (Γ Δ : List (ALCH_Sentence σ)) : Prop :=
-  ∀ I, (∀ ψ ∈ Γ, I ⊨ᴬₘ ψ) → (∀ φ ∈ Δ, I ⊨ᴬₘ φ)
+def entailmentA (Γ Δ : List (Φ σ)) : Prop :=
+  ∀ (I : ℐᴬᶜ σ), (∀ ψ ∈ Γ, I ⊨ᴬₘ ψ) → (∀ φ ∈ Δ, I ⊨ᴬₘ φ)
 
 notation  Γ " ⊨ᴬ " Δ => entailmentA Γ Δ
 
@@ -466,56 +484,81 @@ inductive Side where
 | negative
 deriving DecidableEq, Repr
 
+notation "+ₚ" => Side.positive
+notation "-ₚ" => Side.negative
+
 inductive Bit where
 | truth
 | meaningful
 deriving DecidableEq, Repr
 
+/-
+Given a signature σ, the weak Kleene signature σᵂᴷ is defined by
+pairing each original concept with a side indicator (+ₚ or -ₚ)
+-/
 abbrev wkSignature (σ : Signature) : Signature where
   Nc := σ.Nc × Side
   Nr := σ.Nr
   Ni := σ.Ni
 
+postfix:max "ᵂᴷ" => wkSignature
+
+/-
+Given a signature σ, the target signature σᵀ is defined by
+pairing each original concept and role with a bit
+indicator (truth or meaningful).
+-/
 abbrev targetSignature (σ : Signature) : Signature where
   Nc := σ.Nc × Bit
   Nr := σ.Nr × Bit
   Ni := σ.Ni
 
-/-- Both coordinates use the fixed source constants: the other coordinate is false. -/
-def polarize (σ : Signature) : ALCH_Concept σ → Side → ALCH_Concept (wkSignature σ)
-| ⊤, .positive => ⊤
-| ⊤, .negative => ⊥
-| ⊥, .positive => ⊥
-| ⊥, .negative => ⊤
-| [a]ₐ, side => [(a, side)]ₐ
-| ¬ₜ c, .positive => polarize σ c .negative
-| ¬ₜ c, .negative => polarize σ c .positive
-| c ⊓ₜ d, .positive => polarize σ c .positive ⊓ₜ polarize σ d .positive
-| c ⊓ₜ d, .negative => polarize σ c .negative ⊔ₜ polarize σ d .negative
-| c ⊔ₜ d, .positive => polarize σ c .positive ⊔ₜ polarize σ d .positive
-| c ⊔ₜ d, .negative => polarize σ c .negative ⊓ₜ polarize σ d .negative
-| ∃[r] c, .positive => ∃[r] polarize σ c .positive
-| ∃[r] c, .negative => ∀[r] polarize σ c .negative
-| ∀[r] c, .positive => ∀[r] polarize σ c .positive
-| ∀[r] c, .negative => ∃[r] polarize σ c .negative
+postfix:max "ᵀ" => targetSignature
 
-def projectSentence (σ : Signature) : ALCH_Sentence σ → ALCH_Sentence (wkSignature σ)
-| a :ₐ c => a :ₐ polarize σ c .positive
+-- Polarize recursively transforms an ALCH concept into its weak
+-- Kleene counterpart based on the given side indicator (+ₚ or -ₚ).
+def polarize {σ : Signature} : 𝒞 σ → Side → 𝒞 σᵂᴷ
+| ⊤, +ₚ => ⊤
+| ⊤, -ₚ => ⊥
+| ⊥, +ₚ => ⊥
+| ⊥, -ₚ => ⊤
+| [a]ₐ, side => [(a, side)]ₐ
+| ¬ₜ c, +ₚ => polarize c -ₚ
+| ¬ₜ c, -ₚ => polarize c +ₚ
+| c ⊓ₜ d, +ₚ => polarize c +ₚ ⊓ₜ polarize d +ₚ
+| c ⊓ₜ d, -ₚ => polarize c -ₚ ⊔ₜ polarize d -ₚ
+| c ⊔ₜ d, +ₚ => polarize c +ₚ ⊔ₜ polarize d +ₚ
+| c ⊔ₜ d, -ₚ => polarize c -ₚ ⊓ₜ polarize d -ₚ
+| ∃[r] c, +ₚ => ∃[r] polarize c +ₚ
+| ∃[r] c, -ₚ => ∀[r] polarize c -ₚ
+| ∀[r] c, +ₚ => ∀[r] polarize c +ₚ
+| ∀[r] c, -ₚ => ∃[r] polarize c -ₚ
+
+notation C "ᵖ⁺" => polarize C +ₚ
+notation C "ᵖ⁻" => polarize C -ₚ
+
+/--
+Projects an ALCH sentence over the original signature σ to its weak Kleene counterpart
+over the signature σᵂᴷ by polarizing all concepts positively.
+-/
+def projectSentence (σ : Signature) : Φ σ → Φ (wkSignature σ)
+| a :ₐ c => a :ₐ cᵖ⁺
 | (a, b) :ᵣ r => (a, b) :ᵣ r
-| c ⊑ d => polarize σ c .positive ⊑ polarize σ d .positive
-| c ≡ d => polarize σ c .positive ≡ polarize σ d .positive
+| c ⊑ d => cᵖ⁺ ⊑ dᵖ⁺
+| c ≡ d => cᵖ⁺ ≡ dᵖ⁺
 | r ⊑ᵣ s => r ⊑ᵣ s
 
 def coordinate (v : V32) : Side → V3
-| .positive => v.1
-| .negative => v.2
+| +ₚ => v.1
+| -ₚ => v.2
 
 def acToWK (I : ACInterpretation σ) : WKInterpretation (wkSignature σ) where
   D := I.D
   inhabited := I.inhabited
   individualValuation := I.individualValuation
-  atomicConceptValuation := fun (a, side) x => coordinate (I.atomicConceptValuation a x) side
-  roleValuation := fun r x y => (I.roleValuation r x y).1
+  atomicConceptValuation := fun (a, side) x =>
+    coordinate (I.atomicConceptValuation a x) side
+  roleValuation := λ r x y => ((r^ᵃʳI) x y).1
 
 def wkToAC (K : WKInterpretation (wkSignature σ)) : ACInterpretation σ where
   D := K.D
@@ -536,8 +579,8 @@ theorem acToWK_wkToAC (K : WKInterpretation (wkSignature σ)) :
       cases side <;> rfl
 
 theorem acConceptCoordinates (I : ACInterpretation σ)
-    (c : ALCH_Concept σ) (side : Side) (x : I.D) :
-    evalK (acToWK I) (polarize σ c side) x = coordinate (evalA I c x) side := by
+    (c : 𝒞 σ) (side : Side) (x : I.D) :
+    evalK (acToWK I) (polarize c side) x = coordinate (evalA I c x) side := by
   induction c generalizing side x with
   | top => cases side <;> rfl
   | bot => cases side <;> rfl
@@ -556,15 +599,15 @@ theorem acConceptCoordinates (I : ACInterpretation σ)
       | positive => exact congrArg₂ forallK rfl (funext (ih .positive))
       | negative => exact congrArg₂ existsK rfl (funext (ih .negative))
 
-theorem acSentenceSupport (I : ACInterpretation σ) (s : ALCH_Sentence σ) :
+theorem acSentenceSupport (I : ACInterpretation σ) (s : Φ σ) :
     sentenceK (acToWK I) (projectSentence σ s) = (sentenceA I s).1 := by
-  have hc (c : ALCH_Concept σ) :
-      evalK (acToWK I) (polarize σ c .positive) = fun x => (evalA I c x).1 :=
+  have hc (c : 𝒞 σ) :
+      evalK (acToWK I) (polarize c  .positive) = fun x => (evalA I c x).1 :=
     funext (acConceptCoordinates I c .positive)
   cases s <;> simp only [projectSentence, sentenceK, sentenceA, forallA, andA, hc] <;> rfl
 
 /-- The explicit WK entailment intermediate used in the final theorem. -/
-theorem entailmentA_iff_projectedWK (Γ Δ : List (ALCH_Sentence σ)) :
+theorem entailmentA_iff_projectedWK (Γ Δ : List (Φ σ)) :
     (Γ ⊨ᴬ Δ) ↔
       (Γ.map (projectSentence σ) ⊨ᴷ Δ.map (projectSentence σ)) := by
   constructor
@@ -588,8 +631,7 @@ theorem entailmentA_iff_projectedWK (Γ Δ : List (ALCH_Sentence σ)) :
 /-! ## WK to classical ALCH with universal role and role intersection -/
 
 /-- A truth concept and a meaningfulness concept for each WK concept. -/
-def translateConcept (σ : Signature) : ALCH_Concept σ →
-    ALCHUI_Concept (targetSignature σ) × ALCHUI_Concept (targetSignature σ)
+def translateConcept (σ : Signature) : 𝒞 σ → 𝒞ᵁ σᵀ × 𝒞ᵁ σᵀ
 | ⊤ => (⊤, ⊤)
 | ⊥ => (⊥, ⊤)
 | [a]ₐ => ([(a, .truth)]ₐ, [(a, .meaningful)]ₐ)
@@ -612,10 +654,10 @@ def translateConcept (σ : Signature) : ALCH_Concept σ →
       ∃[[(r, .meaningful)]ᵣ] (translateConcept σ c).2)
 
 /-- The universal role expresses nonemptiness using an ordinary GCI. -/
-def nonemptyAxiom (c : ALCHUI_Concept σ) : ALCHUI_Sentence σ :=
+def nonemptyAxiom (c : ALCHRU_Concept σ) : Φᵁ σ :=
   ⊤ ⊑ ∃[𝒰] c
 
-@[simp] theorem nonemptyAxiom_iff (J : CInterpretation σ) (c : ALCHUI_Concept σ) :
+@[simp] theorem nonemptyAxiom_iff (J : CInterpretation σ) (c : ALCHRU_Concept σ) :
     sentenceC J (nonemptyAxiom c) ↔ ∃ x, evalC J c x := by
   simp only [nonemptyAxiom, sentenceC, evalC, roleC, true_implies, true_and]
   constructor
@@ -626,7 +668,7 @@ def nonemptyAxiom (c : ALCHUI_Concept σ) : ALCHUI_Sentence σ :=
     exact h
 
 /-- Intersection forces both roles to hold on the same ordered pair. -/
-def overlapAxiom (r s : σ.Nr) : ALCHUI_Sentence σ :=
+def overlapAxiom (r s : σ.Nr) : Φᵁ σ :=
   nonemptyAxiom (∃[([r]ᵣ ⊓ᵣ [s]ᵣ)] ⊤)
 
 @[simp] theorem overlapAxiom_iff (J : CInterpretation σ) (r s : σ.Nr) :
@@ -634,13 +676,13 @@ def overlapAxiom (r s : σ.Nr) : ALCHUI_Sentence σ :=
       ∃ x y, J.roleValuation r x y ∧ J.roleValuation s x y := by
   simp [overlapAxiom, evalC, roleC]
 
-def translateInclusion (σ : Signature) (c d : ALCH_Concept σ) :
-    List (ALCHUI_Sentence (targetSignature σ)) :=
+def translateInclusion (σ : Signature) (c d : 𝒞 σ) :
+    List (Φᵁ (targetSignature σ)) :=
   [ (translateConcept σ c).1 ⊑ (translateConcept σ d).1,
     nonemptyAxiom ((translateConcept σ c).2 ⊓ₜ (translateConcept σ d).2) ]
 
-def translateSentence (σ : Signature) : ALCH_Sentence σ →
-    List (ALCHUI_Sentence (targetSignature σ))
+def translateSentence (σ : Signature) : Φ σ →
+    List (Φᵁ (targetSignature σ))
 | a :ₐ c => [a :ₐ (translateConcept σ c).1]
 | (a, b) :ᵣ r => [(a, b) :ᵣ [(r, .truth)]ᵣ]
 | c ⊑ d => translateInclusion σ c d
@@ -649,32 +691,32 @@ def translateSentence (σ : Signature) : ALCH_Sentence σ →
     [[(r, .truth)]ᵣ ⊑ᵣ [(s, .truth)]ᵣ,
       overlapAxiom (r, .meaningful) (s, .meaningful)]
 
-def atomBridge (σ : Signature) (a : σ.Nc) : ALCHUI_Sentence (targetSignature σ) :=
+def atomBridge (σ : Signature) (a : σ.Nc) : Φᵁ (targetSignature σ) :=
   [(a, .truth)]ₐ ⊑ [(a, .meaningful)]ₐ
 
-def roleBridge (σ : Signature) (r : σ.Nr) : ALCHUI_Sentence (targetSignature σ) :=
+def roleBridge (σ : Signature) (r : σ.Nr) : Φᵁ (targetSignature σ) :=
   [(r, .truth)]ᵣ ⊑ᵣ [(r, .meaningful)]ᵣ
 
-def conceptBridges (σ : Signature) : ALCH_Concept σ →
-    List (ALCHUI_Sentence (targetSignature σ))
+def conceptBridges (σ : Signature) : 𝒞 σ →
+    List (Φᵁ (targetSignature σ))
 | ⊤ | ⊥ => []
 | [a]ₐ => [atomBridge σ a]
 | ¬ₜ c => conceptBridges σ c
 | c ⊓ₜ d | c ⊔ₜ d => conceptBridges σ c ++ conceptBridges σ d
 | ∃[r] c | ∀[r] c => roleBridge σ r :: conceptBridges σ c
 
-def sentenceBridges (σ : Signature) : ALCH_Sentence σ →
-    List (ALCHUI_Sentence (targetSignature σ))
+def sentenceBridges (σ : Signature) : Φ σ →
+    List (Φᵁ (targetSignature σ))
 | _ :ₐ c => conceptBridges σ c
 | (_, _) :ᵣ r => [roleBridge σ r]
 | c ⊑ d | c ≡ d => conceptBridges σ c ++ conceptBridges σ d
 | r ⊑ᵣ s => [roleBridge σ r, roleBridge σ s]
 
-def translateWK (σ : Signature) (Γ : List (ALCH_Sentence σ)) :
-    List (ALCHUI_Sentence (targetSignature σ)) := Γ.flatMap (translateSentence σ)
+def translateWK (σ : Signature) (Γ : List (Φ σ)) :
+    List (Φᵁ (targetSignature σ)) := Γ.flatMap (translateSentence σ)
 
-def bridgesWK (σ : Signature) (Γ : List (ALCH_Sentence σ)) :
-    List (ALCHUI_Sentence (targetSignature σ)) := Γ.flatMap (sentenceBridges σ)
+def bridgesWK (σ : Signature) (Γ : List (Φ σ)) :
+    List (Φᵁ (targetSignature σ)) := Γ.flatMap (sentenceBridges σ)
 
 def encodeWK (I : WKInterpretation σ) : CInterpretation (targetSignature σ) where
   D := I.D
@@ -714,7 +756,7 @@ noncomputable def decodeTarget (J : CInterpretation (targetSignature σ)) :
   roleValuation := fun r x y =>
     propValue (J.roleValuation (r, .truth) x y) (J.roleValuation (r, .meaningful) x y)
 
-theorem translateConceptEncode (I : WKInterpretation σ) (c : ALCH_Concept σ) (x : I.D) :
+theorem translateConceptEncode (I : WKInterpretation σ) (c : 𝒞 σ) (x : I.D) :
     (evalC (encodeWK I) (translateConcept σ c).1 x ↔ evalK I c x = 𝔱) ∧
     (evalC (encodeWK I) (translateConcept σ c).2 x ↔ evalK I c x ≠ 𝔢) := by
   induction c generalizing x with
@@ -752,7 +794,7 @@ theorem encodedRoleBridge (I : WKInterpretation σ) (r : σ.Nr) :
   intro x y h
   simp [h]
 
-theorem encodedConceptBridges (I : WKInterpretation σ) (c : ALCH_Concept σ) :
+theorem encodedConceptBridges (I : WKInterpretation σ) (c : 𝒞 σ) :
     ∀ q ∈ conceptBridges σ c, sentenceC (encodeWK I) q := by
   induction c with
   | top | bot => simp [conceptBridges]
@@ -763,7 +805,7 @@ theorem encodedConceptBridges (I : WKInterpretation σ) (c : ALCH_Concept σ) :
   | ex r c ih | all r c ih =>
       simpa [conceptBridges] using And.intro (encodedRoleBridge I r) ih
 
-theorem encodedSentenceBridges (I : WKInterpretation σ) (s : ALCH_Sentence σ) :
+theorem encodedSentenceBridges (I : WKInterpretation σ) (s : Φ σ) :
     ∀ q ∈ sentenceBridges σ s, sentenceC (encodeWK I) q := by
   cases s with
   | isa a c => exact encodedConceptBridges I c
@@ -776,7 +818,7 @@ theorem encodedSentenceBridges (I : WKInterpretation σ) (s : ALCH_Sentence σ) 
 
 /-- Bridges are needed only for the names occurring in the concept being decoded. -/
 theorem decodeConceptLocal (J : CInterpretation (targetSignature σ))
-    (c : ALCH_Concept σ)
+    (c : 𝒞 σ)
     (h : ∀ q ∈ conceptBridges σ c, sentenceC J q) (x : J.D) :
     (evalC J (translateConcept σ c).1 x ↔ evalK (decodeTarget J) c x = 𝔱) ∧
     (evalC J (translateConcept σ c).2 x ↔ evalK (decodeTarget J) c x ≠ 𝔢) := by
@@ -832,7 +874,7 @@ private theorem allMemAppend {α : Type} (P : α → Prop) (xs ys : List α) :
   simp only [List.mem_append, or_imp, forall_and]
 
 private theorem translateInclusion_iff (J : CInterpretation (targetSignature σ))
-    (c d : ALCH_Concept σ) :
+    (c d : 𝒞 σ) :
     (∀ q ∈ translateInclusion σ c d, sentenceC J q) ↔
       (∀ x, evalC J (translateConcept σ c).1 x →
         evalC J (translateConcept σ d).1 x) ∧
@@ -843,7 +885,7 @@ private theorem translateInclusion_iff (J : CInterpretation (targetSignature σ)
   rw [nonemptyAxiom_iff]
   rfl
 
-theorem translateInclusionEncode (I : WKInterpretation σ) (c d : ALCH_Concept σ) :
+theorem translateInclusionEncode (I : WKInterpretation σ) (c d : 𝒞 σ) :
     (∀ q ∈ translateInclusion σ c d, sentenceC (encodeWK I) q) ↔
       forallK (evalK I c) (evalK I d) = 𝔱 := by
   rw [translateInclusion_iff, forallK_t]
@@ -854,7 +896,7 @@ theorem translateInclusionEncode (I : WKInterpretation σ) (c d : ALCH_Concept �
       (translateConceptEncode I d x).2))
 
 theorem decodeInclusionLocal (J : CInterpretation (targetSignature σ))
-    (c d : ALCH_Concept σ)
+    (c d : 𝒞 σ)
     (hc : ∀ q ∈ conceptBridges σ c, sentenceC J q)
     (hd : ∀ q ∈ conceptBridges σ d, sentenceC J q) :
     (∀ q ∈ translateInclusion σ c d, sentenceC J q) ↔
@@ -866,7 +908,7 @@ theorem decodeInclusionLocal (J : CInterpretation (targetSignature σ))
     (exists_congr (fun x => and_congr (decodeConceptLocal J c hc x).2
       (decodeConceptLocal J d hd x).2))
 
-theorem translateSentenceEncode (I : WKInterpretation σ) (s : ALCH_Sentence σ) :
+theorem translateSentenceEncode (I : WKInterpretation σ) (s : Φ σ) :
     (∀ q ∈ translateSentence σ s, sentenceC (encodeWK I) q) ↔ satisfiesK I s := by
   cases s with
   | isa a c =>
@@ -886,7 +928,7 @@ theorem translateSentenceEncode (I : WKInterpretation σ) (s : ALCH_Sentence σ)
         forallK_t, Prod.forall, Prod.exists]
 
 theorem decodeSentenceLocal (J : CInterpretation (targetSignature σ))
-    (s : ALCH_Sentence σ)
+    (s : Φ σ)
     (h : ∀ q ∈ sentenceBridges σ s, sentenceC J q) :
     (∀ q ∈ translateSentence σ s, sentenceC J q) ↔ satisfiesK (decodeTarget J) s := by
   cases s with
@@ -934,18 +976,18 @@ private theorem allMemFlatMap {α β : Type} (P : β → Prop) (f : α → List 
     obtain ⟨x, hx, hy⟩ := List.mem_flatMap.mp hy
     exact h x hx y hy
 
-theorem translateKBEncode (I : WKInterpretation σ) (Γ : List (ALCH_Sentence σ)) :
+theorem translateKBEncode (I : WKInterpretation σ) (Γ : List (Φ σ)) :
     (∀ q ∈ translateWK σ Γ, sentenceC (encodeWK I) q) ↔
       ∀ s ∈ Γ, satisfiesK I s := by
   simp only [translateWK, allMemFlatMap, translateSentenceEncode]
 
-theorem encodedKBBridges (I : WKInterpretation σ) (Γ : List (ALCH_Sentence σ)) :
+theorem encodedKBBridges (I : WKInterpretation σ) (Γ : List (Φ σ)) :
     ∀ q ∈ bridgesWK σ Γ, sentenceC (encodeWK I) q := by
   rw [bridgesWK, allMemFlatMap]
   exact fun s _ => encodedSentenceBridges I s
 
 theorem decodeKBLocal (J : CInterpretation (targetSignature σ))
-    (Γ : List (ALCH_Sentence σ))
+    (Γ : List (Φ σ))
     (h : ∀ q ∈ bridgesWK σ Γ, sentenceC J q) :
     (∀ q ∈ translateWK σ Γ, sentenceC J q) ↔
       ∀ s ∈ Γ, satisfiesK (decodeTarget J) s := by
@@ -957,7 +999,7 @@ theorem decodeKBLocal (J : CInterpretation (targetSignature σ))
   exact decodeSentenceLocal J s (fun q hq => h q (List.mem_flatMap.mpr ⟨s, hs, hq⟩))
 
 /-- Classical models need bridges for the vocabulary of both premises and conclusions. -/
-theorem entailmentK_iff_classical (Γ Δ : List (ALCH_Sentence σ)) :
+theorem entailmentK_iff_classical (Γ Δ : List (Φ σ)) :
     (Γ ⊨ᴷ Δ) ↔
       ((translateWK σ Γ ++ bridgesWK σ Γ ++ bridgesWK σ Δ) ⊨ᶜ translateWK σ Δ) := by
   constructor
@@ -977,18 +1019,18 @@ theorem entailmentK_iff_classical (Γ Δ : List (ALCH_Sentence σ)) :
 /-! ## The composed AC translation -/
 
 /-- Translate a source KB through WK into the derived classical signature. -/
-def T (σ : Signature) (Γ : List (ALCH_Sentence σ)) :
-    List (ALCHUI_Sentence (targetSignature (wkSignature σ))) :=
+def T (σ : Signature) (Γ : List (Φ σ)) :
+    List (Φᵁ (targetSignature (wkSignature σ))) :=
   translateWK (wkSignature σ) (Γ.map (projectSentence σ))
 
 /-- Bridges for the names used by the polarized source KB. -/
-def B (σ : Signature) (Γ : List (ALCH_Sentence σ)) :
-    List (ALCHUI_Sentence (targetSignature (wkSignature σ))) :=
+def B (σ : Signature) (Γ : List (Φ σ)) :
+    List (Φᵁ (targetSignature (wkSignature σ))) :=
   bridgesWK (wkSignature σ) (Γ.map (projectSentence σ))
 
 /-- AC entailment is exactly classical entailment of the translated KBs,
 with the bridges of both KBs included among the premises. -/
-theorem MainResult (σ : Signature) (Γ Δ : List (ALCH_Sentence σ)) :
+theorem MainResult (σ : Signature) (Γ Δ : List (Φ σ)) :
     (Γ ⊨ᴬ Δ) ↔ ((T σ Γ ++ B σ Γ ++ B σ Δ) ⊨ᶜ T σ Δ) := by
   exact (entailmentA_iff_projectedWK Γ Δ).trans
     (entailmentK_iff_classical (Γ.map (projectSentence σ)) (Δ.map (projectSentence σ)))
