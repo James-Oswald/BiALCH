@@ -413,7 +413,7 @@ def satisfiesA (I : ACInterpretation σ) (φ : Sentence σ) : Prop :=
 notation  I "⊨ᴬₘ " S => satisfiesA I S
 
 def entailmentA (Γ Δ : List (Sentence σ)) : Prop :=
-  ∀ I, ∀ φ ∈ Δ, (∀ ψ ∈ Γ, I ⊨ᴬₘ ψ) → I ⊨ᴬₘ φ
+  ∀ I, (∀ ψ ∈ Γ, I ⊨ᴬₘ ψ) → (∀ φ ∈ Δ, I ⊨ᴬₘ φ)
 
 notation  Γ " ⊨ᴬ " Δ => entailmentA Γ Δ
 

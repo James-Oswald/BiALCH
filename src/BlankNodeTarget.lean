@@ -21,14 +21,14 @@ query-language constructors.
 namespace DirectTranslation.BlankNodeTarget
 
 inductive Individual (σ : Signature) where
-  | named : σ.Ni → Individual σ
-  | blank : Nat → Individual σ
+| named : σ.Ni → Individual σ
+| blank : Nat → Individual σ
 
 inductive Sentence (σ : Signature) where
-  | classAssertion : Individual σ → Concept σ → Sentence σ
-  | roleAssertion : Individual σ → Individual σ → σ.Nr → Sentence σ
-  | conceptInclusion : Concept σ → Concept σ → Sentence σ
-  | roleInclusion : σ.Nr → σ.Nr → Sentence σ
+| classAssertion : Individual σ → Concept σ → Sentence σ
+| roleAssertion : Individual σ → Individual σ → σ.Nr → Sentence σ
+| conceptInclusion : Concept σ → Concept σ → Sentence σ
+| roleInclusion : σ.Nr → σ.Nr → Sentence σ
 
 abbrev Graph (σ : Signature) := List (Sentence σ)
 
@@ -38,20 +38,20 @@ abbrev evalConcept (J : Interpretation σ Prop) : Concept σ → J.D → Prop :=
 /-- A partial assignment keeps unused blank labels genuinely unassigned. -/
 def evalIndividual (J : Interpretation σ Prop) (ρ : Nat → Option J.D) :
     Individual σ → Option J.D
-  | .named a => some (J.individual a)
-  | .blank n => ρ n
+| .named a => some (J.individual a)
+| .blank n => ρ n
 
 def holdsSentence (J : Interpretation σ Prop) (ρ : Nat → Option J.D) :
     Sentence σ → Prop
-  | .classAssertion a c =>
-      ∃ x, evalIndividual J ρ a = some x ∧ evalConcept J c x
-  | .roleAssertion a b r =>
-      ∃ x y, evalIndividual J ρ a = some x ∧
-        evalIndividual J ρ b = some y ∧ J.role r x y
-  | .conceptInclusion c d =>
-      ∀ x, evalConcept J c x → evalConcept J d x
-  | .roleInclusion r s =>
-      ∀ x y, J.role r x y → J.role s x y
+| .classAssertion a c =>
+    ∃ x, evalIndividual J ρ a = some x ∧ evalConcept J c x
+| .roleAssertion a b r =>
+    ∃ x y, evalIndividual J ρ a = some x ∧
+      evalIndividual J ρ b = some y ∧ J.role r x y
+| .conceptInclusion c d =>
+    ∀ x, evalConcept J c x → evalConcept J d x
+| .roleInclusion r s =>
+    ∀ x y, J.role r x y → J.role s x y
 
 /-- Blank nodes in a graph share a single existential assignment. -/
 def holdsGraph (J : Interpretation σ Prop) (G : Graph σ) : Prop :=
