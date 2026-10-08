@@ -42,12 +42,12 @@ def individualName : IndividualName → String
 | .bob => "bob"
 
 def sideName : Side → String
-| .positive => "+"
-| .negative => "-"
+| +ₚ => "+"
+| -ₚ => "-"
 
 def bitName : Bit → String
-| .truth => "t"
-| .meaningful => "m"
+| 𝕋 => "t"
+| 𝕄 => "m"
 
 def wkAtomName (a : ConceptName × Side) : String :=
   atomName a.1 ++ sideName a.2
@@ -72,7 +72,7 @@ def showConcept {sig : Signature} {R : Type}
 | ∀[r] c => "∀" ++ showRole r ++ ".(" ++ showConcept showAtom showRole c ++ ")"
 
 def showUIRole {sig : Signature} (showAtom : sig.Nr → String) :
-    ALCHUI_Role sig → String
+    ℛᵁ sig → String
 | [r]ᵣ => showAtom r
 | 𝒰 => "U"
 | r ⊓ᵣ s => "(" ++ showUIRole showAtom r ++ " ∩ " ++ showUIRole showAtom s ++ ")"
@@ -89,33 +89,33 @@ def showSentence {sig : Signature} {R : Type}
     showConcept showAtom showRole d
 | r ⊑ᵣ s => showRole r ++ " ⊑ᵣ " ++ showRole s
 
-def showWKConcept : ALCH_Concept (wkSignature σ) → String :=
+def showWKConcept : 𝒞 (σᵂᴷ) → String :=
   showConcept wkAtomName roleName
 
-def showTargetConcept : ALCHUI_Concept (targetSignature (wkSignature σ)) → String :=
+def showTargetConcept : 𝒞ᵁ ((σᵂᴷ)ᵀ) → String :=
   showConcept targetAtomName (showUIRole targetRoleName)
 
-def showTargetSentence : ALCHUI_Sentence (targetSignature (wkSignature σ)) → String :=
+def showTargetSentence : Φᵁ ((σᵂᴷ)ᵀ) → String :=
   showSentence individualName targetAtomName (showUIRole targetRoleName)
 
-def showPolarities (c : ALCH_Concept σ) : String × String :=
-  (showWKConcept (polarize σ c .positive),
-    showWKConcept (polarize σ c .negative))
+def showPolarities (c : 𝒞 σ) : String × String :=
+  (showWKConcept (cᵖ⁺),
+    showWKConcept (cᵖ⁻))
 
-def showWKTranslation (c : ALCH_Concept (wkSignature σ)) : String × String :=
-  let translated := translateConcept (wkSignature σ) c
+def showWKTranslation (c : 𝒞 (σᵂᴷ)) : String × String :=
+  let translated := translateConcept (σᵂᴷ) c
   (showTargetConcept translated.1, showTargetConcept translated.2)
 
-def A : ALCH_Concept σ := [ConceptName.A]ₐ
-def B : ALCH_Concept σ := [ConceptName.B]ₐ
-def C : ALCH_Concept σ := [ConceptName.C]ₐ
+def A : 𝒞 σ := [ConceptName.A]ₐ
+def B : 𝒞 σ := [ConceptName.B]ₐ
+def C : 𝒞 σ := [ConceptName.C]ₐ
 
-def Apos : ALCH_Concept (wkSignature σ) := [(ConceptName.A, .positive)]ₐ
-def Bpos : ALCH_Concept (wkSignature σ) := [(ConceptName.B, .positive)]ₐ
+def Apos : 𝒞 (σᵂᴷ) := [(ConceptName.A, +ₚ)]ₐ
+def Bpos : 𝒞 (σᵂᴷ) := [(ConceptName.B, +ₚ)]ₐ
 
 /- The first and second entries are the positive and negative coordinates. -/
-#eval showPolarities (⊤ : ALCH_Concept σ)       -- (⊤, ⊥)
-#eval showPolarities (⊥ : ALCH_Concept σ)       -- (⊥, ⊤)
+#eval showPolarities (⊤ : 𝒞 σ)       -- (⊤, ⊥)
+#eval showPolarities (⊥ : 𝒞 σ)       -- (⊥, ⊤)
 #eval showPolarities (¬ₜ A)                     -- (A-, A+)
 #eval showPolarities (¬ₜ (A ⊓ₜ B))             -- (A- ⊔ B-, A+ ⊓ B+)
 #eval showPolarities (¬ₜ (∃[RoleName.r] (A ⊔ₜ B)))
@@ -133,19 +133,19 @@ def Bpos : ALCH_Concept (wkSignature σ) := [(ConceptName.B, .positive)]ₐ
    produces a truth inclusion and an intersection witness on the same pair.
    Equivalence emits both inclusion directions; a role assertion emits one
    truth assertion. -/
-#eval (translateSentence (wkSignature σ) (Apos ⊑ Bpos)).map showTargetSentence
-#eval (translateSentence (wkSignature σ) (Apos ≡ Bpos)).map showTargetSentence
-#eval (translateSentence (wkSignature σ) (RoleName.r ⊑ᵣ RoleName.s)).map
+#eval (translateSentence (σᵂᴷ) (Apos ⊑ Bpos)).map showTargetSentence
+#eval (translateSentence (σᵂᴷ) (Apos ≡ Bpos)).map showTargetSentence
+#eval (translateSentence (σᵂᴷ) (RoleName.r ⊑ᵣ RoleName.s)).map
   showTargetSentence
-#eval (translateSentence (wkSignature σ)
+#eval (translateSentence (σᵂᴷ)
   ((IndividualName.alice, IndividualName.bob) :ᵣ RoleName.r)).map showTargetSentence
 
 /- Assertions translate to one truth assertion; their bridges live in B. -/
-def premises : List (ALCH_Sentence σ) :=
+def premises : List (Φ σ) :=
   [IndividualName.alice :ₐ (∃[RoleName.r] (A ⊔ₜ B)),
     RoleName.r ⊑ᵣ RoleName.s]
 
-def conclusions : List (ALCH_Sentence σ) :=
+def conclusions : List (Φ σ) :=
   [IndividualName.alice :ₐ (∀[RoleName.s] (¬ₜ C))]
 
 #eval (T σ premises).map showTargetSentence
