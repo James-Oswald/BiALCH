@@ -103,7 +103,7 @@ def showPolarities (c : 𝒞 σ) : String × String :=
     showWKConcept (cᵖ⁻))
 
 def showWKTranslation (c : 𝒞 (σᵂᴷ)) : String × String :=
-  (showTargetConcept cᵗ, showTargetConcept cᵐ)
+  (showTargetConcept c^τ, showTargetConcept c^μ)
 
 def A : 𝒞 σ := [ConceptName.A]ₐ
 def B : 𝒞 σ := [ConceptName.B]ₐ

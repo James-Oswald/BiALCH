@@ -1,0 +1,239 @@
+\documentclass[aspectratio=169,10pt]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{stmaryrd}
+\usepackage{microtype}
+
+\definecolor{ink}{HTML}{173047}
+\definecolor{accent}{HTML}{087E8B}
+\definecolor{muted}{HTML}{526675}
+\setbeamercolor{normal text}{fg=ink,bg=white}
+\setbeamercolor{frametitle}{fg=ink,bg=white}
+\setbeamercolor{structure}{fg=accent}
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{\hfill\textcolor{muted}{\insertframenumber/5}\hspace{1.2em}\vspace{0.7em}}
+\setbeamertemplate{itemize items}[circle]
+
+\newcommand{\WK}{\mathrm{WK}}
+\newcommand{\AC}{\mathrm{AC}}
+\newcommand{\CL}{\mathrm{C}}
+\newcommand{\NE}{\operatorname{NE}}
+\newcommand{\OV}{\operatorname{OV}}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\Br}{\operatorname{Br}}
+\newcommand{\val}[1]{\llbracket #1\rrbracket}
+\newcommand{\ttv}{\mathbf t}
+\newcommand{\eev}{\mathbf e}
+
+\begin{document}
+
+\begin{frame}[t]{Source and target syntax}
+\begin{columns}[t,onlytextwidth]
+  \begin{column}{0.48\textwidth}
+    {\color{accent}\large\bfseries ALCH}\par\medskip
+    \textbf{Roles}\quad $r,s$ are role names.\par\medskip
+    \textbf{Concepts}
+    \[
+      \begin{aligned}
+      C ::= {}& \top \mid \bot \mid A \mid \neg C\\
+              & \mid C\sqcap D \mid C\sqcup D\\
+              & \mid \exists r.C \mid \forall r.C
+      \end{aligned}
+    \]
+    \textbf{Sentences}\par
+    $a:C,\quad (a,b):r,\quad C\sqsubseteq D,$\\
+    $C\equiv D,\quad r\sqsubseteq_R s$
+  \end{column}
+  \begin{column}{0.48\textwidth}
+    {\color{accent}\large\bfseries ALCHRU}\par\medskip
+    \textbf{Roles}
+    \[
+      \rho ::= r \mid \mathcal U \mid \rho\sqcap_R\eta
+    \]
+    \textbf{Concepts}\quad Same constructors, with $\rho$ in
+    $\exists\rho.C$ and $\forall\rho.C$.\par\bigskip
+    \textbf{Sentences}\quad Same forms, with $\rho$ in role
+    assertions and role inclusions.\par\bigskip
+    \textcolor{muted}{Here $\mathcal U$ is the universal role;
+    $\rho\sqcap_R\eta$ relates exactly the pairs shared by both roles.}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[t]{Interpretations and entailment}
+\scriptsize
+Every interpretation has a nonempty domain $D$ and maps each individual name $a$ to $a^I\in D$.
+\smallskip
+\begin{columns}[t,onlytextwidth]
+  \begin{column}{0.315\textwidth}
+    {\color{accent}\small\bfseries Classical target}\par\smallskip
+    ALCHRU over the translated signature.\par\smallskip
+    \textbf{Atomic values}\par
+    $A^J:D\to\mathrm{Prop}$,\quad
+    $r^J:D^2\to\mathrm{Prop}$.\par\smallskip
+    \textbf{Extended roles}\par
+    $\mathcal U^J=D^2$;\quad
+    $(\rho\sqcap_R\eta)^J=\rho^J\cap\eta^J$.\par\smallskip
+    \textbf{Concepts}\par
+    $\top^J=\mathsf{true}$, $\bot^J=\mathsf{false}$;
+    $\neg,\sqcap,\sqcup$ are Boolean.\par
+    $(\exists\rho.C)^J(x)\iff
+    \exists y\,[\rho^J(x,y)\land C^J(y)]$.\par
+    $(\forall\rho.C)^J(x)\iff
+    \forall y\,[\rho^J(x,y)\Rightarrow C^J(y)]$.\par\smallskip
+    \textbf{Sentences}\par
+    $J\models_{\CL}C\sqsubseteq D$ iff
+    $\forall x\,[C^J(x)\Rightarrow D^J(x)]$.
+  \end{column}
+  \begin{column}{0.315\textwidth}
+    {\color{accent}\small\bfseries Weak Kleene}\par\smallskip
+    ALCH over the polarized signature.\par\smallskip
+    \textbf{Atomic values}\par
+    $A^K:D\to V_3$,\quad
+    $r^K:D^2\to V_3$,\quad
+    $V_3=\{\ttv,\eev,\mathbf f\}$.\par\smallskip
+    \textbf{Connectives}\par
+    $\top^K=\ttv$, $\bot^K=\mathbf f$.
+    $\neg\eev=\eev$; $\eev$ is absorbing for
+    $\sqcap$ and $\sqcup$.\par\smallskip
+    \textbf{Restricted quantifiers}\par
+    $\exists_K$ is true if some role/concept pair is
+    $(\ttv,\ttv)$. It is meaningful if some pair
+    has neither coordinate $\eev$.\par
+    $\forall_K$ is true if every $\ttv$ role
+    successor has concept value $\ttv$ \emph{and}
+    some pair has neither coordinate $\eev$.
+    Its meaningfulness uses that same witness.\par\smallskip
+    \textbf{Satisfaction}\quad
+    $K\models_{\WK}\varphi\iff\val{\varphi}_K=\ttv$.
+  \end{column}
+  \begin{column}{0.315\textwidth}
+    {\color{accent}\small\bfseries Analytic containment}\par\smallskip
+    ALCH over the source signature.\par\smallskip
+    \textbf{Atomic values}\par
+    $A^I:D\to V_3^2$,\quad
+    $r^I:D^2\to V_3^2$.\par\smallskip
+    \textbf{Coordinates}\par
+    $\top^I=(\ttv,\mathbf f)$,
+    $\bot^I=(\mathbf f,\ttv)$.\par
+    $\neg_{\AC}(v_+,v_-)=(v_-,v_+)$.
+    Conjunction uses WK $\sqcap$ on positive
+    coordinates and WK $\sqcup$ on negative ones;
+    disjunction reverses these choices.\par\smallskip
+    \textbf{Restricted quantifiers}\par
+    $\exists_{\AC}(R,C)=
+    \bigl(\exists_K(R_+,C_+),\,
+    \forall_K(R_+,C_-)\bigr)$.\par
+    $\forall_{\AC}(R,C)=
+    \bigl(\forall_K(R_+,C_+),\,
+    \exists_K(R_+,C_-)\bigr)$.\par\smallskip
+    \textbf{Satisfaction}\quad
+    $I\models_{\AC}\varphi\iff
+    \bigl(\val{\varphi}_I\bigr)_+=\ttv$.
+  \end{column}
+\end{columns}
+\vfill
+\centering
+\textcolor{muted}{Assertions read concepts or roles at named elements.
+Inclusions use classical implication, $\forall_K$, or $\forall_{\AC}$,
+respectively.}\par\smallskip
+\textcolor{muted}{$\Gamma\models_\bullet\Delta\iff
+\forall M_\bullet\,[
+(\forall\gamma\in\Gamma,\ M_\bullet\models_\bullet\gamma)
+\Rightarrow
+(\forall\delta\in\Delta,\ M_\bullet\models_\bullet\delta)]$.}
+\end{frame}
+
+\begin{frame}[t]{Core theorem}
+\normalsize
+First polarize AC concepts into their positive and negative WK coordinates:
+\[
+  \Gamma^{\WK}=P_\sigma(\Gamma).
+\]
+Then split each WK concept and role name into a truth and a meaningfulness name:
+\[
+  T_\sigma(\Gamma)=\Tr\bigl(\Gamma^{\WK}\bigr),\qquad
+  B_\sigma(\Gamma)=\Br\bigl(\Gamma^{\WK}\bigr).
+\]
+\medskip
+\[
+  \boxed{\displaystyle
+  \Gamma\models_{\AC}\Delta
+  \quad\Longleftrightarrow\quad
+  T_\sigma(\Gamma)\cup B_\sigma(\Gamma)\cup B_\sigma(\Delta)
+  \models_{\CL} T_\sigma(\Delta)}
+\]
+\medskip
+\normalsize
+The classical side uses one target signature. The bridges for $\Delta$ are
+premises because they constrain the names used when decoding the conclusions.
+\end{frame}
+
+\begin{frame}[t]{Forward translation}
+\small
+For a WK concept $C$, $C^\tau$ tests truth and $C^\mu$ tests meaningfulness.
+Each atomic concept $A$ and role $r$ gets names $A_{\ttv},A_{\mathrm m}$
+and $r_{\ttv},r_{\mathrm m}$.
+\[
+  (\forall r.C)^\tau
+  =(\forall r_{\ttv}.C^\tau)\sqcap(\exists r_{\mathrm m}.C^\mu),
+  \qquad
+  (\forall r.C)^\mu=\exists r_{\mathrm m}.C^\mu.
+\]
+\vspace{-0.6em}
+\[
+  \begin{aligned}
+  C\sqsubseteq D
+    &\longmapsto
+      \bigl\{C^\tau\sqsubseteq D^\tau,\;
+        \NE(C^\mu\sqcap D^\mu)\bigr\},\\
+  r\sqsubseteq_R s
+    &\longmapsto
+      \bigl\{r_{\ttv}\sqsubseteq_R s_{\ttv},\;
+        \OV(r_{\mathrm m},s_{\mathrm m})\bigr\}.
+  \end{aligned}
+\]
+\vspace{-0.7em}
+\[
+  \NE(X):=\top\sqsubseteq\exists\mathcal U.X,\qquad
+  \OV(p,q):=\NE\bigl(\exists(p\sqcap_R q).\top\bigr).
+\]
+The universal role makes nonemptiness a global condition. Role intersection
+requires the two meaningfulness roles to share the \emph{same pair}.
+Bridges add $A_{\ttv}\sqsubseteq A_{\mathrm m}$ and
+$r_{\ttv}\sqsubseteq_R r_{\mathrm m}$ for names that occur.
+\end{frame}
+
+\begin{frame}[t]{Forward proof sketch}
+\small
+Assume $\Gamma\models_{\AC}\Delta$. Let $J$ be a classical model of
+$T_\sigma(\Gamma)\cup B_\sigma(\Gamma)\cup B_\sigma(\Delta)$.
+\medskip
+\begin{enumerate}
+  \item \textbf{Local decoding.} Decode $J$ as a WK model $K=J^{\WK}$.
+  Bridges enforce truth-implies-meaningfulness on the relevant names.
+  Induction on concepts gives
+  \[
+    \val{C^\tau}_J(x)\iff\val{C}_K(x)=\ttv,\qquad
+    \val{C^\mu}_J(x)\iff\val{C}_K(x)\ne\eev.
+  \]
+  The nonemptiness and overlap lemmas extend this to inclusions and KBs:
+  \[
+    J\models_{\CL}T_\sigma(\Sigma)
+    \iff K\models_{\WK}\Sigma^{\WK}
+    \quad\text{when }J\models_{\CL}B_\sigma(\Sigma).
+  \]
+  \item \textbf{Return to AC.} The polarity lemma says
+  $I\models_{\AC}s\iff I^{\WK}\models_{\WK}P_\sigma(s)$, and
+  $(K^{\AC})^{\WK}=K$.
+  Hence $K\models_{\WK}\Gamma^{\WK}$ gives
+  $K\models_{\WK}\Delta^{\WK}$ by the assumed entailment.
+  \item \textbf{Translate conclusions.} Decode in reverse using
+  $B_\sigma(\Delta)$ to conclude $J\models_{\CL}T_\sigma(\Delta)$.
+\end{enumerate}
+\end{frame}
+
+\end{document}
