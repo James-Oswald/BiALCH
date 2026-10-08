@@ -51,6 +51,7 @@ prefix:70 "¬ₖ " => negK
 infixl:70 " ∧ₖ " => andK
 infixl:65 " ∨ₖ " => orK
 
+
 /-- The paper's restricted existential quantifier, including its stated case order. -/
 noncomputable def paperExists (X : Set V₃²) : V₃ :=
   if H1: ⟨𝔱, 𝔱⟩ ∈ X then
@@ -332,7 +333,7 @@ infix:50 " ⊑ᵣ " => Sentence.rsub
 
 -- ALCH Examples
 example (A B : σ.Nc) (r : σ.Nr) : 𝒞 σ :=
-  A ⊓ₜ (∃[r] B) ⊓ₜ (∀[r] ¬ₜ A)
+  A ⊓ₜ (∃[r] B) ⊓ₜ (∀[r] ¬ₜA)
 
 example (a : σ.Ni) (A : σ.Nc) (r : σ.Nr) : Φ σ :=
   (a :ₐ (A ⊓ₜ (∃[r] A)))
@@ -348,7 +349,6 @@ example (A B : σ.Nc) (r s : ALCHRU_Role σ) : 𝒞ᵁ σ :=
   A ⊓ₜ (∃[r ⊓ᵣ s] B) ⊓ₜ (∀[𝒰] A)
 
 instance : Coe σ.Nr (ALCHRU_Role σ) := ⟨ALCHRU_Role.atom⟩
-
 
 /-- Nonempty domains; no unique-name assumption. -/
 structure Interpretation (σ : Signature) (V : Type) where
@@ -1123,8 +1123,7 @@ with the bridges of both KBs included among the premises. -/
 theorem MainResult (σ : Signature) (Γ Δ : List (Φ σ)) :
     (Γ ⊨ᴬ Δ) ↔ ((T σ Γ ++ B σ Γ ++ B σ Δ) ⊨ᶜ T σ Δ) := by
   calc
-    (Γ ⊨ᴬ Δ) ↔ (Γᵂᴷ ⊨ᴷ Δᵂᴷ) := entailmentA_iff_projectedWK Γ Δ
-    _ ↔ ((T σ Γ ++ B σ Γ ++ B σ Δ) ⊨ᶜ T σ Δ) :=
-      entailmentK_iff_classical Γᵂᴷ Δᵂᴷ
+    (Γ ⊨ᴬ Δ) ↔ (Γᵂᴷ ⊨ᴷ Δᵂᴷ)                  := entailmentA_iff_projectedWK Γ Δ
+    _ ↔ ((T σ Γ ++ B σ Γ ++ B σ Δ) ⊨ᶜ T σ Δ) := entailmentK_iff_classical Γᵂᴷ Δᵂᴷ
 
 end ALCHAC
