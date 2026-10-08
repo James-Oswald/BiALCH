@@ -5,7 +5,7 @@ defaultTargets = ["BiALCH"]
 [[lean_lib]]
 name = "BiALCH"
 srcDir = "src"
-roots = ["DirectTranslation", "Final", "TranslationDemo"]
+roots = ["Final", "TranslationDemo", "DefDel"]
 
 [[require]]
 name = "mathlib"
