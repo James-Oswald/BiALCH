@@ -1,0 +1,80 @@
+
+import Init
+
+/-
+This is a small utility library that inclides the few
+basic definitions we would use from Mathlib.
+
+It includes:
+
+1) Mathlib Sets, Set X := X -> Prop, and helpers
+2) Top and Bot classes with notations ⊤ and ⊥
+3) Some simple theorems about equality and classical logic
+
+-/
+
+-- MARK: Mathlib Sets
+universe u v w
+
+abbrev Set (α : Type u) := α → Prop
+
+instance {α : Type u} : Membership α (Set α) :=
+  ⟨fun s a => s a⟩
+
+namespace Set
+
+def range {α : Type u} {β : Type v} (f : α → β) : Set β :=
+  fun b => ∃ a, f a = b
+
+@[simp] theorem mem_range {α : Type u} {β : Type v}
+    {f : α → β} {b : β} :
+    b ∈ range f ↔ ∃ a, f a = b := Iff.rfl
+
+@[simp] theorem forall_mem_range {α : Type u} {β : Type v}
+    {f : α → β} {P : β → Prop} :
+    (∀ b ∈ range f, P b) ↔ ∀ a, P (f a) := by
+  constructor
+  · intro h a
+    exact h (f a) ⟨a, rfl⟩
+  · intro h b hb
+    obtain ⟨a, rfl⟩ := hb
+    exact h a
+
+@[simp] theorem exists_mem_range {α : Type u} {β : Type v}
+    {f : α → β} {P : β → Prop} :
+    (∃ b ∈ range f, P b) ↔ ∃ a, P (f a) := by
+  constructor
+  · rintro ⟨b, ⟨a, rfl⟩, hb⟩
+    exact ⟨a, hb⟩
+  · rintro ⟨a, ha⟩
+    exact ⟨f a, ⟨a, rfl⟩, ha⟩
+
+end Set
+
+-- MARK: Top and Bot
+
+/- Concept syntax only needs distinguished top and bottom elements. -/
+class Top (α : Type u) where
+  top : α
+
+class Bot (α : Type u) where
+  bot : α
+
+notation "⊤" => Top.top
+notation "⊥" => Bot.bot
+
+attribute [match_pattern] Top.top Bot.bot
+
+-- MARK: Lemmas
+
+theorem congrArg₂ {α : Sort u} {β : Sort v} {γ : Sort w}
+    (f : α → β → γ) {x x' : α} {y y' : β}
+    (hx : x = x') (hy : y = y') : f x y = f x' y' := by
+  cases hx
+  cases hy
+  rfl
+
+theorem not_not {p : Prop} : ¬¬p ↔ p := Classical.not_not
+
+theorem or_iff_not_imp_left {p q : Prop} : p ∨ q ↔ (¬p → q) :=
+  Classical.or_iff_not_imp_left

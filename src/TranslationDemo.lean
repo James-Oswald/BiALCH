@@ -1,11 +1,37 @@
 import Final
 
+open ALCHAC
+section Examples
+variable {σ : Signature}
+
+-- ALCH Examples
+example (A B : σ.Nc) (r : σ.Nr) : 𝒞 σ :=
+  A ⊓ₜ (∃[r] B) ⊓ₜ (∀[r] ¬ₜA)
+
+example (a : σ.Ni) (A : σ.Nc) (r : σ.Nr) : Φ σ :=
+  (a :ₐ (A ⊓ₜ (∃[r] A)))
+
+example (a b : σ.Ni) (r : σ.Nr) : Φ σ :=
+  (a, b) :ᵣ r
+
+example (r s : σ.Nr) : Φ σ := r ⊑ᵣ s
+
+-- ALCHRU Examples with compound roles and universal roles
+
+example (A B : σ.Nc) (r s : ALCHRU_Role σ) : 𝒞ᵁ σ :=
+  A ⊓ₜ (∃[r ⊓ᵣ s] B) ⊓ₜ (∀[𝒰] A)
+
+instance : Coe σ.Nr (ALCHRU_Role σ) := ⟨ALCHRU_Role.atom⟩
+
+end Examples
+
 /-!
 Run `lake build TranslationDemo` to see the translations below.
 The printers in this file only abbreviate the generated syntax; all translations
 come from `Final.lean`. A `+` or `-` labels an AC coordinate; `.t` and `.m`
 label the WK truth and meaningfulness concepts or roles.
 -/
+
 
 namespace TranslationDemo
 

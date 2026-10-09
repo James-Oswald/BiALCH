@@ -5,8 +5,4 @@ defaultTargets = ["BiALCH"]
 [[lean_lib]]
 name = "BiALCH"
 srcDir = "src"
-roots = ["Final", "TranslationDemo", "DefDel"]
-
-[[require]]
-name = "mathlib"
-scope = "leanprover-community"
+roots = ["Final", "TranslationDemo", "DefDel", "Utils"]
