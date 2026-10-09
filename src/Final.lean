@@ -141,7 +141,9 @@ structure Signature where
   Ni : Type
   [reprNi : Repr Ni]
 
-attribute [instance] Signature.reprNc Signature.reprNr Signature.reprNi
+attribute [instance] Signature.reprNc
+attribute [instance] Signature.reprNr
+attribute [instance] Signature.reprNi
 
 /--
 The type of ALCHRU Roles (ALCHRU role language).
@@ -229,7 +231,9 @@ infix:50 " ⊑ᵣ " => Sentence.rsub
 
 /--
 The type of interpretations on a signature.
-Parameterized over the type of truth values.
+Parameterized over the type of truth values V,
+which allows us to use this structure to define
+classical, WK, and AC interpretations.
 -/
 structure Interpretation (σ : Signature) (V : Type) where
   D : Type
@@ -240,11 +244,6 @@ structure Interpretation (σ : Signature) (V : Type) where
 
 attribute [class] Interpretation
 
-/-- Interpret a syntax object using the current interpretation. -/
-class Interpret (σ : Signature) (V : Type) (α : Type u) where
-  Result : Interpretation σ V → Type
-  interpret (I : Interpretation σ V) : α → Result I
-
 /--
 The type of classical Interpretations.
 Uses the two-valued type (`Prop`) for valuations.
@@ -252,18 +251,6 @@ Uses the two-valued type (`Prop`) for valuations.
 abbrev CInterpretation (σ : Signature) :=
   Interpretation σ Prop
 notation "ℐᶜ" => CInterpretation
-
-instance : Interpret σ V σ.Ni where
-  Result I := I.D
-  interpret I := I.individualValuation
-
-instance : Interpret σ V σ.Nr where
-  Result I := I.D → I.D → V
-  interpret I := I.roleValuation
-
-instance : Interpret σ V σ.Nc where
-  Result I := I.D → V
-  interpret I := I.atomicConceptValuation
 
 /--
 The type of Weak Kleene Interpretations
@@ -280,20 +267,54 @@ abbrev ACInterpretation (σ : Signature) :=
   Interpretation σ V₃²
 notation "ℐᴬᶜ" => ACInterpretation
 
-/-- Interpret syntax using whichever interpretation is available as a class instance. -/
+-- MARK: Interpretation Syntax
+/-! # Interpretation Syntax -/
+/-!
+The rest of this section is alot of slop that allows
+us to use the current interpretation as a class instance,
+so that we can use superscript I notation to denote
+interpreting individuals, roles, concepts, and sentences
+in a nice way.
+-/
+
+/-- Interpret a syntax object using the current interpretation. -/
+class Interpret (σ : Signature) (V : Type) (α : Type u) where
+  Result : Interpretation σ V → Type
+  interpret (I : Interpretation σ V) : α → Result I
+
+instance : Interpret σ V σ.Ni where
+  Result I := I.D
+  interpret I := I.individualValuation
+
+instance : Interpret σ V σ.Nr where
+  Result I := I.D → I.D → V
+  interpret I := I.roleValuation
+
+instance : Interpret σ V σ.Nc where
+  Result I := I.D → V
+  interpret I := I.atomicConceptValuation
+
+
+/--
+Interpret syntax using whichever interpretation is
+available as a class instance.
+-/
 class InterpretCurrent (σ : Signature) (α : Type u) where
   Result : Type
   interpret : α → Result
 
-instance [I : ℐᶜ σ] [h : Interpret σ Prop α] : InterpretCurrent σ α where
+instance [I : ℐᶜ σ] [h : Interpret σ Prop α] :
+InterpretCurrent σ α where
   Result := h.Result I
   interpret := h.interpret I
 
-instance [I : ℐᵂᴷ σ] [h : Interpret σ V₃ α] : InterpretCurrent σ α where
+instance [I : ℐᵂᴷ σ] [h : Interpret σ V₃ α] :
+InterpretCurrent σ α where
   Result := h.Result I
   interpret := h.interpret I
 
-instance [I : ℐᴬᶜ σ] [h : Interpret σ V₃² α] : InterpretCurrent σ α where
+instance [I : ℐᴬᶜ σ] [h : Interpret σ V₃² α] :
+InterpretCurrent σ α where
   Result := h.Result I
   interpret := h.interpret I
 
@@ -307,17 +328,16 @@ notation "Δᴵ" => InterpretCurrent.Result (σ := σ) (α := σ.Ni)
 /- # Classical Semantics -/
 
 -- Classical Role Evaluation for ALCHRU
-def∇ roleC [I : ℐᶜ σ] : ℛᵁ σ → Δᴵ → Δᴵ → Prop
+def∇ roleC [ℐᶜ σ] : ℛᵁ σ → Δᴵ → Δᴵ → Prop
 | [r]ᵣ, x, y => rᴵ x y
 | 𝒰, _, _ => True
 | r ⊓ᵣ s, x, y => ∇ r x y ∧ ∇ s x y
 
-instance : Interpret σ Prop (ℛᵁ σ) where
-  Result I := I.D → I.D → Prop
-  interpret _ := roleC
+instance : Interpret σ Prop (ℛᵁ σ) :=
+  ⟨λ I => I.D → I.D → Prop, λ_=> roleC⟩
 
 -- Classical Concept Evaluation on ALCHRU concepts
-def∇ evalC [I : ℐᶜ σ] : 𝒞ᵁ σ → Δᴵ → Prop
+def∇ evalC [ℐᶜ σ] : 𝒞ᵁ σ → Δᴵ → Prop
 | ⊤, _ => True
 | ⊥, _ => False
 | [C]ₐ, x => Cᴵ x
@@ -327,23 +347,18 @@ def∇ evalC [I : ℐᶜ σ] : 𝒞ᵁ σ → Δᴵ → Prop
 | ∃[R] C, x => ∃ y, Rᴵ x y ∧ ∇ C y
 | ∀[R] C, x => ∀ y, Rᴵ x y → ∇ C y
 
-instance : Interpret σ Prop (𝒞ᵁ σ) where
-  Result I := I.D → Prop
-  interpret _ := evalC
+instance : Interpret σ Prop (𝒞ᵁ σ) :=
+  ⟨(·.D → Prop), λ_=> evalC⟩
 
 /--
 Classical sentence semantics for ALCHRU.
 -/
-def sentenceC [I : ℐᶜ σ] : Φᵁ σ → Prop
+def sentenceC [ℐᶜ σ] : Φᵁ σ → Prop
 | a :ₐ C => Cᴵ aᴵ
 | (a, b) :ᵣ R => Rᴵ aᴵ bᴵ
 | C ⊑ D => ∀ x, Cᴵ x → Dᴵ x
 | C ≡ D => ∀ x, Cᴵ x ↔ Dᴵ x
 | R ⊑ᵣ S => ∀ x y, Rᴵ x y → Sᴵ x y
-
-instance : Interpret σ Prop (Φᵁ σ) where
-  Result _ := Prop
-  interpret _ := sentenceC
 
 notation  I "⊨ᶜ " S => @sentenceC _ I S
 
@@ -368,9 +383,8 @@ noncomputable def∇ evalK [ℐᵂᴷ σ] : 𝒞 σ → Δᴵ → V₃
 | ∃[R] C, x => ∃ₖ[Rᴵ x] (∇ C)
 | ∀[R] C, x => ∀ₖ[Rᴵ x] (∇ C)
 
-noncomputable instance : Interpret σ V₃ (𝒞 σ) where
-  Result I := I.D → V₃
-  interpret _ := evalK
+noncomputable instance : Interpret σ V₃ (𝒞 σ) :=
+  ⟨(·.D → V₃), λ_=> evalK⟩
 
 /--
 Weak Kleene sentence semantics for ALCHRU.
@@ -382,9 +396,9 @@ noncomputable def sentenceK [ℐᵂᴷ σ] : Φ σ → V₃
 | C ≡ D => (∀ₖ[Cᴵ] Dᴵ) ∧ₖ (∀ₖ[Dᴵ] Cᴵ)
 | R ⊑ᵣ S => ∀ₖ[(λ p : Δᴵ × Δᴵ => Rᴵ p.1 p.2)] (λ p => Sᴵ p.1 p.2)
 
-noncomputable instance : Interpret σ V₃ (Φ σ) where
-  Result _ := V₃
-  interpret I := @sentenceK _ I
+noncomputable instance : Interpret σ V₃ (Φ σ) :=
+  ⟨λ_=>V₃, λ_=> sentenceK⟩
+
 
 def satisfiesK [ℐᵂᴷ σ] (φ : Φ σ) : Prop :=
   φᴵ = 𝔱
@@ -409,9 +423,8 @@ noncomputable def∇ evalA [ℐᴬᶜ σ] : 𝒞 σ → Δᴵ → V₃²
 | ∃[r] c, x => ∃ₐ[rᴵ x] (∇ c)
 | ∀[r] c, x => ∀ₐ[rᴵ x] (∇ c)
 
-noncomputable instance : Interpret σ V₃² (𝒞 σ) where
-  Result I := I.D → V₃²
-  interpret _ := evalA
+noncomputable instance : Interpret σ V₃² (𝒞 σ) :=
+  ⟨(·.D → V₃²), λ_=>evalA⟩
 
 noncomputable def sentenceA [ℐᴬᶜ σ] : Φ σ → V₃²
 | a :ₐ c => cᴵ aᴵ
@@ -420,10 +433,8 @@ noncomputable def sentenceA [ℐᴬᶜ σ] : Φ σ → V₃²
 | c ≡ d => (∀ₐ[cᴵ] dᴵ) ∧ₐ (∀ₐ[dᴵ] cᴵ)
 | r ⊑ᵣ s => ∀ₐ[(λ p : Δᴵ × Δᴵ => rᴵ p.1 p.2)] (λ p => sᴵ p.1 p.2)
 
-
-noncomputable instance : Interpret σ V₃² (Φ σ) where
-  Result _ := V₃²
-  interpret I := @sentenceA _ I
+noncomputable instance : Interpret σ V₃² (Φ σ) :=
+  ⟨λ_=>V₃²,λ_=>sentenceA⟩
 
 def satisfiesA [ℐᴬᶜ σ] (φ : Φ σ) : Prop :=
   (φᴵ : V₃²).1 = 𝔱
