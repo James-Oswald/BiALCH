@@ -781,15 +781,15 @@ theorem acConceptCoordinates (I : ℐᴬᶜ σ) (c : 𝒞 σ) (s : Side) (x : I.
       | negative => exact congrArg₂ existsK rfl (funext (ih -ₚ))
 
 theorem acSentenceSupport (I : ℐᴬᶜ σ) (s : Φ σ) :
-    @evalSentenceK _ (Iᵂᴷ) (projectSentence σ s) = (@evalSentenceA _ I s)[+ₚ] := by
+    @evalSentenceK _ (Iᵂᴷ) (polarizeSentence σ s) = (@evalSentenceA _ I s)[+ₚ] := by
   have hc (c : 𝒞 σ) :
       (@evalConceptK _ (Iᵂᴷ) (cᵖ⁺)) = fun x => ((@evalConceptA _ I c) x)[+ₚ] :=
     funext (acConceptCoordinates I c +ₚ)
-  cases s <;> simp only [InterpretCurrent.interpret, Interpret.interpret, projectSentence, evalSentenceK, evalSentenceA, forallA, andA, hc] <;> rfl
+  cases s <;> simp only [InterpretCurrent.interpret, Interpret.interpret, polarizeSentence, evalSentenceK, evalSentenceA, forallA, andA, hc] <;> rfl
 
 theorem acSentenceSupport_iff (I : ℐᴬᶜ σ) (s : Φ σ) :
-    (Iᵂᴷ ⊨ᴷ projectSentence σ s) ↔ (I ⊨ᴬ s) := by
-  change @evalSentenceK _ (Iᵂᴷ) (projectSentence σ s) = 𝔱 ↔ (@evalSentenceA _ I s)[+ₚ] = 𝔱
+    (Iᵂᴷ ⊨ᴷ polarizeSentence σ s) ↔ (I ⊨ᴬ s) := by
+  change @evalSentenceK _ (Iᵂᴷ) (polarizeSentence σ s) = 𝔱 ↔ (@evalSentenceA _ I s)[+ₚ] = 𝔱
   rw [acSentenceSupport]
 
 /-- The explicit WK entailment intermediate used in the final theorem. -/
@@ -801,7 +801,7 @@ theorem entailmentA_iff_projectedWK (Γ Δ : List (Φ σ)) :
     rcases List.mem_map.mp hq with ⟨s, hs, rfl⟩
     have hsource : ∀ p ∈ Γ, Kᴬᶜ ⊨ᴬ p := by
       intro p hp
-      have hk := hΓ (projectSentence σ p) (List.mem_map.mpr ⟨p, hp, rfl⟩)
+      have hk := hΓ (polarizeSentence σ p) (List.mem_map.mpr ⟨p, hp, rfl⟩)
       exact (acSentenceSupport_iff Kᴬᶜ p).mp (hround ▸ hk)
     have hout := h Kᴬᶜ hsource s hs
     exact hround ▸ (acSentenceSupport_iff Kᴬᶜ s).mpr hout
@@ -810,7 +810,7 @@ theorem entailmentA_iff_projectedWK (Γ Δ : List (Φ σ)) :
       intro p hp
       rcases List.mem_map.mp hp with ⟨q, hq, rfl⟩
       exact (acSentenceSupport_iff I q).mpr (hΓ q hq)
-    have hout := h Iᵂᴷ hprojected (projectSentence σ s)
+    have hout := h Iᵂᴷ hprojected (polarizeSentence σ s)
       (List.mem_map.mpr ⟨s, hs, rfl⟩)
     exact (acSentenceSupport_iff I s).mp hout
 
