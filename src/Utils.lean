@@ -23,16 +23,17 @@ instance {α : Type u} : Membership α (Set α) :=
 
 namespace Set
 
-def range {α : Type u} {β : Type v} (f : α → β) : Set β :=
+/-- The set of values obtained by varying an argument over its type. -/
+def ofValues {α : Type u} {β : Type v} (f : α → β) : Set β :=
   fun b => ∃ a, f a = b
 
-@[simp] theorem mem_range {α : Type u} {β : Type v}
+@[simp] theorem mem_ofValues {α : Type u} {β : Type v}
     {f : α → β} {b : β} :
-    b ∈ range f ↔ ∃ a, f a = b := Iff.rfl
+    b ∈ ofValues f ↔ ∃ a, f a = b := Iff.rfl
 
-@[simp] theorem forall_mem_range {α : Type u} {β : Type v}
+@[simp] theorem forall_mem_ofValues {α : Type u} {β : Type v}
     {f : α → β} {P : β → Prop} :
-    (∀ b ∈ range f, P b) ↔ ∀ a, P (f a) := by
+    (∀ b ∈ ofValues f, P b) ↔ ∀ a, P (f a) := by
   constructor
   · intro h a
     exact h (f a) ⟨a, rfl⟩
@@ -40,16 +41,28 @@ def range {α : Type u} {β : Type v} (f : α → β) : Set β :=
     obtain ⟨a, rfl⟩ := hb
     exact h a
 
-@[simp] theorem exists_mem_range {α : Type u} {β : Type v}
+@[simp] theorem exists_mem_ofValues {α : Type u} {β : Type v}
     {f : α → β} {P : β → Prop} :
-    (∃ b ∈ range f, P b) ↔ ∃ a, P (f a) := by
+    (∃ b ∈ ofValues f, P b) ↔ ∃ a, P (f a) := by
   constructor
   · rintro ⟨b, ⟨a, rfl⟩, hb⟩
     exact ⟨a, hb⟩
   · rintro ⟨a, ha⟩
     exact ⟨f a, ⟨a, rfl⟩, ha⟩
 
+/-- A set of values indexed by an inhabited type is nonempty. -/
+theorem ofValues_nonempty {α : Type u} {β : Type v} [Nonempty α]
+    (f : α → β) : ∃ b, b ∈ ofValues f := by
+  obtain ⟨a⟩ := ‹Nonempty α›
+  exact ⟨f a, a, rfl⟩
+
 end Set
+
+/-- `{f x | x : α}` is the set of values of `f` on the whole type `α`. -/
+syntax:arg "{" term " | " ident " : " term "}" : term
+macro_rules
+  | `({ $value:term | $x:ident : $α:term }) =>
+      `(Set.ofValues (fun $x : $α => $value))
 
 -- MARK: Top and Bot
 

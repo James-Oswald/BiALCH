@@ -91,9 +91,8 @@ prefix:70 "¬ₖ " => negK
 infixl:70 " ∧ₖ " => andK
 infixl:65 " ∨ₖ " => orK
 
-
 /-- Fergusonian Restricted existential quantifier -/
-noncomputable def paperExists (X : Set V₃²) : V₃ := by
+noncomputable def existsK (X : Set V₃²) : V₃ := by
   classical
   exact
   -- 𝔱 if any pair is (𝔱, 𝔱)
@@ -110,7 +109,7 @@ noncomputable def paperExists (X : Set V₃²) : V₃ := by
   else by grind only -- Impossible case
 
 /-- Fergusonian Restricted universal quantifier -/
-noncomputable def paperForall (X : Set V₃²) : V₃ := by
+noncomputable def forallK (X : Set V₃²) : V₃ := by
   classical
   exact
   -- 𝔱 if no pair is (𝔱, 𝔣) or (𝔱, 𝔢) and there is at
@@ -126,30 +125,8 @@ noncomputable def paperForall (X : Set V₃²) : V₃ := by
     𝔣
   else by grind only -- Impossible case
 
-noncomputable def existsK {D : Type} (r c : D → V₃) : V₃ :=
-  paperExists (Set.range (λ x => (r x, c x)))
-
-noncomputable def forallK {D : Type} (r c : D → V₃) : V₃ :=
-  paperForall (Set.range (λ x => (r x, c x)))
-
-notation "∃ₖ[" r "]" c:75 => existsK r c
-notation "∀ₖ[" r "]" c:75 => forallK r c
-
--- The following indexed-family characterizations are used only to state and
--- prove convenient truth/meaningfulness lemmas. The semantic operators above are
--- defined by the paper's set clauses.
-private noncomputable def existsKIndexed {D : Type} (r c : D → V₃) : V₃ := by
-  classical
-  exact if ∃ x, r x = 𝔱 ∧ c x = 𝔱 then 𝔱
-    else if ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 then 𝔣
-    else 𝔢
-
-private noncomputable def forallKIndexed {D : Type} (r c : D → V₃) : V₃ := by
-  classical
-  exact if ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 then
-    if ∀ x, r x = 𝔱 → c x = 𝔱 then 𝔱 else 𝔣
-    else 𝔢
-
+prefix:75 "∃ₖ " => existsK
+prefix:75 "∀ₖ " => forallK
 
 -- MARK: AC Operators
 /- # AC Operators -/
@@ -162,16 +139,44 @@ prefix:70 "∼ₐ " => negA
 infixl:70 " ∧ₐ " => andA
 infixl:65 " ∨ₐ " => orA
 
-noncomputable def existsA {D : Type} (r c : D → V₃²) : V₃² :=
-  (∃ₖ[(λ x => (r x).1)] (λ x => (c x).1),
-   ∀ₖ[(λ x => (r x).1)] (λ x => (c x).2))
+/-- Project the positive coordinates of AC role/concept pairs. -/
+def acPositive (X : Set (V₃² × V₃²)) : Set V₃² :=
+  fun p => ∃ q ∈ X, (q.1.1, q.2.1) = p
 
-noncomputable def forallA {D : Type} (r c : D → V₃²) : V₃² :=
-  (∀ₖ[(λ x => (r x).1)] (λ x => (c x).1),
-   ∃ₖ[(λ x => (r x).1)] (λ x => (c x).2))
+/-- Project the role's positive and the concept's negative coordinates. -/
+def acNegative (X : Set (V₃² × V₃²)) : Set V₃² :=
+  fun p => ∃ q ∈ X, (q.1.1, q.2.2) = p
 
-notation "∃ₐ[" r "]" c:75 => existsA r c
-notation "∀ₐ[" r "]" c:75 => forallA r c
+@[simp] theorem acPositive_builder {D : Type} (r c : D → V₃²) :
+    acPositive {(r x, c x) | x : D} =
+      {((r x).1, (c x).1) | x : D} := by
+  funext p
+  apply propext
+  constructor
+  · rintro ⟨q, ⟨x, rfl⟩, rfl⟩
+    exact ⟨x, rfl⟩
+  · rintro ⟨x, rfl⟩
+    exact ⟨(r x, c x), ⟨x, rfl⟩, rfl⟩
+
+@[simp] theorem acNegative_builder {D : Type} (r c : D → V₃²) :
+    acNegative {(r x, c x) | x : D} =
+      {((r x).1, (c x).2) | x : D} := by
+  funext p
+  apply propext
+  constructor
+  · rintro ⟨q, ⟨x, rfl⟩, rfl⟩
+    exact ⟨x, rfl⟩
+  · rintro ⟨x, rfl⟩
+    exact ⟨(r x, c x), ⟨x, rfl⟩, rfl⟩
+
+noncomputable def existsA (X : Set (V₃² × V₃²)) : V₃² :=
+  (∃ₖ (acPositive X), ∀ₖ (acNegative X))
+
+noncomputable def forallA (X : Set (V₃² × V₃²)) : V₃² :=
+  (∀ₖ (acPositive X), ∃ₖ (acNegative X))
+
+prefix:75 "∃ₐ " => existsA
+prefix:75 "∀ₐ " => forallA
 
 -- MARK: Language
 /- # ALCH(RU) Language -/
@@ -417,8 +422,8 @@ noncomputable def∇ evalConceptK [ℐᵂᴷ σ] : 𝒞 σ → Δᴵ → V₃
 | ¬ₜ C, x => ¬ₖ(∇ C x)
 | C ⊓ₜ D, x => (∇ C x) ∧ₖ (∇ D x)
 | C ⊔ₜ D, x => (∇ C x) ∨ₖ (∇ D x)
-| ∃[R] C, x => ∃ₖ[Rᴵ x] (∇ C)
-| ∀[R] C, x => ∀ₖ[Rᴵ x] (∇ C)
+| ∃[R] C, x => ∃ₖ {(Rᴵ x y, ∇ C y) | y : Δᴵ}
+| ∀[R] C, x => ∀ₖ {(Rᴵ x y, ∇ C y) | y : Δᴵ}
 
 /-- ·ᴵ for ALCHRU concepts in weak Kleene semantics -/
 noncomputable instance : Interpret σ V₃ (𝒞 σ) :=
@@ -428,9 +433,10 @@ noncomputable instance : Interpret σ V₃ (𝒞 σ) :=
 noncomputable def evalSentenceK [ℐᵂᴷ σ] : Φ σ → V₃
 | a :ₐ C => Cᴵ aᴵ
 | (a, b) :ᵣ r => rᴵ aᴵ bᴵ
-| C ⊑ D => ∀ₖ[Cᴵ] Dᴵ
-| C ≡ D => (∀ₖ[Cᴵ] Dᴵ) ∧ₖ (∀ₖ[Dᴵ] Cᴵ)
-| R ⊑ᵣ S => ∀ₖ[(λ p : Δᴵ × Δᴵ => Rᴵ p.1 p.2)] (λ p => Sᴵ p.1 p.2)
+| C ⊑ D => ∀ₖ {(Cᴵ x, Dᴵ x) | x : Δᴵ}
+| C ≡ D => (∀ₖ {(Cᴵ x, Dᴵ x) | x : Δᴵ}) ∧ₖ
+    (∀ₖ {(Dᴵ x, Cᴵ x) | x : Δᴵ})
+| R ⊑ᵣ S => ∀ₖ {(Rᴵ p.1 p.2, Sᴵ p.1 p.2) | p : Δᴵ × Δᴵ}
 
 /-- ·ᴵ for ALCHRU sentences in weak Kleene semantics -/
 noncomputable instance : Interpret σ V₃ (Φ σ) :=
@@ -458,8 +464,8 @@ noncomputable def∇ evalConceptA [ℐᴬᶜ σ] : 𝒞 σ → Δᴵ → V₃²
 | ¬ₜ c, x => ∼ₐ(∇ c x)
 | c ⊓ₜ d, x => (∇ c x) ∧ₐ (∇ d x)
 | c ⊔ₜ d, x => (∇ c x) ∨ₐ (∇ d x)
-| ∃[r] c, x => ∃ₐ[rᴵ x] (∇ c)
-| ∀[r] c, x => ∀ₐ[rᴵ x] (∇ c)
+| ∃[r] c, x => ∃ₐ {(rᴵ x y, ∇ c y) | y : Δᴵ}
+| ∀[r] c, x => ∀ₐ {(rᴵ x y, ∇ c y) | y : Δᴵ}
 
 /-- ·ᴵ for ALCH concepts in AC semantics -/
 noncomputable instance : Interpret σ V₃² (𝒞 σ) :=
@@ -469,9 +475,10 @@ noncomputable instance : Interpret σ V₃² (𝒞 σ) :=
 noncomputable def evalSentenceA [ℐᴬᶜ σ] : Φ σ → V₃²
 | a :ₐ c => cᴵ aᴵ
 | (a, b) :ᵣ r => rᴵ aᴵ bᴵ
-| c ⊑ d => ∀ₐ[cᴵ] dᴵ
-| c ≡ d => (∀ₐ[cᴵ] dᴵ) ∧ₐ (∀ₐ[dᴵ] cᴵ)
-| r ⊑ᵣ s => ∀ₐ[(λ p : Δᴵ × Δᴵ => rᴵ p.1 p.2)] (λ p => sᴵ p.1 p.2)
+| c ⊑ d => ∀ₐ {(cᴵ x, dᴵ x) | x : Δᴵ}
+| c ≡ d => (∀ₐ {(cᴵ x, dᴵ x) | x : Δᴵ}) ∧ₐ
+    (∀ₐ {(dᴵ x, cᴵ x) | x : Δᴵ})
+| r ⊑ᵣ s => ∀ₐ {(rᴵ p.1 p.2, sᴵ p.1 p.2) | p : Δᴵ × Δᴵ}
 
 /-- ·ᴵ for ALCH sentences in AC semantics -/
 noncomputable instance : Interpret σ V₃² (Φ σ) :=
@@ -757,103 +764,6 @@ instance : BridgeTranslation ((Φ σ)*) (Φᵁ σᵀ)* :=
 -- MARK: WK Lemmas
 /- # WK Lemmas -/
 
-private theorem existsKIndexed_paper {D} (r c : D → V₃) :
-    existsKIndexed r c = paperExists (Set.range (fun x => (r x, c x))) := by
-  classical
-  have hm : (∀ p ∈ Set.range (fun x => (r x, c x)), p.1 = 𝔢 ∨ p.2 = 𝔢) ↔
-      ¬ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-    simp only [Set.forall_mem_range, not_exists, not_and, not_not]
-    exact forall_congr' (fun x => or_iff_not_imp_left)
-  have ht : ((𝔱, 𝔱) ∈ Set.range (fun x => (r x, c x))) ↔
-      ∃ x, r x = 𝔱 ∧ c x = 𝔱 := by simp
-  have hw : (∃ p ∈ Set.range (fun x => (r x, c x)), p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) ↔
-      ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-    simp only [Set.exists_mem_range]
-  unfold existsKIndexed paperExists
-  by_cases hT : ∃ x, r x = 𝔱 ∧ c x = 𝔱
-  · have hT' := ht.mpr hT
-    simp [hT, hT']
-  · by_cases hW : ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢
-    · have hT' : (𝔱, 𝔱) ∉ Set.range (fun x => (r x, c x)) :=
-        fun h => hT (ht.mp h)
-      have hW' := hw.mpr hW
-      have hM' : ¬ (∀ p ∈ Set.range (fun x => (r x, c x)),
-          p.1 = 𝔢 ∨ p.2 = 𝔢) := fun h => (hm.mp h) hW
-      simp only [hT, hT', hW, hW', hM', ite_false, ite_true,
-        dite_false, dite_true, not_false_eq_true, true_and]
-    · have hT' : (𝔱, 𝔱) ∉ Set.range (fun x => (r x, c x)) :=
-        fun h => hT (ht.mp h)
-      simp [hT, hT', hW]
-
-private theorem forallKIndexed_paper {D} (r c : D → V₃) :
-    forallKIndexed r c = paperForall (Set.range (fun x => (r x, c x))) := by
-  classical
-  have hm : (∀ p ∈ Set.range (fun x => (r x, c x)), p.1 = 𝔢 ∨ p.2 = 𝔢) ↔
-      ¬ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-    simp only [Set.forall_mem_range, not_exists, not_and, not_not]
-    exact forall_congr' (fun x => or_iff_not_imp_left)
-  have hw : (∃ p ∈ Set.range (fun x => (r x, c x)), p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) ↔
-      ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-    simp only [Set.exists_mem_range]
-  have ht : ((𝔱, 𝔣) ∉ Set.range (fun x => (r x, c x)) ∧
-      (𝔱, 𝔢) ∉ Set.range (fun x => (r x, c x))) ↔
-      ∀ x, r x = 𝔱 → c x = 𝔱 := by
-    simp only [Set.mem_range, Prod.mk.injEq, not_exists, not_and]
-    constructor
-    · rintro ⟨hf, he⟩ x hx
-      have hf' := hf x hx
-      have he' := he x hx
-      cases hcx : c x <;> simp_all
-    · intro h
-      constructor <;> intro x hx <;> simp [h x hx]
-  have htrue : ((𝔱, 𝔣) ∉ Set.range (fun x => (r x, c x)) ∧
-      (𝔱, 𝔢) ∉ Set.range (fun x => (r x, c x)) ∧
-      ∃ p ∈ Set.range (fun x => (r x, c x)), p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢) ↔
-      (∀ x, r x = 𝔱 → c x = 𝔱) ∧ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-    rw [← and_assoc, ht, hw]
-  have hv : ((𝔱, 𝔣) ∈ Set.range (fun x => (r x, c x)) ∨
-      (𝔱, 𝔢) ∈ Set.range (fun x => (r x, c x))) ↔
-      ∃ x, r x = 𝔱 ∧ c x ≠ 𝔱 := by
-    simp only [Set.mem_range, Prod.mk.injEq, ← exists_or]
-    constructor
-    · rintro ⟨x, (⟨hr, hf⟩ | ⟨hr, he⟩)⟩
-      · exact ⟨x, hr, by simp [hf]⟩
-      · exact ⟨x, hr, by simp [he]⟩
-    · rintro ⟨x, hr, hc⟩
-      cases hcx : c x with
-      | t => simp [hcx] at hc
-      | e => exact ⟨x, Or.inr ⟨hr, hcx⟩⟩
-      | f => exact ⟨x, Or.inl ⟨hr, hcx⟩⟩
-  unfold forallKIndexed paperForall
-  repeat (split) <;> first | rfl | grind only
-
-private theorem existsKIndexed_t {D} (r c : D → V₃) :
-    existsKIndexed r c = 𝔱 ↔ ∃ x, r x = 𝔱 ∧ c x = 𝔱 := by
-  classical
-  unfold existsKIndexed
-  repeat (split) <;> simp_all
-
-private theorem existsKIndexed_m {D} (r c : D → V₃) :
-    existsKIndexed r c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-  classical
-  unfold existsKIndexed
-  repeat (split) <;> simp_all
-  obtain ⟨x, hx, hy⟩ := ‹∃ x, r x = 𝔱 ∧ c x = 𝔱›
-  exact ⟨x, by simp [hx], by simp [hy]⟩
-
-private theorem forallKIndexed_t {D} (r c : D → V₃) :
-    forallKIndexed r c = 𝔱 ↔ (∀ x, r x = 𝔱 → c x = 𝔱) ∧
-      ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-  classical
-  unfold forallKIndexed
-  repeat (split) <;> simp_all
-
-private theorem forallKIndexed_m {D} (r c : D → V₃) :
-    forallKIndexed r c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-  classical
-  unfold forallKIndexed
-  repeat (split) <;> simp_all
-
 /-- ¬v is 𝔱 iff v is neither 𝔢 nor 𝔱 -/
 @[simp]
 theorem negK_t (v : V₃) : ¬ₖv = 𝔱 ↔ v ≠ 𝔢 ∧ v ≠ 𝔱 := by
@@ -883,34 +793,70 @@ theorem orK_t (v w : V₃) : v ∨ₖ w = 𝔱 ↔ (v = 𝔱 ∨ w = 𝔱) ∧ v
 theorem orK_m (v w : V₃) : v ∨ₖ w ≠ 𝔢 ↔ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
   cases v <;> cases w <;> decide
 
-@[simp]
-theorem existsK_t {D} (r c : D → V₃) :
-    ∃ₖ[r] c = 𝔱 ↔ ∃ x, r x = 𝔱 ∧ c x = 𝔱 := by
-  change paperExists (Set.range (λ x => (r x, c x))) = 𝔱 ↔ _
-  rw [← existsKIndexed_paper]
-  exact existsKIndexed_t r c
+/-- ∃ₖ X is true iff X contains (𝔱, 𝔱). -/
+private theorem existsK_true (X : Set V₃²) :
+∃ₖ X = 𝔱 ↔ (𝔱, 𝔱) ∈ X := by
+  classical
+  unfold existsK
+  repeat (split <;> (try rfl) <;> (try grind only))
+
+/-- ∃ₖ X is meaningful when a pair is fully meaningful. -/
+private theorem existsK_meaningful (X : Set V₃²) :
+∃ₖ X ≠ 𝔢 ↔ ∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢 := by
+  classical
+  unfold existsK
+  repeat (split <;> (try rfl) <;> (try grind only))
+
+/-- ∀ₖ X is true exactly under its set-based true clause. -/
+private theorem forallK_true (X : Set V₃²) :
+∀ₖ X = 𝔱 ↔ (𝔱, 𝔣) ∉ X ∧ (𝔱, 𝔢) ∉ X ∧ ∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢 := by
+  classical
+  unfold forallK
+  repeat (split <;> (try rfl) <;> (try grind only))
+
+/-- ∀ₖ X is meaningful exactly when a pair is fully meaningful. -/
+private theorem forallK_meaningful (X : Set V₃²) :
+∀ₖ X ≠ 𝔢 ↔ ∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢 := by
+  classical
+  unfold forallK
+  repeat (split <;> (try rfl) <;> (try grind only))
+
 
 @[simp]
-theorem existsK_m {D} (r c : D → V₃) :
-    ∃ₖ[r] c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-  change paperExists (Set.range (λ x => (r x, c x)) ) ≠ 𝔢 ↔ _
-  rw [← existsKIndexed_paper]
-  exact existsKIndexed_m r c
+theorem existsK_t {D : Type} (r c : D → V₃) :
+∃ₖ {(r x, c x) | x : D} = 𝔱 ↔ ∃ x, r x = 𝔱 ∧ c x = 𝔱 := by
+  rw [existsK_true]
+  simp
 
 @[simp]
-theorem forallK_t {D} (r c : D → V₃) :
-    ∀ₖ[r] c = 𝔱 ↔ (∀ x, r x = 𝔱 → c x = 𝔱) ∧
-      ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-  change paperForall (Set.range (λ x => (r x, c x))) = 𝔱 ↔ _
-  rw [← forallKIndexed_paper]
-  exact forallKIndexed_t r c
+theorem existsK_m {D : Type} (r c : D → V₃) :
+∃ₖ {(r x, c x) | x : D} ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
+  rw [existsK_meaningful]
+  simp only [Set.exists_mem_ofValues]
 
 @[simp]
-theorem forallK_m {D} (r c : D → V₃) :
-    ∀ₖ[r] c ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
-  change paperForall (Set.range (λ x => (r x, c x))) ≠ 𝔢 ↔ _
-  rw [← forallKIndexed_paper]
-  exact forallKIndexed_m r c
+theorem forallK_t {D : Type} (r c : D → V₃) :
+∀ₖ {(r x, c x) | x : D} = 𝔱 ↔
+(∀ x, r x = 𝔱 → c x = 𝔱) ∧ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
+  have ht : ((𝔱, 𝔣) ∉ {(r x, c x) | x : D} ∧
+      (𝔱, 𝔢) ∉ {(r x, c x) | x : D}) ↔
+      ∀ x, r x = 𝔱 → c x = 𝔱 := by
+    simp only [Set.mem_ofValues, Prod.mk.injEq, not_exists, not_and]
+    constructor
+    · rintro ⟨hf, he⟩ x hx
+      have hf' := hf x hx
+      have he' := he x hx
+      cases hcx : c x <;> simp_all
+    · intro h
+      constructor <;> intro x hx <;> simp [h x hx]
+  rw [forallK_true, ← and_assoc, ht]
+  simp only [Set.exists_mem_ofValues]
+
+@[simp]
+theorem forallK_m {D : Type} (r c : D → V₃) :
+    ∀ₖ {(r x, c x) | x : D} ≠ 𝔢 ↔ ∃ x, r x ≠ 𝔢 ∧ c x ≠ 𝔢 := by
+  rw [forallK_meaningful]
+  simp only [Set.exists_mem_ofValues]
 
 -- MARK: Other Lemmas
 
@@ -1007,12 +953,36 @@ theorem acConceptCoordinates (I : ℐᴬᶜ σ) (c : 𝒞 σ)
         [piConcept, evalConceptK, evalConceptA, orA, GetElem.getElem, coordinate, ihc, ihd]
   | ex r c ih =>
       cases s with
-      | positive => exact congrArg₂ existsK rfl (funext (ih +ₚ))
-      | negative => exact congrArg₂ forallK rfl (funext (ih -ₚ))
+      | positive =>
+          simp only [piConcept, evalConceptK, evalConceptA, existsA,
+            GetElem.getElem, coordinate, acPositive_builder]
+          apply congrArg existsK
+          apply congrArg Set.ofValues
+          funext y
+          exact congrArg (fun z => (_, z)) (ih +ₚ y)
+      | negative =>
+          simp only [piConcept, evalConceptK, evalConceptA, existsA,
+            GetElem.getElem, coordinate, acNegative_builder]
+          apply congrArg forallK
+          apply congrArg Set.ofValues
+          funext y
+          exact congrArg (fun z => (_, z)) (ih -ₚ y)
   | all r c ih =>
       cases s with
-      | positive => exact congrArg₂ forallK rfl (funext (ih +ₚ))
-      | negative => exact congrArg₂ existsK rfl (funext (ih -ₚ))
+      | positive =>
+          simp only [piConcept, evalConceptK, evalConceptA, forallA,
+            GetElem.getElem, coordinate, acPositive_builder]
+          apply congrArg forallK
+          apply congrArg Set.ofValues
+          funext y
+          exact congrArg (fun z => (_, z)) (ih +ₚ y)
+      | negative =>
+          simp only [piConcept, evalConceptK, evalConceptA, forallA,
+            GetElem.getElem, coordinate, acNegative_builder]
+          apply congrArg existsK
+          apply congrArg Set.ofValues
+          funext y
+          exact congrArg (fun z => (_, z)) (ih -ₚ y)
 
 theorem acSentenceSupport (I : ℐᴬᶜ σ) (s : Φ σ) :
     (π s)^(Iᵂᴷ) = coordinate (s^I) +ₚ := by
@@ -1020,7 +990,9 @@ theorem acSentenceSupport (I : ℐᴬᶜ σ) (s : Φ σ) :
   have hc (c : 𝒞 σ) :
       (@evalConceptK _ (Iᵂᴷ) (c⁺)) = fun x => ((@evalConceptA _ I c) x)[+ₚ] :=
     funext (acConceptCoordinates (I := I) c +ₚ)
-  cases s <;> simp only [Interpret.domain, Interpret.current, Interpret.interpret, piSentence, evalSentenceK, evalSentenceA, forallA, andA, hc] <;> rfl
+  cases s <;> simp only [Interpret.domain, Interpret.current, Interpret.interpret,
+    piSentence, evalSentenceK, evalSentenceA, forallA, andA, hc,
+    acPositive_builder, GetElem.getElem, coordinate] <;> rfl
 
 theorem acSentenceSupport_iff (I : ℐᴬᶜ σ) (s : Φ σ) :
 (Iᵂᴷ ⊨ᵂᴷ π s) ↔ (I ⊨ᴬᶜ s) := by
@@ -1262,9 +1234,9 @@ private theorem translateInclusion_iff (J : ℐᶜ σᵀ) (c d : 𝒞 σ) :
 
 theorem translateInclusionEncode (I : ℐᵂᴷ σ) (c d : 𝒞 σ) :
     (∀ q ∈ tauSubsumption c d, (encodeWK I) ⊨ᶜ q) ↔
-      ∀ₖ[c^I] (d^I) = 𝔱 := by
+      ∀ₖ {((c^I) x, (d^I) x) | x : I.D} = 𝔱 := by
   change (∀ q ∈ tauSubsumption c d, (encodeWK I) ⊨ᶜ q) ↔
-    ∀ₖ[(@evalConceptK _ I c)] (@evalConceptK _ I d) = 𝔱
+    ∀ₖ {((@evalConceptK _ I c) x, (@evalConceptK _ I d) x) | x : I.D} = 𝔱
   rw [translateInclusion_iff, forallK_t]
   exact and_congr
     (forall_congr' (fun x => imp_congr (translateConceptEncode I c x).1
@@ -1277,9 +1249,10 @@ theorem decodeInclusionLocal (J : ℐᶜ σᵀ)
     (hc : ∀ q ∈ conceptBridges c, J ⊨ᶜ q)
     (hd : ∀ q ∈ conceptBridges d, J ⊨ᶜ q) :
     (∀ q ∈ tauSubsumption c d, J ⊨ᶜ q) ↔
-      ∀ₖ[c^(decodeTarget J)] (d^(decodeTarget J)) = 𝔱 := by
+      ∀ₖ {((c^(decodeTarget J)) x, (d^(decodeTarget J)) x) | x : J.D} = 𝔱 := by
   change (∀ q ∈ tauSubsumption c d, J ⊨ᶜ q) ↔
-    ∀ₖ[(@evalConceptK _ (decodeTarget J) c)] (@evalConceptK _ (decodeTarget J) d) = 𝔱
+    ∀ₖ {((@evalConceptK _ (decodeTarget J) c) x,
+      (@evalConceptK _ (decodeTarget J) d) x) | x : J.D} = 𝔱
   rw [translateInclusion_iff, forallK_t]
   exact and_congr
     (forall_congr' (fun x => imp_congr (decodeConceptLocal J c hc x).1
@@ -1335,6 +1308,7 @@ theorem decodeSentenceLocal (J : ℐᶜ σᵀ)
       simp only [Interpret.current, Interpret.interpret, tauSentence, allMemAppend, decodeInclusionLocal J c d hc hd,
         decodeInclusionLocal J d c hd hc, satisfiesK, evalSentenceK]
       rw [andK_t]
+      rfl
   | rsub r s =>
       have hr : ∀ x y, (J.roleValuation (r, 𝕋)) x y →
           (J.roleValuation (r, 𝕄)) x y :=
