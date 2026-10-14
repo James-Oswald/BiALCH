@@ -252,9 +252,11 @@ infix:50 " ⊑ᵣ " => Sentence.rsub
 The type of interpretations on a signature.
 Parameterized over the type of truth values V,
 which allows us to use this structure to define
-classical, WK, and AC interpretations.
+classical, WK, and AC interpretations. V is an
+outParam so the current interpretation determines
+the truth-value type during instance search.
 -/
-structure Interpretation (σ : Signature) (V : Type) where
+structure Interpretation (σ : Signature) (V : outParam Type) where
   D : Type
   inhabited : Nonempty D
   individualValuation : σ.Ni → D
@@ -279,71 +281,52 @@ abbrev WKInterpretation (σ : Signature) :=
   Interpretation σ V₃
 notation "ℐᵂᴷ" => WKInterpretation
 
-/-- The type of Analytic Containment Interpretations.
+/--
+The type of Analytic Containment Interpretations.
 Uses pairs of three-valued Kleene (`V₃²`) for valuations.
 -/
 abbrev ACInterpretation (σ : Signature) :=
   Interpretation σ V₃²
 notation "ℐᴬᶜ" => ACInterpretation
 
--- MARK: Interpretation Notation
-/-! # Interpretation Notation -/
-/-!
-The rest of this section is alot of class slop that allows
-us to use the current interpretation as a class instance,
-so that we can use superscript I notation to denote
-interpreting individuals, roles, concepts, and sentences
-in a nice way.
--/
+/-! ## Interpretation Notation -/
 
-/-- Interpret a syntax object using the current interpretation. -/
+/--
+Operator for allowing superscript I notation for interpretations
+-/
 class Interpret (σ : Signature) (V : Type) (α : Type u) where
   Result : Interpretation σ V → Type
   interpret (I : Interpretation σ V) : α → Result I
 
-instance : Interpret σ V σ.Ni where
-  Result I := I.D
-  interpret I := I.individualValuation
+/-- ·ᴵ for interpretations of individuals -/
+instance : Interpret σ V σ.Ni :=
+  ⟨(·.D), (·.individualValuation)⟩
 
-instance : Interpret σ V σ.Nr where
-  Result I := I.D → I.D → V
-  interpret I := I.roleValuation
+/-- ·ᴵ for interpretations of atomic role names -/
+instance : Interpret σ V σ.Nr :=
+  ⟨λ I => I.D → I.D → V, (·.roleValuation)⟩
 
-instance : Interpret σ V σ.Nc where
-  Result I := I.D → V
-  interpret I := I.atomicConceptValuation
+/-- ·ᴵ for interpretations of atomic concept names -/
+instance : Interpret σ V σ.Nc :=
+  ⟨λ I => I.D → V, (·.atomicConceptValuation)⟩
 
 
-/--
-Interpret syntax using whichever interpretation is
-available as a class instance.
--/
-class InterpretCurrent (σ : Signature) (α : Type u) where
-  Result : Type
-  interpret : α → Result
-
-instance [I : ℐᶜ σ] [h : Interpret σ Prop α] :
-InterpretCurrent σ α where
-  Result := h.Result I
-  interpret := h.interpret I
-
-instance [I : ℐᵂᴷ σ] [h : Interpret σ V₃ α] :
-InterpretCurrent σ α where
-  Result := h.Result I
-  interpret := h.interpret I
-
-instance [I : ℐᴬᶜ σ] [h : Interpret σ V₃² α] :
-InterpretCurrent σ α where
-  Result := h.Result I
-  interpret := h.interpret I
+/-- Infer the truth-value type from the interpretation in scope. -/
+abbrev Interpret.current {V : Type}
+[I : Interpretation σ V] [h : Interpret σ V α] (a : α) :
+h.Result I := h.interpret I a
 
 set_option quotPrecheck false in
-postfix:max "ᴵ" => InterpretCurrent.interpret (σ := σ)
+postfix:max "ᴵ" => Interpret.current (σ := σ)
+
+/-- The domain of the current interpretation. -/
+abbrev Interpret.domain {V : Type}
+[I : Interpretation σ V] : Type := I.D
 
 set_option quotPrecheck false in
-notation "Δᴵ" => InterpretCurrent.Result (σ := σ) (α := σ.Ni)
+notation "Δᴵ" => Interpret.domain (σ := σ)
 
--- MARK: C Semantics
+-- MARK: Classical Semantics
 /- # Classical Semantics -/
 
 /-- Classical Role evaluation for ALCHRU -/
@@ -785,7 +768,7 @@ theorem acSentenceSupport (I : ℐᴬᶜ σ) (s : Φ σ) :
   have hc (c : 𝒞 σ) :
       (@evalConceptK _ (Iᵂᴷ) (cᵖ⁺)) = fun x => ((@evalConceptA _ I c) x)[+ₚ] :=
     funext (acConceptCoordinates I c +ₚ)
-  cases s <;> simp only [InterpretCurrent.interpret, Interpret.interpret, polarizeSentence, evalSentenceK, evalSentenceA, forallA, andA, hc] <;> rfl
+  cases s <;> simp only [Interpret.domain, Interpret.current, Interpret.interpret, polarizeSentence, evalSentenceK, evalSentenceA, forallA, andA, hc] <;> rfl
 
 theorem acSentenceSupport_iff (I : ℐᴬᶜ σ) (s : Φ σ) :
     (Iᵂᴷ ⊨ᴷ polarizeSentence σ s) ↔ (I ⊨ᴬ s) := by
@@ -889,7 +872,7 @@ in the domain of I such that x satisfies c.
 @[simp]
 theorem nonempty_iff (I : ℐᶜ σ) (c : 𝒞ᵁ σ) :
 (I ⊨ᶜ (nonempty c)) ↔ ∃ x, (@evalConceptC _ I c) x := by
-  simp only [InterpretCurrent.interpret, Interpret.interpret, nonempty, evalSentenceC, evalConceptC, evalRoleC, true_implies, true_and]
+  simp only [Interpret.domain, Interpret.current, Interpret.interpret, nonempty, evalSentenceC, evalConceptC, evalRoleC, true_implies, true_and]
   constructor
   · intro h
     obtain ⟨x⟩ := I.inhabited
@@ -908,8 +891,7 @@ in the domain of I such that both r and s relate x to y.
 -/
 @[simp] theorem overlap_iff (I : ℐᶜ σ) (r s : σ.Nr) :
 (I ⊨ᶜ (overlap r s)) ↔ ∃ x y, (I.roleValuation r) x y ∧ (I.roleValuation s) x y := by
-  simp only [InterpretCurrent.interpret, Interpret.interpret, overlap, nonempty_iff, evalConceptC, evalRoleC, and_true]
-  rfl
+  simp only [Interpret.domain, Interpret.current, Interpret.interpret, overlap, nonempty_iff, evalConceptC, evalRoleC, and_true]
 
 def translateInclusion (σ : Signature) (c d : 𝒞 σ) : List (Φᵁ σᵀ) :=
   [ c^τ ⊑ d^τ, nonempty (c^μ ⊓ₜ d^μ) ]
@@ -976,7 +958,7 @@ noncomputable def propValue (truth meaningful : Prop) : V₃ := by
   unfold propValue
   repeat (split) <;> simp_all
 
-noncomputable def decodeTarget (J : ℐᶜ σᵀ) : ℐᵂᴷ σ where
+@[instance_reducible] noncomputable def decodeTarget (J : ℐᶜ σᵀ) : ℐᵂᴷ σ where
   D := J.D
   inhabited := J.inhabited
   individualValuation := J.individualValuation
@@ -996,7 +978,7 @@ theorem translateConceptEncode (I : ℐᵂᴷ σ) (c : 𝒞 σ) (x : I.D) :
       simp only [concept_tau, concept_mu, translateTau, translateMu, evalConceptC, evalConceptK]
       decide
   | atom a =>
-      simp only [InterpretCurrent.interpret, Interpret.interpret, concept_tau, concept_mu, ToC.cIze, translateTau, translateMu,
+      simp only [Interpret.current, Interpret.interpret, concept_tau, concept_mu, ToC.cIze, translateTau, translateMu,
         evalConceptC, evalConceptK, encodeWK, true_and]
   | neg c ih =>
       simp only [concept_tau, concept_mu] at ih
@@ -1011,11 +993,11 @@ theorem translateConceptEncode (I : ℐᵂᴷ σ) (c : 𝒞 σ) (x : I.D) :
       simp only [concept_tau, concept_mu, translateTau, translateMu, evalConceptC, evalConceptK,
         (ihc x).1, (ihc x).2, (ihd x).1, (ihd x).2, orK_t, orK_m, true_and]
   | ex r c ih =>
-      simp only [InterpretCurrent.interpret, evalConceptK, existsK_t, existsK_m]
+      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, translateTau, translateMu, ToC.cIze, encodeWK, evalConceptK, existsK_t, existsK_m]
       exact ⟨exists_congr (fun y => and_congr Iff.rfl (ih y).1),
         exists_congr (fun y => and_congr Iff.rfl (ih y).2)⟩
   | all r c ih =>
-      simp only [InterpretCurrent.interpret, evalConceptK, forallK_t, forallK_m]
+      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, translateTau, translateMu, ToC.cIze, encodeWK, evalConceptK, forallK_t, forallK_m]
       refine ⟨and_congr ?_ ?_, ?_⟩
       · exact forall_congr' (fun y => imp_congr Iff.rfl (ih y).1)
       · exact exists_congr (fun y => and_congr Iff.rfl (ih y).2)
@@ -1023,14 +1005,14 @@ theorem translateConceptEncode (I : ℐᵂᴷ σ) (c : 𝒞 σ) (x : I.D) :
 
 theorem encodedAtomBridge (I : ℐᵂᴷ σ) (a : σ.Nc) :
     (encodeWK I) ⊨ᶜ (atomBridge σ a) := by
-  simp only [InterpretCurrent.interpret, Interpret.interpret, atomBridge, evalSentenceC, evalConceptC, encodeWK]
+  simp only [Interpret.current, Interpret.interpret, atomBridge, evalSentenceC, evalConceptC, encodeWK]
   intro x h
   rw [h]
   decide
 
 theorem encodedRoleBridge (I : ℐᵂᴷ σ) (r : σ.Nr) :
     (encodeWK I) ⊨ᶜ (roleBridge σ r) := by
-  simp only [InterpretCurrent.interpret, Interpret.interpret, roleBridge, evalSentenceC, evalRoleC, encodeWK]
+  simp only [Interpret.current, Interpret.interpret, roleBridge, evalSentenceC, evalRoleC, encodeWK]
   intro x y h
   rw [h]
   decide
@@ -1103,7 +1085,8 @@ theorem decodeConceptLocal (J : ℐᶜ σᵀ)
           (J.roleValuation (r, 𝕄)) y z :=
         h (roleBridge σ r) (by simp only [conceptBridges, List.mem_cons, eq_self, true_or])
       have hc := ih (fun q hq => h q (List.mem_cons_of_mem _ hq))
-      simp only [InterpretCurrent.interpret, evalConceptK, existsK_t, existsK_m]
+      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, translateTau, translateMu, decodeTarget, evalConceptK]
+      rw [existsK_t, existsK_m]
       exact ⟨exists_congr (fun y => and_congr (propValue_truth _ _).symm (hc y).1),
         exists_congr (fun y => and_congr (propValue_meaningful _ _ (hr x y)).symm
           (hc y).2)⟩
@@ -1112,7 +1095,8 @@ theorem decodeConceptLocal (J : ℐᶜ σᵀ)
           (J.roleValuation (r, 𝕄)) y z :=
         h (roleBridge σ r) (by simp only [conceptBridges, List.mem_cons, eq_self, true_or])
       have hc := ih (fun q hq => h q (List.mem_cons_of_mem _ hq))
-      simp only [InterpretCurrent.interpret, evalConceptK, forallK_t, forallK_m]
+      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, translateTau, translateMu, decodeTarget, evalConceptK]
+      rw [forallK_t, forallK_m]
       refine ⟨and_congr ?_ ?_, ?_⟩
       · exact forall_congr' (fun y =>
           imp_congr (propValue_truth _ _).symm (hc y).1)
@@ -1164,24 +1148,24 @@ theorem translateSentenceEncode (I : ℐᵂᴷ σ) (s : Φ σ) :
     (∀ q ∈ translateSentence σ s, (encodeWK I) ⊨ᶜ q) ↔ I ⊨ᴷ s := by
   cases s with
   | isa a c =>
-      simp only [InterpretCurrent.interpret, translateSentence, List.mem_singleton, forall_eq, evalSentenceC,
+      simp only [Interpret.current, translateSentence, List.mem_singleton, forall_eq, evalSentenceC,
         satisfiesK]
       exact (translateConceptEncode I c ((I.individualValuation a))).1
   | role a b r =>
-      simp only [InterpretCurrent.interpret, Interpret.interpret, translateSentence, List.mem_singleton, forall_eq, evalSentenceC, evalRoleC,
+      simp only [Interpret.current, Interpret.interpret, translateSentence, List.mem_singleton, forall_eq, evalSentenceC, evalRoleC,
         encodeWK, satisfiesK, evalSentenceK]
   | sub c d => exact translateInclusionEncode I c d
   | equiv c d =>
-      simp only [InterpretCurrent.interpret, Interpret.interpret, translateSentence, allMemAppend, translateInclusionEncode,
+      simp only [Interpret.domain, Interpret.current, Interpret.interpret, translateSentence, allMemAppend, translateInclusionEncode,
         satisfiesK, evalSentenceK]
       rw [andK_t]
   | rsub r s =>
       simp only [translateSentence, List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp,
         forall_eq]
       rw [overlap_iff]
-      simp only [InterpretCurrent.interpret, Interpret.interpret, evalSentenceC, evalRoleC, encodeWK, satisfiesK, evalSentenceK]
+      simp only [Interpret.domain, Interpret.current, Interpret.interpret, evalSentenceC, evalRoleC, encodeWK, satisfiesK, evalSentenceK]
       rw [forallK_t]
-      simp only [InterpretCurrent.Result, Interpret.Result, Prod.forall, Prod.exists]
+      simp only [Prod.forall, Prod.exists]
 
 theorem decodeSentenceLocal (J : ℐᶜ σᵀ)
     (s : Φ σ)
@@ -1189,11 +1173,11 @@ theorem decodeSentenceLocal (J : ℐᶜ σᵀ)
     (∀ q ∈ translateSentence σ s, J ⊨ᶜ q) ↔ (decodeTarget J) ⊨ᴷ s := by
   cases s with
   | isa a c =>
-      simp only [InterpretCurrent.interpret, translateSentence, List.mem_singleton, forall_eq, evalSentenceC,
+      simp only [Interpret.current, translateSentence, List.mem_singleton, forall_eq, evalSentenceC,
         satisfiesK]
       exact (decodeConceptLocal J c h ((J.individualValuation a))).1
   | role a b r =>
-      simp only [InterpretCurrent.interpret, Interpret.interpret, translateSentence, List.mem_singleton, forall_eq, evalSentenceC, evalRoleC,
+      simp only [Interpret.current, Interpret.interpret, translateSentence, List.mem_singleton, forall_eq, evalSentenceC, evalRoleC,
         decodeTarget, satisfiesK, evalSentenceK]
       exact (propValue_truth _ _).symm
   | sub c d =>
@@ -1205,7 +1189,7 @@ theorem decodeSentenceLocal (J : ℐᶜ σᵀ)
         fun q hq => h q (List.mem_append_left _ hq)
       have hd : ∀ q ∈ conceptBridges σ d, J ⊨ᶜ q :=
         fun q hq => h q (List.mem_append_right _ hq)
-      simp only [InterpretCurrent.interpret, Interpret.interpret, translateSentence, allMemAppend, decodeInclusionLocal J c d hc hd,
+      simp only [Interpret.domain, Interpret.current, Interpret.interpret, translateSentence, allMemAppend, decodeInclusionLocal J c d hc hd,
         decodeInclusionLocal J d c hd hc, satisfiesK, evalSentenceK]
       rw [andK_t]
   | rsub r s =>
@@ -1219,10 +1203,10 @@ theorem decodeSentenceLocal (J : ℐᶜ σᵀ)
       simp only [translateSentence, List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp,
         forall_eq]
       rw [overlap_iff]
-      simp only [InterpretCurrent.interpret, Interpret.interpret, evalSentenceC, evalRoleC, satisfiesK,
+      simp only [Interpret.domain, Interpret.current, Interpret.interpret, evalSentenceC, evalRoleC, satisfiesK,
         evalSentenceK, decodeTarget]
       rw [forallK_t]
-      simp only [InterpretCurrent.Result, Interpret.Result, decodeTarget, Prod.forall, Prod.exists, propValue_truth,
+      simp only [Prod.forall, Prod.exists, propValue_truth,
         fun x y => propValue_meaningful _ _ (hr x y),
         fun x y => propValue_meaningful _ _ (hs x y)]
 
