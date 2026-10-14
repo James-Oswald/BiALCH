@@ -125,11 +125,11 @@ def showTargetSentence : Φᵁ ((σᵂᴷ)ᵀ) → String :=
   showSentence individualName targetAtomName (showUIRole targetRoleName)
 
 def showPolarities (c : 𝒞 σ) : String × String :=
-  (showWKConcept (cᵖ⁺),
-    showWKConcept (cᵖ⁻))
+  (showWKConcept (c⁺),
+    showWKConcept (c⁻))
 
 def showWKTranslation (c : 𝒞 (σᵂᴷ)) : String × String :=
-  (showTargetConcept c^τ, showTargetConcept c^μ)
+  (showTargetConcept (τ c), showTargetConcept (μ c))
 
 def A : 𝒞 σ := [ConceptName.A]ₐ
 def B : 𝒞 σ := [ConceptName.B]ₐ
@@ -158,11 +158,11 @@ def Bpos : 𝒞 (σᵂᴷ) := [(ConceptName.B, +ₚ)]ₐ
    produces a truth inclusion and an intersection witness on the same pair.
    Equivalence emits both inclusion directions; a role assertion emits one
    truth assertion. -/
-#eval (translateSentence (σᵂᴷ) (Apos ⊑ Bpos)).map showTargetSentence
-#eval (translateSentence (σᵂᴷ) (Apos ≡ Bpos)).map showTargetSentence
-#eval (translateSentence (σᵂᴷ) (RoleName.r ⊑ᵣ RoleName.s)).map
+#eval (tauSentence (Apos ⊑ Bpos)).map showTargetSentence
+#eval (tauSentence (Apos ≡ Bpos)).map showTargetSentence
+#eval (tauSentence (RoleName.r ⊑ᵣ RoleName.s)).map
   showTargetSentence
-#eval (translateSentence (σᵂᴷ)
+#eval (tauSentence
   ((IndividualName.alice, IndividualName.bob) :ᵣ RoleName.r)).map showTargetSentence
 
 /- Assertions translate to one truth assertion; their bridges live in B. -/

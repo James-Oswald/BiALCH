@@ -3,6 +3,8 @@ import Utils
 
 namespace ALCHAC
 
+-- MARK: Notation
+
 /-- Operator overload for superscript WK -/
 class ToWK (α : Type u) (γ : outParam (Type w)) where
   wkIze : α → γ
@@ -21,6 +23,28 @@ class ToC (α : Type u) (γ : outParam (Type w)) where
 
 postfix:max "ᶜ" => ToC.cIze
 
+class PiTranslation (α : Type u) (γ : outParam (Type w)) where
+  piIze : α → γ
+
+prefix:max "π " => PiTranslation.piIze
+
+class TauTranslation (α : Type u) (γ : outParam (Type w)) where
+  tau : α → γ
+
+prefix:max  "τ " => TauTranslation.tau
+
+class MuTranslation (α : Type u) (γ : outParam (Type w)) where
+  mu : α → γ
+
+prefix:max "μ " => MuTranslation.mu
+
+class BridgeTranslation (α : Type u) (γ : outParam (Type w)) where
+  bridge : α → γ
+
+prefix:max "𝒟" => BridgeTranslation.bridge
+
+
+postfix:max "*" => List
 
 -- MARK: Truth Values
 /- # Truth Values -/
@@ -252,9 +276,11 @@ infix:50 " ⊑ᵣ " => Sentence.rsub
 The type of interpretations on a signature.
 Parameterized over the type of truth values V,
 which allows us to use this structure to define
-classical, WK, and AC interpretations. V is an
-outParam so the current interpretation determines
+classical, WK, and AC interpretations.
+
+V is an outParam so the current interpretation determines
 the truth-value type during instance search.
+(This is needed for our ·ᴵ notation)
 -/
 structure Interpretation (σ : Signature) (V : outParam Type) where
   D : Type
@@ -319,6 +345,16 @@ h.Result I := h.interpret I a
 set_option quotPrecheck false in
 postfix:max "ᴵ" => Interpret.current (σ := σ)
 
+
+/--
+Interpret an expression under an explicitly
+supplied interpretation. We need to use this if
+we have multiple interpretations in scope and want to
+specify which one to use.
+-/
+scoped notation:80 a:81 "^" I:80 => Interpret.interpret I a
+
+
 /-- The domain of the current interpretation. -/
 abbrev Interpret.domain {V : Type}
 [I : Interpretation σ V] : Type := I.D
@@ -365,10 +401,10 @@ def evalSentenceC [ℐᶜ σ] : Φᵁ σ → Prop
 notation  I "⊨ᶜ " S => @evalSentenceC _ I S
 
 /-- Classical entailment for ALCHRU. -/
-def entailmentC (Γ Δ : List (Φᵁ σ)) : Prop :=
+def entailmentC (Γ Δ : (Φᵁ σ)*) : Prop :=
   ∀ I, (∀ ψ ∈ Γ, I ⊨ᶜ ψ) → (∀ φ ∈ Δ, I ⊨ᶜ φ)
 
-notation  Γ " ⊨ᶜ " Δ => entailmentC Γ Δ
+notation Γ " ⊨ᶜ " Δ => entailmentC Γ Δ
 
 -- MARK: WK Semantics
 /- # Weak Kleene Semantics -/
@@ -404,13 +440,13 @@ noncomputable instance : Interpret σ V₃ (Φ σ) :=
 def satisfiesK [ℐᵂᴷ σ] (φ : Φ σ) : Prop :=
   φᴵ = 𝔱
 
-notation  I "⊨ᴷ " S => @satisfiesK _ I S
+notation  I "⊨ᵂᴷ " S => @satisfiesK _ I S
 
 /-- Entailment for weak Kleene semantics -/
-def entailmentK (Γ Δ : List (Φ σ)) : Prop :=
-  ∀ (I : ℐᵂᴷ σ), (∀ ψ ∈ Γ, I ⊨ᴷ ψ) → (∀ φ ∈ Δ, I ⊨ᴷ φ)
+def entailmentK (Γ Δ : (Φ σ)*) : Prop :=
+  ∀ (I : ℐᵂᴷ σ), (∀ ψ ∈ Γ, I ⊨ᵂᴷ ψ) → (∀ φ ∈ Δ, I ⊨ᵂᴷ φ)
 
-notation  Γ " ⊨ᴷ " Δ => entailmentK Γ Δ
+notation  Γ " ⊨ᵂᴷ " Δ => entailmentK Γ Δ
 
 -- MARK: AC Semantics
 /- # Analytic Containment Semantics -/
@@ -425,9 +461,11 @@ noncomputable def∇ evalConceptA [ℐᴬᶜ σ] : 𝒞 σ → Δᴵ → V₃²
 | ∃[r] c, x => ∃ₐ[rᴵ x] (∇ c)
 | ∀[r] c, x => ∀ₐ[rᴵ x] (∇ c)
 
+/-- ·ᴵ for ALCH concepts in AC semantics -/
 noncomputable instance : Interpret σ V₃² (𝒞 σ) :=
   ⟨(·.D → V₃²), λ_=>evalConceptA⟩
 
+/-- AC sentence semantics for ALCH. -/
 noncomputable def evalSentenceA [ℐᴬᶜ σ] : Φ σ → V₃²
 | a :ₐ c => cᴵ aᴵ
 | (a, b) :ᵣ r => rᴵ aᴵ bᴵ
@@ -435,37 +473,46 @@ noncomputable def evalSentenceA [ℐᴬᶜ σ] : Φ σ → V₃²
 | c ≡ d => (∀ₐ[cᴵ] dᴵ) ∧ₐ (∀ₐ[dᴵ] cᴵ)
 | r ⊑ᵣ s => ∀ₐ[(λ p : Δᴵ × Δᴵ => rᴵ p.1 p.2)] (λ p => sᴵ p.1 p.2)
 
+/-- ·ᴵ for ALCH sentences in AC semantics -/
 noncomputable instance : Interpret σ V₃² (Φ σ) :=
   ⟨λ_=>V₃²,λ_=>evalSentenceA⟩
 
+/-- Satisfaction relation for AC semantics -/
 def satisfiesA [ℐᴬᶜ σ] (φ : Φ σ) : Prop :=
   (φᴵ : V₃²).1 = 𝔱
 
-notation  I "⊨ᴬ " S => @satisfiesA _ I S
+notation  I "⊨ᴬᶜ " S => @satisfiesA _ I S
 
-def entailmentA (Γ Δ : List (Φ σ)) : Prop :=
-  ∀ (I : ℐᴬᶜ σ), (∀ ψ ∈ Γ, I ⊨ᴬ ψ) → (∀ φ ∈ Δ, I ⊨ᴬ φ)
+/-- Entailment for AC semantics -/
+def entailmentA (Γ Δ : (Φ σ)*) : Prop :=
+  ∀ (I : ℐᴬᶜ σ), (∀ ψ ∈ Γ, I ⊨ᴬᶜ ψ) → (∀ φ ∈ Δ, I ⊨ᴬᶜ φ)
 
-notation  Γ " ⊨ᴬ " Δ => entailmentA Γ Δ
+notation  Γ " ⊨ᴬᶜ " Δ => entailmentA Γ Δ
 
 -- MARK: AC to WK
 /-! # AC to WK Translation -/
 /-!
-The main idea of the AC to WK translation is to
-*polarize* all concepts in an ALCH sentence according to
-their syntactic position, transforming it into a weak
-kleene sentence. Polarization pushes negations down
-as far as possible, ensuring that the resulting concept
-is in a form suitable for weak Kleene evaluation.
+We want a translation π such that (Γ ⊨ᴬᶜ Δ) ↔ (π Γ ⊨ʷᴷ π Δ).
 
+We use the same idea from the mutual
+π ν translation in the original paper,
+modifying the signature to have π and ν
+side indicators for concepts, and turning
+ALCH concepts into their weak Kleene counterparts. We
+prefer + and - over pi and nu for notational
+(no unicode for superscript pi and nu)
+
+Some examples of the π translation:
+π (a : ¬(A ⊓ ∃[r] B)) = a : [(A, -ₚ)]ₐ ⊔ₜ ∀[r] [(B, -ₚ)]ₐ
+π (C ⊑ ∀[r] D) = [C, +ₚ]ₐ ⊑ ∀[r] [D, +ₚ]ₐ
 -/
 
 /--
 WK side indicator for polarizing concepts (+ₚ or -ₚ).
 -/
 inductive Side where
-| positive
-| negative
+| positive --pi
+| negative --nu
 deriving DecidableEq, Repr
 
 notation "+ₚ" => Side.positive
@@ -486,11 +533,12 @@ instance toWKSignature : ToWK Signature Signature where
   wkIze := wkSignature
 
 /--
-Polarize recursively transforms an ALCH concept into its
+piConcept recursively transforms an ALCH concept into its
 weak Kleene counterpart based on the given side indicator
-(+ₚ or -ₚ).
+(+ₚ or -ₚ). Note that we don't use a seperate ν translation;
+the side indicator is passed directly to piConcept.
 -/
-def∇ polarizeConcept {σ : Signature} : 𝒞 σ → Side → 𝒞 σᵂᴷ
+def∇ piConcept {σ : Signature} : 𝒞 σ → Side → 𝒞 σᵂᴷ
 | ⊤, +ₚ => ⊤
 | ⊤, -ₚ => ⊥
 | ⊥, +ₚ => ⊥
@@ -507,57 +555,203 @@ def∇ polarizeConcept {σ : Signature} : 𝒞 σ → Side → 𝒞 σᵂᴷ
 | ∀[r] c, +ₚ => ∀[r] ∇ c +ₚ
 | ∀[r] c, -ₚ => ∃[r] ∇ c -ₚ
 
-notation C "ᵖ⁺" => polarizeConcept C +ₚ
-notation C "ᵖ⁻" => polarizeConcept C -ₚ
-postfix:max "ᵖ" => polarizeConcept
+-- Think of this as superscript pi
+notation C "⁺" => piConcept C +ₚ
+-- Think of this as superscript nu
+notation C "⁻" => piConcept C -ₚ
+postfix:max "ᵖ" => piConcept
 
 /--
-Polarizes an ALCH sentence over the original signature
+transforms an ALCH sentence over the original signature
 σ to its weak Kleene counterpart over the signature σᵂᴷ
 by polarizing all concepts positively.
 -/
-def polarizeSentence (σ : Signature) : Φ σ → Φ σᵂᴷ
-| a :ₐ c => a :ₐ cᵖ⁺
+def piSentence : Φ σ → Φ σᵂᴷ
+| a :ₐ c => a :ₐ c⁺
 | (a, b) :ᵣ r => (a, b) :ᵣ r
-| c ⊑ d => cᵖ⁺ ⊑ dᵖ⁺
-| c ≡ d => cᵖ⁺ ≡ dᵖ⁺
+| c ⊑ d => c⁺ ⊑ d⁺
+| c ≡ d => c⁺ ≡ d⁺
 | r ⊑ᵣ s => r ⊑ᵣ s
 
-abbrev polarizeSentenceSet (σ : Signature) :
-List (Φ σ) → List (Φ σᵂᴷ) :=
-  List.map (polarizeSentence σ)
+/-- π φ notationfor sentences -/
+instance : PiTranslation (Φ σ) (Φ σᵂᴷ) where
+  piIze := piSentence
 
-instance : ToWK (List (Φ σ)) (List (Φ σᵂᴷ)) where
-  wkIze := polarizeSentenceSet _
+/-- Transforms a set of ALCH sentences over the original
+signature to their weak Kleene counterparts over the
+signature σᵂᴷ -/
+abbrev piSentenceSet : (Φ σ)* → (Φ σᵂᴷ)* :=
+  List.map piSentence
 
-def coordinate (v : V₃²) : Side → V₃
-| +ₚ => v.1
-| -ₚ => v.2
+instance : PiTranslation (Φ σ)* (Φ σᵂᴷ)* where
+  piIze := piSentenceSet
 
--- So we can use v[+ₚ] and v[-ₚ] to access the
--- respective components of a V₃² vector.
-instance : GetElem (V₃²) Side V₃ (λ _ _ => True) where
-  getElem := λ v s _ => coordinate v s
+-- MARK: WK to C
+/-! # Weak Kleene to Classical Translation -/
+/-!
+Similar idea to the original tau / mu translation
+with some fixes. We modify the signature to include a bit
+indicator for each concept and role, representing
+if the concept or role is true or meaningful.
 
-def acToWK (I : ℐᴬᶜ σ) : ℐᵂᴷ σᵂᴷ where
-  D :=                      I.D
-  inhabited :=              I.inhabited
-  individualValuation :=    I.individualValuation
-  atomicConceptValuation := λ (a, s) x => ((I.atomicConceptValuation a) x)[s]
-  roleValuation :=          λ r x y => ((I.roleValuation r) x y)[+ₚ]
+The core distinction is that we can use the universal role
+to express nonemptiness of concepts and overlap of roles,
+and then use this information to encode the wk
+semantics through the translation.
+-/
 
-instance : ToWK (ℐᴬᶜ σ) (ℐᵂᴷ σᵂᴷ) := ⟨acToWK⟩
+inductive Bit where
+| truth
+| meaningful
+deriving DecidableEq, Repr
 
-def wkToAC (K : ℐᵂᴷ σᵂᴷ) : ℐᴬᶜ σ where
-  D :=                      K.D
-  inhabited :=              K.inhabited
-  individualValuation :=    K.individualValuation
-  atomicConceptValuation := λ a x => ((K.atomicConceptValuation (a, +ₚ)) x, (K.atomicConceptValuation (a, -ₚ)) x)
-  roleValuation :=          λ r x y => ((K.roleValuation r) x y, 𝔢)
+-- supserscript tau on atomic concepts
+notation "𝕋" => Bit.truth
+-- supserscript mu on atomic concepts
+notation "𝕄" => Bit.meaningful
 
-instance : ToAC (ℐᵂᴷ σᵂᴷ) (ℐᴬᶜ σ) := ⟨wkToAC⟩
+/-
+Given a signature σ, the target signature σᵀ is defined by
+pairing each original concept and role with a bit
+indicator (truth or meaningful).
+-/
+abbrev targetSignature (σ : Signature) : Signature where
+  Nc := σ.Nc × Bit
+  Nr := σ.Nr × Bit
+  Ni := σ.Ni
+
+postfix:max "ᵀ" => targetSignature
+
+/-- The meaningfulness component of a translated concept. -/
+def∇ muConcept : 𝒞 σ → 𝒞ᵁ σᵀ
+| ⊤ => ⊤
+| ⊥ => ⊤
+| [a]ₐ => [(a, 𝕄)]ₐ
+| ¬ₜc => ∇ c
+| c ⊓ₜ d => (∇ c) ⊓ₜ (∇ d)
+| c ⊔ₜ d => (∇ c) ⊓ₜ (∇ d)
+| ∃[r] c => ∃[[(r, 𝕄)]ᵣ] (∇ c)
+| ∀[r] c => ∃[[(r, 𝕄)]ᵣ] (∇ c)
+
+instance : MuTranslation (𝒞 σ) (𝒞ᵁ σᵀ) := ⟨muConcept⟩
+
+/-- The truth component of a translated concept. -/
+def∇ tauConcept : 𝒞 σ → 𝒞ᵁ σᵀ
+| ⊤ => ⊤
+| ⊥ => ⊥
+| [a]ₐ => [(a, 𝕋)]ₐ
+| ¬ₜc => μ c ⊓ₜ ¬ₜ(∇ c)
+| c ⊓ₜ d => (∇ c) ⊓ₜ (∇ d)
+| c ⊔ₜ d => ((∇ c) ⊔ₜ (∇ d)) ⊓ₜ (μ c ⊓ₜ μ d)
+| ∃[r] c => ∃[[(r, 𝕋)]ᵣ] (∇ c)
+| ∀[r] c => (∀[[(r, 𝕋)]ᵣ] (∇ c)) ⊓ₜ ∃[[(r, 𝕄)]ᵣ] (μ c)
+
+/-- τ for concepts -/
+instance : TauTranslation (𝒞 σ) (𝒞ᵁ σᵀ) := ⟨tauConcept⟩
+
+/--
+We can express that C is nonempty in classical ALC using
+the universal role. ⊤ ⊑ ∃[𝒰] c -> ∀x, ∃y, c(y) -> ∃y, c(y)
+-/
+def nonempty (c : 𝒞ᵁ σ) : Φᵁ σ :=
+  ⊤ ⊑ ∃[𝒰] c
+
+prefix:max "∃₁" => nonempty
 
 
+/--
+Intersection forces both roles to hold on the same pair.
+Classically this resolves
+∃₁(∃[(r ⊓ᵣ s)] ⊤) ->
+-/
+def overlap (r s : σ.Nr) : Φᵁ σ :=
+  ∃₁(∃[([r]ᵣ ⊓ᵣ [s]ᵣ)] ⊤)
+
+infixl:70 " ⨅⁺ " => overlap
+
+
+def tauSubsumption (c d : 𝒞 σ) : (Φᵁ σᵀ)* :=
+  [τ c ⊑ τ d, ∃₁(μ c ⊓ₜ μ d)]
+
+
+def tauSentence : Φ σ → (Φᵁ σᵀ)*
+| a :ₐ c => [a :ₐ τ c]
+| (a, b) :ᵣ r => [(a, b) :ᵣ [(r, 𝕋)]ᵣ]
+| c ⊑ d => tauSubsumption c d
+| c ≡ d => tauSubsumption c d ++ tauSubsumption d c
+| r ⊑ᵣ s => [[(r, 𝕋)]ᵣ ⊑ᵣ [(s, 𝕋)]ᵣ, (r, 𝕄) ⨅⁺ (s, 𝕄)]
+
+instance : TauTranslation (Φ σ) (Φᵁ σᵀ)* :=
+  ⟨tauSentence⟩
+
+def tauSentenceSet (Γ : (Φ σ)*) : (Φᵁ σᵀ)* :=
+  Γ.flatMap (tauSentence)
+
+instance : TauTranslation (Φ σ)* (Φᵁ σᵀ)* :=
+  ⟨tauSentenceSet⟩
+
+-- MARK: WK To C Bridges
+/-!
+It is not enough to simply translate concepts and roles;
+we also need to ensure that the truth and meaningfulness
+components are properly related through bridge axioms.
+-/
+
+/--
+Bridge axiom for atomic concepts.
+Ensures that the truth component
+implies the meaningfulness component.
+-/
+def atomicConceptBridge (a : σ.Nc) : Φᵁ σᵀ :=
+  [(a, 𝕋)]ₐ ⊑ [(a, 𝕄)]ₐ
+
+instance : BridgeTranslation (σ.Nc) (Φᵁ σᵀ) :=
+⟨atomicConceptBridge⟩
+
+/--
+Bridge axiom for atomic roles.
+Ensures that the truth component
+implies the meaningfulness component.
+-/
+def atomicRoleBridge (r : σ.Nr) : Φᵁ σᵀ :=
+  [(r, 𝕋)]ᵣ ⊑ᵣ [(r, 𝕄)]ᵣ
+
+instance : BridgeTranslation (σ.Nr) (Φᵁ σᵀ) :=
+ ⟨atomicRoleBridge⟩
+
+/--
+Bridge axioms for concepts.
+Ensures that the truth and meaningfulness components
+are properly related for complex concepts.
+-/
+def∇ conceptBridges : 𝒞 σ → (Φᵁ σᵀ)*
+| ⊤ => []
+| ⊥ => []
+| [a]ₐ => [𝒟 a]
+| ¬ₜ c => ∇ c
+| c ⊓ₜ d => ∇ c ++ ∇ d
+| c ⊔ₜ d => ∇ c ++ ∇ d
+| ∃[r] c => [𝒟 r] ++ ∇ c
+| ∀[r] c => [𝒟 r] ++ ∇ c
+
+instance : BridgeTranslation (𝒞 σ) (Φᵁ σᵀ)* :=
+ ⟨conceptBridges⟩
+
+def sentenceBridges : Φ σ → (Φᵁ σᵀ)*
+| _ :ₐ c => 𝒟 c
+| (_, _) :ᵣ r => [𝒟 r]
+| c ⊑ d => 𝒟 c ++ 𝒟 d
+| c ≡ d => 𝒟 c ++ 𝒟 d
+| r ⊑ᵣ s => [𝒟 r, 𝒟 s]
+
+instance : BridgeTranslation (Φ σ) (Φᵁ σᵀ)* :=
+ ⟨sentenceBridges⟩
+
+def sentenceSetBridges (Γ : (Φ σ)*) : (Φᵁ σᵀ)* :=
+  Γ.flatMap (sentenceBridges)
+
+instance : BridgeTranslation ((Φ σ)*) (Φᵁ σᵀ)* :=
+ ⟨sentenceSetBridges⟩
 
 
 -- MARK: WK Lemmas
@@ -718,42 +912,99 @@ theorem forallK_m {D} (r c : D → V₃) :
   rw [← forallKIndexed_paper]
   exact forallKIndexed_m r c
 
--- theorem existsK_paper {D} (r c : D → V₃) :
--- existsK r c = paperExists (Set.range (λ x => (r x, c x))) := by
---   rfl
+-- MARK: Other Lemmas
 
--- theorem forallK_paper {D} (r c : D → V₃) :
--- forallK r c = paperForall (Set.range (λ x => (r x, c x))) := by
---   rfl
+/--
+Given a classical interpretation I and a concept c,
+I entails nonemptiness of c iff there exists an element x
+in the domain of I such that x satisfies c.
+-/
+@[simp]
+theorem nonempty_iff [I : ℐᶜ σ] (c : 𝒞ᵁ σ) :
+(I ⊨ᶜ ∃₁c) ↔ ∃ x, cᴵ x := by
+  simp only [Interpret.current, Interpret.interpret,
+  nonempty, evalSentenceC, evalConceptC, evalRoleC,
+  true_implies, true_and]
+  constructor
+  · intro h
+    obtain ⟨x⟩ := I.inhabited
+    exact h x
+  · intro h _
+    exact h
+
+/--
+Given a classical interpretation I and two roles r and s,
+I entails that r and s overlap iff there exist elements x and y
+in the domain of I such that both r and s relate x to y.
+-/
+@[simp] theorem overlap_iff [I : ℐᶜ σ] (r s : σ.Nr) :
+(I ⊨ᶜ (r ⨅⁺ s)) ↔ ∃ x y, rᴵ x y ∧ sᴵ x y := by
+  simp only [Interpret.current, Interpret.interpret,
+  overlap, nonempty_iff, evalConceptC, evalRoleC, and_true]
+
 
 -- MARK: AC to WK
-/-! ## AC to weak Kleene -/
+/-! ## AC to weak Kleene Theorems -/
+/-! In this section we prove the forwards
+AC to WK translation preserves the interpretation of
+concepts and roles. IE
+Γ ⊨ᴬᶜ Δ → π Γ ⊨ᵂᴷ π Δ
+-/
 
+def coordinate (v : V₃²) : Side → V₃
+| +ₚ => v.1
+| -ₚ => v.2
 
+-- So we can use v[+ₚ] and v[-ₚ] to access the
+-- respective components of a V₃² vector.
+instance : GetElem (V₃²) Side V₃ (λ _ _ => True) where
+  getElem := λ v s _ => coordinate v s
+
+@[instance_reducible]
+def acToWK [I : ℐᴬᶜ σ] : ℐᵂᴷ σᵂᴷ where
+  D :=                      Δᴵ
+  inhabited :=              I.inhabited
+  individualValuation :=    λ x => xᴵ
+  atomicConceptValuation := λ (a, s) x => (aᴵ x)[s]
+  roleValuation :=          λ r x y => (rᴵ x y)[+ₚ]
+
+instance : ToWK (ℐᴬᶜ σ) (ℐᵂᴷ σᵂᴷ) := ⟨@acToWK σ⟩
+
+@[instance_reducible]
+def wkToAC [I : ℐᵂᴷ σᵂᴷ] : ℐᴬᶜ σ where
+  D :=                      I.D
+  inhabited :=              I.inhabited
+  individualValuation :=    I.individualValuation
+  atomicConceptValuation := λ a x => ((I.atomicConceptValuation (a, +ₚ)) x, (I.atomicConceptValuation (a, -ₚ)) x)
+  roleValuation :=          λ r x y => ((I.roleValuation r) x y, 𝔢)
+
+instance : ToAC (ℐᵂᴷ σᵂᴷ) (ℐᴬᶜ σ) := ⟨@wkToAC σ⟩
 
 theorem acToWK_wkToAC (K : ℐᵂᴷ σᵂᴷ) : (Kᴬᶜ)ᵂᴷ = K := by
   cases K with
   | mk D inhabited individuals atoms roles =>
-      simp only [acToWK, wkToAC, ToAC.acIze, ToWK.wkIze]
+      simp only [acToWK, ToWK.wkIze]
       congr 1
       funext a x
       rcases a with ⟨a, side⟩
       cases side <;> rfl
 
-theorem acConceptCoordinates (I : ℐᴬᶜ σ) (c : 𝒞 σ) (s : Side) (x : I.D) :
-(@evalConceptK _ (Iᵂᴷ) (cᵖ s)) x = ((@evalConceptA _ I c) x)[s] := by
+theorem acConceptCoordinates (I : ℐᴬᶜ σ) (c : 𝒞 σ)
+(s : Side) (x : Δᴵ) :
+((cᵖ s)^(Iᵂᴷ)) x = ((c^I) x)[s] := by
+  change (@evalConceptK _ (Iᵂᴷ) (cᵖ s)) x = ((@evalConceptA _ I c) x)[s]
   induction c generalizing s x with
   | top => cases s <;> rfl
   | bot => cases s <;> rfl
   | atom a => cases s <;> rfl
   | neg c ih => cases s <;> simp only
-    [polarizeConcept, evalConceptA, negA, GetElem.getElem, coordinate, ih]
+    [piConcept, evalConceptA, negA, GetElem.getElem, coordinate, ih]
   | conj c d ihc ihd =>
       cases s <;> simp only
-        [polarizeConcept, evalConceptK, evalConceptA, andA, GetElem.getElem, coordinate, ihc, ihd]
+        [piConcept, evalConceptK, evalConceptA, andA, GetElem.getElem, coordinate, ihc, ihd]
   | disj c d ihc ihd =>
       cases s <;> simp only
-        [polarizeConcept, evalConceptK, evalConceptA, orA, GetElem.getElem, coordinate, ihc, ihd]
+        [piConcept, evalConceptK, evalConceptA, orA, GetElem.getElem, coordinate, ihc, ihd]
   | ex r c ih =>
       cases s with
       | positive => exact congrArg₂ existsK rfl (funext (ih +ₚ))
@@ -764,171 +1015,55 @@ theorem acConceptCoordinates (I : ℐᴬᶜ σ) (c : 𝒞 σ) (s : Side) (x : I.
       | negative => exact congrArg₂ existsK rfl (funext (ih -ₚ))
 
 theorem acSentenceSupport (I : ℐᴬᶜ σ) (s : Φ σ) :
-    @evalSentenceK _ (Iᵂᴷ) (polarizeSentence σ s) = (@evalSentenceA _ I s)[+ₚ] := by
+    (π s)^(Iᵂᴷ) = coordinate (s^I) +ₚ := by
+  change @evalSentenceK _ (Iᵂᴷ) (piSentence s) = (@evalSentenceA _ I s)[+ₚ]
   have hc (c : 𝒞 σ) :
-      (@evalConceptK _ (Iᵂᴷ) (cᵖ⁺)) = fun x => ((@evalConceptA _ I c) x)[+ₚ] :=
-    funext (acConceptCoordinates I c +ₚ)
-  cases s <;> simp only [Interpret.domain, Interpret.current, Interpret.interpret, polarizeSentence, evalSentenceK, evalSentenceA, forallA, andA, hc] <;> rfl
+      (@evalConceptK _ (Iᵂᴷ) (c⁺)) = fun x => ((@evalConceptA _ I c) x)[+ₚ] :=
+    funext (acConceptCoordinates (I := I) c +ₚ)
+  cases s <;> simp only [Interpret.domain, Interpret.current, Interpret.interpret, piSentence, evalSentenceK, evalSentenceA, forallA, andA, hc] <;> rfl
 
 theorem acSentenceSupport_iff (I : ℐᴬᶜ σ) (s : Φ σ) :
-    (Iᵂᴷ ⊨ᴷ polarizeSentence σ s) ↔ (I ⊨ᴬ s) := by
-  change @evalSentenceK _ (Iᵂᴷ) (polarizeSentence σ s) = 𝔱 ↔ (@evalSentenceA _ I s)[+ₚ] = 𝔱
+(Iᵂᴷ ⊨ᵂᴷ π s) ↔ (I ⊨ᴬᶜ s) := by
+  change (π s)^(Iᵂᴷ) = 𝔱 ↔ coordinate (s^I) +ₚ = 𝔱
   rw [acSentenceSupport]
 
+theorem A_implies_pi_WK (Γ Δ : List (Φ σ)) :
+(Γ ⊨ᴬᶜ Δ) → (π Γ ⊨ᵂᴷ π Δ) := by
+  intro h K hΓ q hq
+  have hround : (Kᴬᶜ)ᵂᴷ = K := acToWK_wkToAC K
+  rcases List.mem_map.mp hq with ⟨s, hs, rfl⟩
+  have hsource : ∀ p ∈ Γ, Kᴬᶜ ⊨ᴬᶜ p := by
+    intro p hp
+    have hk := hΓ (π p) (List.mem_map.mpr ⟨p, hp, rfl⟩)
+    exact (acSentenceSupport_iff Kᴬᶜ p).mp (hround ▸ hk)
+  have hout := h Kᴬᶜ hsource s hs
+  exact hround ▸ (acSentenceSupport_iff Kᴬᶜ s).mpr hout
+
+
+theorem pi_WK_implies_A (Γ Δ : List (Φ σ)) :
+(π Γ ⊨ᵂᴷ π Δ) → (Γ ⊨ᴬᶜ Δ) := by
+  intro h I hΓ s hs
+  have hprojected : ∀ p ∈ π Γ, Iᵂᴷ ⊨ᵂᴷ p := by
+    intro p hp
+    rcases List.mem_map.mp hp with ⟨q, hq, rfl⟩
+    exact (acSentenceSupport_iff I q).mpr (hΓ q hq)
+  have hout := h Iᵂᴷ hprojected (piSentence s)
+    (List.mem_map.mpr ⟨s, hs, rfl⟩)
+  exact (acSentenceSupport_iff I s).mp hout
+
 /-- The explicit WK entailment intermediate used in the final theorem. -/
-theorem entailmentA_iff_projectedWK (Γ Δ : List (Φ σ)) :
-    (Γ ⊨ᴬ Δ) ↔ (Γᵂᴷ ⊨ᴷ Δᵂᴷ) := by
-  constructor
-  · intro h K hΓ q hq
-    have hround : (Kᴬᶜ)ᵂᴷ = K := acToWK_wkToAC K
-    rcases List.mem_map.mp hq with ⟨s, hs, rfl⟩
-    have hsource : ∀ p ∈ Γ, Kᴬᶜ ⊨ᴬ p := by
-      intro p hp
-      have hk := hΓ (polarizeSentence σ p) (List.mem_map.mpr ⟨p, hp, rfl⟩)
-      exact (acSentenceSupport_iff Kᴬᶜ p).mp (hround ▸ hk)
-    have hout := h Kᴬᶜ hsource s hs
-    exact hround ▸ (acSentenceSupport_iff Kᴬᶜ s).mpr hout
-  · intro h I hΓ s hs
-    have hprojected : ∀ p ∈ Γᵂᴷ, Iᵂᴷ ⊨ᴷ p := by
-      intro p hp
-      rcases List.mem_map.mp hp with ⟨q, hq, rfl⟩
-      exact (acSentenceSupport_iff I q).mpr (hΓ q hq)
-    have hout := h Iᵂᴷ hprojected (polarizeSentence σ s)
-      (List.mem_map.mpr ⟨s, hs, rfl⟩)
-    exact (acSentenceSupport_iff I s).mp hout
+theorem A_iff_pi_WK (Γ Δ : List (Φ σ)) :
+(Γ ⊨ᴬᶜ Δ) ↔ (π Γ ⊨ᵂᴷ π Δ) :=
+  Iff.intro (A_implies_pi_WK Γ Δ) (pi_WK_implies_A Γ Δ)
+
 
 -- MARK: WK to C
 /-! ## WK to classical ALCH with universal role and role intersection -/
 
-inductive Bit where
-| truth
-| meaningful
-deriving DecidableEq, Repr
+@[simp] theorem concept_mu (c : 𝒞 σ) : μ c = muConcept c := rfl
+@[simp] theorem concept_tau (c : 𝒞 σ) : τ c = tauConcept c := rfl
 
-notation "𝕋" => Bit.truth
-notation "𝕄" => Bit.meaningful
-
-/-
-Given a signature σ, the target signature σᵀ is defined by
-pairing each original concept and role with a bit
-indicator (truth or meaningful).
--/
-abbrev targetSignature (σ : Signature) : Signature where
-  Nc := σ.Nc × Bit
-  Nr := σ.Nr × Bit
-  Ni := σ.Ni
-
-postfix:max "ᵀ" => targetSignature
-
-class ToTau (α : Type u) (γ : outParam (Type w)) where
-  tau : α → γ
-
-postfix:max "^τ" => ToTau.tau
-
-class ToMu (α : Type u) (γ : outParam (Type w)) where
-  mu : α → γ
-
-postfix:max "^μ" => ToMu.mu
-
-/-- The meaningfulness component of a translated concept. -/
-def∇ translateMu {σ : Signature} : 𝒞 σ → 𝒞ᵁ σᵀ
-| ⊤
-| ⊥ => ⊤
-| [a]ₐ => [(a, 𝕄)]ₐ
-| ¬ₜc => ∇ c
-| c ⊓ₜ d | c ⊔ₜ d => (∇ c) ⊓ₜ (∇ d)
-| ∃[r] c | ∀[r] c => ∃[[(r, 𝕄)]ᵣ] (∇ c)
-
-instance (σ : Signature) : ToMu (𝒞 σ) (𝒞ᵁ σᵀ) := ⟨translateMu⟩
-
-/-- The truth component of a translated concept. -/
-def∇ translateTau {σ : Signature} : 𝒞 σ → 𝒞ᵁ σᵀ
-| ⊤ => ⊤
-| ⊥ => ⊥
-| [a]ₐ => [(a, 𝕋)]ₐ
-| ¬ₜ c => c^μ ⊓ₜ ¬ₜ(∇ c)
-| c ⊓ₜ d => (∇ c) ⊓ₜ (∇ d)
-| c ⊔ₜ d => ((∇ c) ⊔ₜ (∇ d)) ⊓ₜ (c^μ ⊓ₜ d^μ)
-| ∃[r] c => ∃[[(r, 𝕋)]ᵣ] (∇ c)
-| ∀[r] c => (∀[[(r, 𝕋)]ᵣ] (∇ c)) ⊓ₜ ∃[[(r, 𝕄)]ᵣ] c^μ
-
-instance (σ : Signature) : ToTau (𝒞 σ) (𝒞ᵁ σᵀ) := ⟨translateTau⟩
-
-@[simp] theorem concept_mu (c : 𝒞 σ) : c^μ = translateMu c := rfl
-@[simp] theorem concept_tau (c : 𝒞 σ) : c^τ = translateTau c := rfl
-
-/--
-We can express that C is nonempty in classical ALC using
-the universal role. ⊤ ⊑ ∃[𝒰] c -> ∀x, ∃y, c(y) -> ∃y, c(y)
--/
-def nonempty (c : 𝒞ᵁ σ) : Φᵁ σ :=
-  ⊤ ⊑ ∃[𝒰] c
-
-/--
-Given a classical interpretation I and a concept c,
-I entails nonemptiness of c iff there exists an element x
-in the domain of I such that x satisfies c.
--/
-@[simp]
-theorem nonempty_iff (I : ℐᶜ σ) (c : 𝒞ᵁ σ) :
-(I ⊨ᶜ (nonempty c)) ↔ ∃ x, (@evalConceptC _ I c) x := by
-  simp only [Interpret.domain, Interpret.current, Interpret.interpret, nonempty, evalSentenceC, evalConceptC, evalRoleC, true_implies, true_and]
-  constructor
-  · intro h
-    obtain ⟨x⟩ := I.inhabited
-    exact h x
-  · intro h _
-    exact h
-
-/-- Intersection forces both roles to hold on the same ordered pair. -/
-def overlap (r s : σ.Nr) : Φᵁ σ :=
-  nonempty (∃[([r]ᵣ ⊓ᵣ [s]ᵣ)] ⊤)
-
-/--
-Given a classical interpretation I and two roles r and s,
-I entails that r and s overlap iff there exist elements x and y
-in the domain of I such that both r and s relate x to y.
--/
-@[simp] theorem overlap_iff (I : ℐᶜ σ) (r s : σ.Nr) :
-(I ⊨ᶜ (overlap r s)) ↔ ∃ x y, (I.roleValuation r) x y ∧ (I.roleValuation s) x y := by
-  simp only [Interpret.domain, Interpret.current, Interpret.interpret, overlap, nonempty_iff, evalConceptC, evalRoleC, and_true]
-
-def translateInclusion (σ : Signature) (c d : 𝒞 σ) : List (Φᵁ σᵀ) :=
-  [ c^τ ⊑ d^τ, nonempty (c^μ ⊓ₜ d^μ) ]
-
-def translateSentence (σ : Signature) : Φ σ → List (Φᵁ σᵀ)
-| a :ₐ c => [a :ₐ c^τ]
-| (a, b) :ᵣ r => [(a, b) :ᵣ [(r, 𝕋)]ᵣ]
-| c ⊑ d => translateInclusion σ c d
-| c ≡ d => translateInclusion σ c d ++ translateInclusion σ d c
-| r ⊑ᵣ s => [[(r, 𝕋)]ᵣ ⊑ᵣ [(s, 𝕋)]ᵣ, overlap (r, 𝕄) (s, 𝕄)]
-
-def atomBridge (σ : Signature) (a : σ.Nc) : Φᵁ σᵀ :=
-  [(a, 𝕋)]ₐ ⊑ [(a, 𝕄)]ₐ
-
-def roleBridge (σ : Signature) (r : σ.Nr) : Φᵁ σᵀ :=
-  [(r, 𝕋)]ᵣ ⊑ᵣ [(r, 𝕄)]ᵣ
-
-def conceptBridges (σ : Signature) : 𝒞 σ → List (Φᵁ σᵀ)
-| ⊤
-| ⊥ => []
-| [a]ₐ => [atomBridge σ a]
-| ¬ₜ c => conceptBridges σ c
-| c ⊓ₜ d | c ⊔ₜ d => conceptBridges σ c ++ conceptBridges σ d
-| ∃[r] c | ∀[r] c => roleBridge σ r :: conceptBridges σ c
-
-def sentenceBridges (σ : Signature) : Φ σ → List (Φᵁ σᵀ)
-| _ :ₐ c => conceptBridges σ c
-| (_, _) :ᵣ r => [roleBridge σ r]
-| c ⊑ d | c ≡ d => conceptBridges σ c ++ conceptBridges σ d
-| r ⊑ᵣ s => [roleBridge σ r, roleBridge σ s]
-
-def translateWK (σ : Signature) (Γ : List (Φ σ)) :
-    List (Φᵁ σᵀ) := Γ.flatMap (translateSentence σ)
-
-def bridgesWK (σ : Signature) (Γ : List (Φ σ)) :
-    List (Φᵁ σᵀ) := Γ.flatMap (sentenceBridges σ)
-
+@[instance_reducible]
 def encodeWK (I : ℐᵂᴷ σ) : ℐᶜ σᵀ where
   D := I.D
   inhabited := I.inhabited
@@ -942,18 +1077,18 @@ def encodeWK (I : ℐᵂᴷ σ) : ℐᶜ σᵀ where
 
 instance : ToC (ℐᵂᴷ σ) (ℐᶜ σᵀ) := ⟨encodeWK⟩
 
-noncomputable def propValue (truth meaningful : Prop) : V₃ := by
+noncomputable def propValue (t m : Prop) : V₃ := by
   classical
-  exact if truth then 𝔱 else if meaningful then 𝔣 else 𝔢
+  exact if t then 𝔱 else if m then 𝔣 else 𝔢
 
-@[simp] theorem propValue_truth (truth meaningful : Prop) :
-    propValue truth meaningful = 𝔱 ↔ truth := by
+@[simp] theorem propValue_truth (t m : Prop) :
+    propValue t m = 𝔱 ↔ t := by
   classical
   unfold propValue
   repeat (split) <;> simp_all
 
-@[simp] theorem propValue_meaningful (truth meaningful : Prop)
-    (h : truth → meaningful) : propValue truth meaningful ≠ 𝔢 ↔ meaningful := by
+@[simp] theorem propValue_meaningful (t m : Prop)
+    (h : t → m) : propValue t m ≠ 𝔢 ↔ m := by
   classical
   unfold propValue
   repeat (split) <;> simp_all
@@ -971,121 +1106,126 @@ noncomputable def propValue (truth meaningful : Prop) : V₃ := by
 noncomputable instance : ToWK (ℐᶜ σᵀ) (ℐᵂᴷ σ) := ⟨decodeTarget⟩
 
 theorem translateConceptEncode (I : ℐᵂᴷ σ) (c : 𝒞 σ) (x : I.D) :
-    ((@evalConceptC _ (Iᶜ) (c^τ)) x ↔ (@evalConceptK _ I c) x = 𝔱) ∧
-    ((@evalConceptC _ (Iᶜ) (c^μ)) x ↔ (@evalConceptK _ I c) x ≠ 𝔢) := by
+  (((τ c)^(Iᶜ)) x ↔ (c^I) x = 𝔱) ∧
+  (((μ c)^(Iᶜ)) x ↔ (c^I) x ≠ 𝔢) := by
+  change ((@evalConceptC _ (Iᶜ) (τ c)) x ↔ (@evalConceptK _ I c) x = 𝔱) ∧
+    ((@evalConceptC _ (Iᶜ) (μ c)) x ↔ (@evalConceptK _ I c) x ≠ 𝔢)
   induction c generalizing x with
   | top | bot =>
-      simp only [concept_tau, concept_mu, translateTau, translateMu, evalConceptC, evalConceptK]
+      simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK]
       decide
   | atom a =>
-      simp only [Interpret.current, Interpret.interpret, concept_tau, concept_mu, ToC.cIze, translateTau, translateMu,
+      simp only [Interpret.current, Interpret.interpret, concept_tau, concept_mu, ToC.cIze, tauConcept, muConcept,
         evalConceptC, evalConceptK, encodeWK, true_and]
   | neg c ih =>
       simp only [concept_tau, concept_mu] at ih
-      simp only [concept_tau, concept_mu, translateTau, translateMu, evalConceptC, evalConceptK,
+      simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK,
         (ih x).1, (ih x).2, negK_t, negK_m, true_and]
   | conj c d ihc ihd =>
       simp only [concept_tau, concept_mu] at ihc ihd
-      simp only [concept_tau, concept_mu, translateTau, translateMu, evalConceptC, evalConceptK,
+      simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK,
         (ihc x).1, (ihc x).2, (ihd x).1, (ihd x).2, andK_t, andK_m, true_and]
   | disj c d ihc ihd =>
       simp only [concept_tau, concept_mu] at ihc ihd
-      simp only [concept_tau, concept_mu, translateTau, translateMu, evalConceptC, evalConceptK,
+      simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK,
         (ihc x).1, (ihc x).2, (ihd x).1, (ihd x).2, orK_t, orK_m, true_and]
   | ex r c ih =>
-      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, translateTau, translateMu, ToC.cIze, encodeWK, evalConceptK, existsK_t, existsK_m]
+      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, tauConcept, muConcept, ToC.cIze, encodeWK, evalConceptK, existsK_t, existsK_m]
       exact ⟨exists_congr (fun y => and_congr Iff.rfl (ih y).1),
         exists_congr (fun y => and_congr Iff.rfl (ih y).2)⟩
   | all r c ih =>
-      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, translateTau, translateMu, ToC.cIze, encodeWK, evalConceptK, forallK_t, forallK_m]
+      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, tauConcept, muConcept, ToC.cIze, encodeWK, evalConceptK, forallK_t, forallK_m]
       refine ⟨and_congr ?_ ?_, ?_⟩
       · exact forall_congr' (fun y => imp_congr Iff.rfl (ih y).1)
       · exact exists_congr (fun y => and_congr Iff.rfl (ih y).2)
       · exact exists_congr (fun y => and_congr Iff.rfl (ih y).2)
 
-theorem encodedAtomBridge (I : ℐᵂᴷ σ) (a : σ.Nc) :
-    (encodeWK I) ⊨ᶜ (atomBridge σ a) := by
-  simp only [Interpret.current, Interpret.interpret, atomBridge, evalSentenceC, evalConceptC, encodeWK]
+theorem encodedatomicConceptBridge (I : ℐᵂᴷ σ) (a : σ.Nc) :
+    (encodeWK I) ⊨ᶜ (atomicConceptBridge a) := by
+  simp only [Interpret.current, Interpret.interpret, atomicConceptBridge, evalSentenceC, evalConceptC, encodeWK]
   intro x h
   rw [h]
   decide
 
-theorem encodedRoleBridge (I : ℐᵂᴷ σ) (r : σ.Nr) :
-    (encodeWK I) ⊨ᶜ (roleBridge σ r) := by
-  simp only [Interpret.current, Interpret.interpret, roleBridge, evalSentenceC, evalRoleC, encodeWK]
+theorem encodedatomicRoleBridge (I : ℐᵂᴷ σ) (r : σ.Nr) :
+    (encodeWK I) ⊨ᶜ (atomicRoleBridge r) := by
+  simp only [Interpret.current, Interpret.interpret, atomicRoleBridge, evalSentenceC, evalRoleC, encodeWK]
   intro x y h
   rw [h]
   decide
 
 theorem encodedConceptBridges (I : ℐᵂᴷ σ) (c : 𝒞 σ) :
-    ∀ q ∈ conceptBridges σ c, (encodeWK I) ⊨ᶜ q := by
+    ∀ q ∈ conceptBridges c, (encodeWK I) ⊨ᶜ q := by
   induction c with
   | top | bot => intro q hq; cases hq
   | atom a =>
-      simpa only [conceptBridges, List.mem_singleton, forall_eq] using
-        encodedAtomBridge I a
+      simpa only [conceptBridges, BridgeTranslation.bridge, List.mem_singleton, forall_eq] using
+        encodedatomicConceptBridge I a
   | neg c ih => exact ih
   | conj c d ihc ihd | disj c d ihc ihd =>
-      simpa only [conceptBridges, List.mem_append, or_imp, forall_and] using And.intro ihc ihd
+      simpa only [conceptBridges, BridgeTranslation.bridge, List.mem_append, or_imp, forall_and] using And.intro ihc ihd
   | ex r c ih | all r c ih =>
-      simpa only [conceptBridges, List.mem_cons, forall_eq_or_imp] using
-        And.intro (encodedRoleBridge I r) ih
+      simpa only [conceptBridges, BridgeTranslation.bridge, List.mem_append,
+        List.mem_singleton, or_imp, forall_and, forall_eq] using
+        And.intro (encodedatomicRoleBridge I r) ih
 
 theorem encodedSentenceBridges (I : ℐᵂᴷ σ) (s : Φ σ) :
-    ∀ q ∈ sentenceBridges σ s, (encodeWK I) ⊨ᶜ q := by
+    ∀ q ∈ sentenceBridges s, (encodeWK I) ⊨ᶜ q := by
   cases s with
   | isa a c => exact encodedConceptBridges I c
   | role a b r =>
-      simpa only [sentenceBridges, List.mem_singleton, forall_eq] using
-        encodedRoleBridge I r
+      simpa only [sentenceBridges, BridgeTranslation.bridge, List.mem_singleton, forall_eq] using
+        encodedatomicRoleBridge I r
   | sub c d | equiv c d =>
-      simpa only [sentenceBridges, List.mem_append, or_imp, forall_and] using
+      simpa only [sentenceBridges, BridgeTranslation.bridge, List.mem_append, or_imp, forall_and] using
         And.intro (encodedConceptBridges I c) (encodedConceptBridges I d)
   | rsub r s =>
       intro q hq
-      simp only [sentenceBridges, List.mem_cons, List.not_mem_nil, or_false] at hq
+      simp only [sentenceBridges, BridgeTranslation.bridge, List.mem_cons, List.not_mem_nil, or_false] at hq
       rcases hq with rfl | rfl
-      · exact encodedRoleBridge I r
-      · exact encodedRoleBridge I s
+      · exact encodedatomicRoleBridge I r
+      · exact encodedatomicRoleBridge I s
 
 /-- Bridges are needed only for the names occurring in the concept being decoded. -/
 theorem decodeConceptLocal (J : ℐᶜ σᵀ)
     (c : 𝒞 σ)
-    (h : ∀ q ∈ conceptBridges σ c, J ⊨ᶜ q) (x : J.D) :
-    ((@evalConceptC _ J (c^τ)) x ↔ (@evalConceptK _ (decodeTarget J) c) x = 𝔱) ∧
-    ((@evalConceptC _ J (c^μ)) x ↔ (@evalConceptK _ (decodeTarget J) c) x ≠ 𝔢) := by
+    (h : ∀ q ∈ conceptBridges c, J ⊨ᶜ q) (x : J.D) :
+    (((τ c)^J) x ↔ (c^(decodeTarget J)) x = 𝔱) ∧
+    (((μ c)^J) x ↔ (c^(decodeTarget J)) x ≠ 𝔢) := by
+  change ((@evalConceptC _ J (τ c)) x ↔ (@evalConceptK _ (decodeTarget J) c) x = 𝔱) ∧
+    ((@evalConceptC _ J (μ c)) x ↔ (@evalConceptK _ (decodeTarget J) c) x ≠ 𝔢)
   induction c generalizing x with
   | top | bot =>
-      simp only [concept_tau, concept_mu, translateTau, translateMu, evalConceptC, evalConceptK]
+      simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK]
       decide
   | atom a =>
       have ha : ∀ y, (J.atomicConceptValuation (a, 𝕋)) y →
           (J.atomicConceptValuation (a, 𝕄)) y :=
-        h (atomBridge σ a) (by simp only [conceptBridges, List.mem_singleton])
+        h (atomicConceptBridge a) (by simp only [conceptBridges, BridgeTranslation.bridge, List.mem_singleton])
       exact ⟨(propValue_truth _ _).symm, (propValue_meaningful _ _ (ha x)).symm⟩
   | neg c ih =>
       have hc := ih h
       simp only [concept_tau, concept_mu] at hc
-      simp only [concept_tau, concept_mu, translateTau, translateMu, evalConceptC, evalConceptK,
+      simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK,
         (hc x).1, (hc x).2, negK_t, negK_m, true_and]
   | conj c d ihc ihd =>
       have hc := ihc (fun q hq => h q (List.mem_append_left _ hq))
       have hd := ihd (fun q hq => h q (List.mem_append_right _ hq))
       simp only [concept_tau, concept_mu] at hc hd
-      simp only [concept_tau, concept_mu, translateTau, translateMu, evalConceptC, evalConceptK,
+      simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK,
         (hc x).1, (hc x).2, (hd x).1, (hd x).2, andK_t, andK_m, true_and]
   | disj c d ihc ihd =>
       have hc := ihc (fun q hq => h q (List.mem_append_left _ hq))
       have hd := ihd (fun q hq => h q (List.mem_append_right _ hq))
       simp only [concept_tau, concept_mu] at hc hd
-      simp only [concept_tau, concept_mu, translateTau, translateMu, evalConceptC, evalConceptK,
+      simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK,
         (hc x).1, (hc x).2, (hd x).1, (hd x).2, orK_t, orK_m, true_and]
   | ex r c ih =>
       have hr : ∀ y z, (J.roleValuation (r, 𝕋)) y z →
           (J.roleValuation (r, 𝕄)) y z :=
-        h (roleBridge σ r) (by simp only [conceptBridges, List.mem_cons, eq_self, true_or])
+        h (atomicRoleBridge r) (by simp [conceptBridges, BridgeTranslation.bridge])
       have hc := ih (fun q hq => h q (List.mem_cons_of_mem _ hq))
-      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, translateTau, translateMu, decodeTarget, evalConceptK]
+      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, tauConcept, muConcept, decodeTarget, evalConceptK]
       rw [existsK_t, existsK_m]
       exact ⟨exists_congr (fun y => and_congr (propValue_truth _ _).symm (hc y).1),
         exists_congr (fun y => and_congr (propValue_meaningful _ _ (hr x y)).symm
@@ -1093,9 +1233,9 @@ theorem decodeConceptLocal (J : ℐᶜ σᵀ)
   | all r c ih =>
       have hr : ∀ y z, (J.roleValuation (r, 𝕋)) y z →
           (J.roleValuation (r, 𝕄)) y z :=
-        h (roleBridge σ r) (by simp only [conceptBridges, List.mem_cons, eq_self, true_or])
+        h (atomicRoleBridge r) (by simp [conceptBridges, BridgeTranslation.bridge])
       have hc := ih (fun q hq => h q (List.mem_cons_of_mem _ hq))
-      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, translateTau, translateMu, decodeTarget, evalConceptK]
+      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, tauConcept, muConcept, decodeTarget, evalConceptK]
       rw [forallK_t, forallK_m]
       refine ⟨and_congr ?_ ?_, ?_⟩
       · exact forall_congr' (fun y =>
@@ -1109,21 +1249,22 @@ private theorem allMemAppend {α : Type} (P : α → Prop) (xs ys : List α) :
     (∀ x ∈ xs ++ ys, P x) ↔ (∀ x ∈ xs, P x) ∧ (∀ x ∈ ys, P x) := by
   simp only [List.mem_append, or_imp, forall_and]
 
-private theorem translateInclusion_iff (J : ℐᶜ σᵀ)
-    (c d : 𝒞 σ) :
-    (∀ q ∈ translateInclusion σ c d, J ⊨ᶜ q) ↔
-      (∀ x, (@evalConceptC _ J (c^τ)) x →
-        (@evalConceptC _ J (d^τ)) x) ∧
-      ∃ x, (@evalConceptC _ J (c^μ)) x ∧
-        (@evalConceptC _ J (d^μ)) x := by
-  simp only [translateInclusion, List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp,
+private theorem translateInclusion_iff (J : ℐᶜ σᵀ) (c d : 𝒞 σ) :
+    (∀ q ∈ tauSubsumption c d, J ⊨ᶜ q) ↔
+      (∀ x, (@evalConceptC _ J (τ c)) x →
+        (@evalConceptC _ J (τ d)) x) ∧
+      ∃ x, (@evalConceptC _ J (μ c)) x ∧
+        (@evalConceptC _ J (μ d)) x := by
+  simp only [tauSubsumption, List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp,
     forall_eq]
   rw [nonempty_iff]
   rfl
 
 theorem translateInclusionEncode (I : ℐᵂᴷ σ) (c d : 𝒞 σ) :
-    (∀ q ∈ translateInclusion σ c d, (encodeWK I) ⊨ᶜ q) ↔
-      ∀ₖ[(@evalConceptK _ I c)] (@evalConceptK _ I d) = 𝔱 := by
+    (∀ q ∈ tauSubsumption c d, (encodeWK I) ⊨ᶜ q) ↔
+      ∀ₖ[c^I] (d^I) = 𝔱 := by
+  change (∀ q ∈ tauSubsumption c d, (encodeWK I) ⊨ᶜ q) ↔
+    ∀ₖ[(@evalConceptK _ I c)] (@evalConceptK _ I d) = 𝔱
   rw [translateInclusion_iff, forallK_t]
   exact and_congr
     (forall_congr' (fun x => imp_congr (translateConceptEncode I c x).1
@@ -1133,10 +1274,12 @@ theorem translateInclusionEncode (I : ℐᵂᴷ σ) (c d : 𝒞 σ) :
 
 theorem decodeInclusionLocal (J : ℐᶜ σᵀ)
     (c d : 𝒞 σ)
-    (hc : ∀ q ∈ conceptBridges σ c, J ⊨ᶜ q)
-    (hd : ∀ q ∈ conceptBridges σ d, J ⊨ᶜ q) :
-    (∀ q ∈ translateInclusion σ c d, J ⊨ᶜ q) ↔
-      ∀ₖ[(@evalConceptK _ (decodeTarget J) c)] (@evalConceptK _ (decodeTarget J) d) = 𝔱 := by
+    (hc : ∀ q ∈ conceptBridges c, J ⊨ᶜ q)
+    (hd : ∀ q ∈ conceptBridges d, J ⊨ᶜ q) :
+    (∀ q ∈ tauSubsumption c d, J ⊨ᶜ q) ↔
+      ∀ₖ[c^(decodeTarget J)] (d^(decodeTarget J)) = 𝔱 := by
+  change (∀ q ∈ tauSubsumption c d, J ⊨ᶜ q) ↔
+    ∀ₖ[(@evalConceptK _ (decodeTarget J) c)] (@evalConceptK _ (decodeTarget J) d) = 𝔱
   rw [translateInclusion_iff, forallK_t]
   exact and_congr
     (forall_congr' (fun x => imp_congr (decodeConceptLocal J c hc x).1
@@ -1144,40 +1287,40 @@ theorem decodeInclusionLocal (J : ℐᶜ σᵀ)
     (exists_congr (fun x => and_congr (decodeConceptLocal J c hc x).2
       (decodeConceptLocal J d hd x).2))
 
-theorem translateSentenceEncode (I : ℐᵂᴷ σ) (s : Φ σ) :
-    (∀ q ∈ translateSentence σ s, (encodeWK I) ⊨ᶜ q) ↔ I ⊨ᴷ s := by
+theorem tauSentenceEncode (I : ℐᵂᴷ σ) (s : Φ σ) :
+    (∀ q ∈ tauSentence s, (encodeWK I) ⊨ᶜ q) ↔ I ⊨ᵂᴷ s := by
   cases s with
   | isa a c =>
-      simp only [Interpret.current, translateSentence, List.mem_singleton, forall_eq, evalSentenceC,
+      simp only [Interpret.current, tauSentence, List.mem_singleton, forall_eq, evalSentenceC,
         satisfiesK]
       exact (translateConceptEncode I c ((I.individualValuation a))).1
   | role a b r =>
-      simp only [Interpret.current, Interpret.interpret, translateSentence, List.mem_singleton, forall_eq, evalSentenceC, evalRoleC,
+      simp only [Interpret.current, Interpret.interpret, tauSentence, List.mem_singleton, forall_eq, evalSentenceC, evalRoleC,
         encodeWK, satisfiesK, evalSentenceK]
   | sub c d => exact translateInclusionEncode I c d
   | equiv c d =>
-      simp only [Interpret.domain, Interpret.current, Interpret.interpret, translateSentence, allMemAppend, translateInclusionEncode,
+      simp only [Interpret.current, Interpret.interpret, tauSentence, allMemAppend, translateInclusionEncode,
         satisfiesK, evalSentenceK]
       rw [andK_t]
   | rsub r s =>
-      simp only [translateSentence, List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp,
+      simp only [tauSentence, List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp,
         forall_eq]
-      rw [overlap_iff]
+      rw [overlap_iff (I := encodeWK I)]
       simp only [Interpret.domain, Interpret.current, Interpret.interpret, evalSentenceC, evalRoleC, encodeWK, satisfiesK, evalSentenceK]
       rw [forallK_t]
       simp only [Prod.forall, Prod.exists]
 
 theorem decodeSentenceLocal (J : ℐᶜ σᵀ)
     (s : Φ σ)
-    (h : ∀ q ∈ sentenceBridges σ s, J ⊨ᶜ q) :
-    (∀ q ∈ translateSentence σ s, J ⊨ᶜ q) ↔ (decodeTarget J) ⊨ᴷ s := by
+    (h : ∀ q ∈ sentenceBridges s, J ⊨ᶜ q) :
+    (∀ q ∈ tauSentence s, J ⊨ᶜ q) ↔ (decodeTarget J) ⊨ᵂᴷ s := by
   cases s with
   | isa a c =>
-      simp only [Interpret.current, translateSentence, List.mem_singleton, forall_eq, evalSentenceC,
+      simp only [Interpret.current, tauSentence, List.mem_singleton, forall_eq, evalSentenceC,
         satisfiesK]
       exact (decodeConceptLocal J c h ((J.individualValuation a))).1
   | role a b r =>
-      simp only [Interpret.current, Interpret.interpret, translateSentence, List.mem_singleton, forall_eq, evalSentenceC, evalRoleC,
+      simp only [Interpret.current, Interpret.interpret, tauSentence, List.mem_singleton, forall_eq, evalSentenceC, evalRoleC,
         decodeTarget, satisfiesK, evalSentenceK]
       exact (propValue_truth _ _).symm
   | sub c d =>
@@ -1185,22 +1328,22 @@ theorem decodeSentenceLocal (J : ℐᶜ σᵀ)
         (fun q hq => h q (List.mem_append_left _ hq))
         (fun q hq => h q (List.mem_append_right _ hq))
   | equiv c d =>
-      have hc : ∀ q ∈ conceptBridges σ c, J ⊨ᶜ q :=
+      have hc : ∀ q ∈ conceptBridges c, J ⊨ᶜ q :=
         fun q hq => h q (List.mem_append_left _ hq)
-      have hd : ∀ q ∈ conceptBridges σ d, J ⊨ᶜ q :=
+      have hd : ∀ q ∈ conceptBridges d, J ⊨ᶜ q :=
         fun q hq => h q (List.mem_append_right _ hq)
-      simp only [Interpret.domain, Interpret.current, Interpret.interpret, translateSentence, allMemAppend, decodeInclusionLocal J c d hc hd,
+      simp only [Interpret.current, Interpret.interpret, tauSentence, allMemAppend, decodeInclusionLocal J c d hc hd,
         decodeInclusionLocal J d c hd hc, satisfiesK, evalSentenceK]
       rw [andK_t]
   | rsub r s =>
       have hr : ∀ x y, (J.roleValuation (r, 𝕋)) x y →
           (J.roleValuation (r, 𝕄)) x y :=
-        h (roleBridge σ r) (by simp only [sentenceBridges, List.mem_cons, eq_self, true_or])
+        h (atomicRoleBridge r) (by simp only [sentenceBridges, BridgeTranslation.bridge, List.mem_cons, eq_self, true_or])
       have hs : ∀ x y, (J.roleValuation (s, 𝕋)) x y →
           (J.roleValuation (s, 𝕄)) x y :=
-        h (roleBridge σ s) (by simp only [sentenceBridges, List.mem_cons,
+        h (atomicRoleBridge s) (by simp only [sentenceBridges, BridgeTranslation.bridge, List.mem_cons,
           eq_self, true_or, or_true])
-      simp only [translateSentence, List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp,
+      simp only [tauSentence, List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp,
         forall_eq]
       rw [overlap_iff]
       simp only [Interpret.domain, Interpret.current, Interpret.interpret, evalSentenceC, evalRoleC, satisfiesK,
@@ -1221,21 +1364,21 @@ private theorem allMemFlatMap {α β : Type} (P : β → Prop) (f : α → List 
     exact h x hx y hy
 
 theorem translateKBEncode (I : ℐᵂᴷ σ) (Γ : List (Φ σ)) :
-    (∀ q ∈ translateWK σ Γ, (encodeWK I) ⊨ᶜ q) ↔
-      ∀ s ∈ Γ, I ⊨ᴷ s := by
-  simp only [translateWK, allMemFlatMap, translateSentenceEncode]
+    (∀ q ∈ tauSentenceSet Γ, (encodeWK I) ⊨ᶜ q) ↔
+      ∀ s ∈ Γ, I ⊨ᵂᴷ s := by
+  simp only [tauSentenceSet, allMemFlatMap, tauSentenceEncode]
 
 theorem encodedKBBridges (I : ℐᵂᴷ σ) (Γ : List (Φ σ)) :
-    ∀ q ∈ bridgesWK σ Γ, (encodeWK I) ⊨ᶜ q := by
-  rw [bridgesWK, allMemFlatMap]
+    ∀ q ∈ sentenceSetBridges Γ, (encodeWK I) ⊨ᶜ q := by
+  rw [sentenceSetBridges, allMemFlatMap]
   exact fun s _ => encodedSentenceBridges I s
 
 theorem decodeKBLocal (J : ℐᶜ σᵀ)
     (Γ : List (Φ σ))
-    (h : ∀ q ∈ bridgesWK σ Γ, J ⊨ᶜ q) :
-    (∀ q ∈ translateWK σ Γ, J ⊨ᶜ q) ↔
-      ∀ s ∈ Γ, (decodeTarget J) ⊨ᴷ s := by
-  rw [translateWK, allMemFlatMap]
+    (h : ∀ q ∈ sentenceSetBridges Γ, J ⊨ᶜ q) :
+    (∀ q ∈ tauSentenceSet Γ, J ⊨ᶜ q) ↔
+      ∀ s ∈ Γ, (decodeTarget J) ⊨ᵂᴷ s := by
+  rw [tauSentenceSet, allMemFlatMap]
   apply forall_congr'
   intro s
   apply forall_congr'
@@ -1244,8 +1387,8 @@ theorem decodeKBLocal (J : ℐᶜ σᵀ)
 
 /-- Classical models need bridges for the vocabulary of both premises and conclusions. -/
 theorem entailmentK_iff_classical (Γ Δ : List (Φ σ)) :
-    (Γ ⊨ᴷ Δ) ↔
-      ((translateWK σ Γ ++ bridgesWK σ Γ ++ bridgesWK σ Δ) ⊨ᶜ translateWK σ Δ) := by
+    (Γ ⊨ᵂᴷ Δ) ↔
+      ((tauSentenceSet Γ ++ sentenceSetBridges Γ ++ sentenceSetBridges Δ) ⊨ᶜ tauSentenceSet Δ) := by
   constructor
   · intro h J hJ
     rw [allMemAppend, allMemAppend] at hJ
@@ -1265,19 +1408,19 @@ theorem entailmentK_iff_classical (Γ Δ : List (Φ σ)) :
 /-- Translate a source KB through WK into the derived classical signature. -/
 def T (σ : Signature) (Γ : List (Φ σ)) :
     List (Φᵁ (σᵂᴷ)ᵀ) :=
-  translateWK σᵂᴷ Γᵂᴷ
+  tauSentenceSet (π Γ)
 
 /-- Bridges for the names used by the polarized source KB. -/
 def B (σ : Signature) (Γ : List (Φ σ)) :
     List (Φᵁ (σᵂᴷ)ᵀ) :=
-  bridgesWK σᵂᴷ Γᵂᴷ
+  sentenceSetBridges (π Γ)
 
 /-- AC entailment is exactly classical entailment of the translated KBs,
 with the bridges of both KBs included among the premises. -/
 theorem MainResult (σ : Signature) (Γ Δ : List (Φ σ)) :
-    (Γ ⊨ᴬ Δ) ↔ ((T σ Γ ++ B σ Γ ++ B σ Δ) ⊨ᶜ T σ Δ) := by
+    (Γ ⊨ᴬᶜ Δ) ↔ ((T σ Γ ++ B σ Γ ++ B σ Δ) ⊨ᶜ T σ Δ) := by
   calc
-    (Γ ⊨ᴬ Δ) ↔ (Γᵂᴷ ⊨ᴷ Δᵂᴷ)                  := entailmentA_iff_projectedWK Γ Δ
-    _ ↔ ((T σ Γ ++ B σ Γ ++ B σ Δ) ⊨ᶜ T σ Δ) := entailmentK_iff_classical Γᵂᴷ Δᵂᴷ
+    (Γ ⊨ᴬᶜ Δ) ↔ (π Γ ⊨ᵂᴷ π Δ)                  := A_iff_pi_WK Γ Δ
+    _ ↔ ((T σ Γ ++ B σ Γ ++ B σ Δ) ⊨ᶜ T σ Δ) := entailmentK_iff_classical (π Γ) (π Δ)
 
 end ALCHAC
