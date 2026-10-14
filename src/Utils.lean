@@ -50,6 +50,17 @@ def ofValues {α : Type u} {β : Type v} (f : α → β) : Set β :=
   · rintro ⟨a, ha⟩
     exact ⟨f a, ⟨a, rfl⟩, ha⟩
 
+/-- The image of a set under a function. -/
+def image {A : Type u} {B : Type v} (g : A → B) (X : Set A) : Set B :=
+  fun b => ∃ a ∈ X, g a = b
+
+/-- Projecting a set of values gives the values of the composite function. -/
+@[simp] theorem image_ofValues {A : Type u} {B : Type v} {C : Type w}
+    (f : A → B) (g : B → C) :
+    image g (ofValues f) = ofValues (fun a => g (f a)) := by
+  funext c
+  exact propext exists_mem_ofValues
+
 /-- A set of values indexed by an inhabited type is nonempty. -/
 theorem ofValues_nonempty {α : Type u} {β : Type v} [Nonempty α]
     (f : α → β) : ∃ b, b ∈ ofValues f := by

@@ -141,33 +141,11 @@ infixl:65 " ∨ₐ " => orA
 
 /-- Project the positive coordinates of AC role/concept pairs. -/
 def acPositive (X : Set (V₃² × V₃²)) : Set V₃² :=
-  fun p => ∃ q ∈ X, (q.1.1, q.2.1) = p
+  Set.image (fun q => (q.1.1, q.2.1)) X
 
 /-- Project the role's positive and the concept's negative coordinates. -/
 def acNegative (X : Set (V₃² × V₃²)) : Set V₃² :=
-  fun p => ∃ q ∈ X, (q.1.1, q.2.2) = p
-
-@[simp] theorem acPositive_builder {D : Type} (r c : D → V₃²) :
-    acPositive {(r x, c x) | x : D} =
-      {((r x).1, (c x).1) | x : D} := by
-  funext p
-  apply propext
-  constructor
-  · rintro ⟨q, ⟨x, rfl⟩, rfl⟩
-    exact ⟨x, rfl⟩
-  · rintro ⟨x, rfl⟩
-    exact ⟨(r x, c x), ⟨x, rfl⟩, rfl⟩
-
-@[simp] theorem acNegative_builder {D : Type} (r c : D → V₃²) :
-    acNegative {(r x, c x) | x : D} =
-      {((r x).1, (c x).2) | x : D} := by
-  funext p
-  apply propext
-  constructor
-  · rintro ⟨q, ⟨x, rfl⟩, rfl⟩
-    exact ⟨x, rfl⟩
-  · rintro ⟨x, rfl⟩
-    exact ⟨(r x, c x), ⟨x, rfl⟩, rfl⟩
+  Set.image (fun q => (q.1.1, q.2.2)) X
 
 noncomputable def existsA (X : Set (V₃² × V₃²)) : V₃² :=
   (∃ₖ (acPositive X), ∀ₖ (acNegative X))
@@ -283,11 +261,11 @@ Parameterized over the type of truth values V,
 which allows us to use this structure to define
 classical, WK, and AC interpretations.
 
-V is an outParam so the current interpretation determines
-the truth-value type during instance search.
+Both parameters are outParams so the current interpretation determines
+the signature and truth-value type during instance search.
 (This is needed for our ·ᴵ notation)
 -/
-structure Interpretation (σ : Signature) (V : outParam Type) where
+structure Interpretation (σ : outParam Signature) (V : outParam Type) where
   D : Type
   inhabited : Nonempty D
   individualValuation : σ.Ni → D
@@ -342,13 +320,12 @@ instance : Interpret σ V σ.Nc :=
   ⟨λ I => I.D → V, (·.atomicConceptValuation)⟩
 
 
-/-- Infer the truth-value type from the interpretation in scope. -/
+/-- Infer the signature and truth-value type from the interpretation in scope. -/
 abbrev Interpret.current {V : Type}
 [I : Interpretation σ V] [h : Interpret σ V α] (a : α) :
 h.Result I := h.interpret I a
 
-set_option quotPrecheck false in
-postfix:max "ᴵ" => Interpret.current (σ := σ)
+postfix:max "ᴵ" => Interpret.current
 
 
 /--
@@ -364,8 +341,7 @@ scoped notation:80 a:81 "^" I:80 => Interpret.interpret I a
 abbrev Interpret.domain {V : Type}
 [I : Interpretation σ V] : Type := I.D
 
-set_option quotPrecheck false in
-notation "Δᴵ" => Interpret.domain (σ := σ)
+notation "Δᴵ" => Interpret.domain
 
 -- MARK: Classical Semantics
 /- # Classical Semantics -/
@@ -918,11 +894,14 @@ instance : ToWK (ℐᴬᶜ σ) (ℐᵂᴷ σᵂᴷ) := ⟨@acToWK σ⟩
 
 @[instance_reducible]
 def wkToAC [I : ℐᵂᴷ σᵂᴷ] : ℐᴬᶜ σ where
-  D :=                      I.D
+  D :=                      Δᴵ
   inhabited :=              I.inhabited
-  individualValuation :=    I.individualValuation
-  atomicConceptValuation := λ a x => ((I.atomicConceptValuation (a, +ₚ)) x, (I.atomicConceptValuation (a, -ₚ)) x)
-  roleValuation :=          λ r x y => ((I.roleValuation r) x y, 𝔢)
+  individualValuation :=    λ x => xᴵ
+  atomicConceptValuation := λ a x =>
+    let pos : σᵂᴷ.Nc := ⟨a, +ₚ⟩
+    let neg : σᵂᴷ.Nc := ⟨a, -ₚ⟩
+    (posᴵ x, negᴵ x)
+  roleValuation :=          λ r x y => (rᴵ x y, 𝔢)
 
 instance : ToAC (ℐᵂᴷ σᵂᴷ) (ℐᴬᶜ σ) := ⟨@wkToAC σ⟩
 
@@ -938,61 +917,45 @@ theorem acToWK_wkToAC (K : ℐᵂᴷ σᵂᴷ) : (Kᴬᶜ)ᵂᴷ = K := by
 theorem acConceptCoordinates (I : ℐᴬᶜ σ) (c : 𝒞 σ)
 (s : Side) (x : Δᴵ) :
 ((cᵖ s)^(Iᵂᴷ)) x = ((c^I) x)[s] := by
-  change (@evalConceptK _ (Iᵂᴷ) (cᵖ s)) x = ((@evalConceptA _ I c) x)[s]
+  simp only [Interpret.interpret]
   induction c generalizing s x with
   | top => cases s <;> rfl
   | bot => cases s <;> rfl
   | atom a => cases s <;> rfl
-  | neg c ih => cases s <;> simp only
-    [piConcept, evalConceptA, negA, GetElem.getElem, coordinate, ih]
+  | neg c ih => cases s <;> simp only [
+     piConcept, evalConceptA, negA, GetElem.getElem,
+     coordinate, ih]
   | conj c d ihc ihd =>
-      cases s <;> simp only
-        [piConcept, evalConceptK, evalConceptA, andA, GetElem.getElem, coordinate, ihc, ihd]
+      cases s <;> simp only [
+        piConcept, evalConceptK, evalConceptA, andA,
+        GetElem.getElem, coordinate, ihc, ihd]
   | disj c d ihc ihd =>
-      cases s <;> simp only
-        [piConcept, evalConceptK, evalConceptA, orA, GetElem.getElem, coordinate, ihc, ihd]
+      cases s <;> simp only [
+        piConcept, evalConceptK, evalConceptA, orA,
+        GetElem.getElem, coordinate, ihc, ihd]
   | ex r c ih =>
-      cases s with
-      | positive =>
-          simp only [piConcept, evalConceptK, evalConceptA, existsA,
-            GetElem.getElem, coordinate, acPositive_builder]
-          apply congrArg existsK
-          apply congrArg Set.ofValues
-          funext y
-          exact congrArg (fun z => (_, z)) (ih +ₚ y)
-      | negative =>
-          simp only [piConcept, evalConceptK, evalConceptA, existsA,
-            GetElem.getElem, coordinate, acNegative_builder]
-          apply congrArg forallK
-          apply congrArg Set.ofValues
-          funext y
-          exact congrArg (fun z => (_, z)) (ih -ₚ y)
+      cases s <;> simp only [
+        piConcept, evalConceptK, evalConceptA, existsA,
+        acPositive, acNegative, Set.image_ofValues, ih,
+        GetElem.getElem, coordinate] <;> rfl
   | all r c ih =>
-      cases s with
-      | positive =>
-          simp only [piConcept, evalConceptK, evalConceptA, forallA,
-            GetElem.getElem, coordinate, acPositive_builder]
-          apply congrArg forallK
-          apply congrArg Set.ofValues
-          funext y
-          exact congrArg (fun z => (_, z)) (ih +ₚ y)
-      | negative =>
-          simp only [piConcept, evalConceptK, evalConceptA, forallA,
-            GetElem.getElem, coordinate, acNegative_builder]
-          apply congrArg existsK
-          apply congrArg Set.ofValues
-          funext y
-          exact congrArg (fun z => (_, z)) (ih -ₚ y)
+      cases s <;> simp only [
+        piConcept, evalConceptK, evalConceptA, forallA,
+        acPositive, acNegative, Set.image_ofValues, ih,
+        GetElem.getElem, coordinate] <;> rfl
 
 theorem acSentenceSupport (I : ℐᴬᶜ σ) (s : Φ σ) :
-    (π s)^(Iᵂᴷ) = coordinate (s^I) +ₚ := by
-  change @evalSentenceK _ (Iᵂᴷ) (piSentence s) = (@evalSentenceA _ I s)[+ₚ]
+(π s)^(Iᵂᴷ) = coordinate (s^I) +ₚ := by
   have hc (c : 𝒞 σ) :
-      (@evalConceptK _ (Iᵂᴷ) (c⁺)) = fun x => ((@evalConceptA _ I c) x)[+ₚ] :=
+      (c⁺)^(Iᵂᴷ) = fun x => ((c^I) x)[+ₚ] :=
     funext (acConceptCoordinates (I := I) c +ₚ)
-  cases s <;> simp only [Interpret.domain, Interpret.current, Interpret.interpret,
-    piSentence, evalSentenceK, evalSentenceA, forallA, andA, hc,
-    acPositive_builder, GetElem.getElem, coordinate] <;> rfl
+  simp only [Interpret.interpret] at hc
+  cases s <;> simp only [
+    Interpret.domain, Interpret.current,
+    Interpret.interpret, PiTranslation.piIze, piSentence,
+    evalSentenceK, evalSentenceA, forallA, andA, hc,
+    acPositive, Set.image_ofValues, GetElem.getElem,
+    coordinate] <;> rfl
 
 theorem acSentenceSupport_iff (I : ℐᴬᶜ σ) (s : Φ σ) :
 (Iᵂᴷ ⊨ᵂᴷ π s) ↔ (I ⊨ᴬᶜ s) := by
@@ -1065,7 +1028,8 @@ noncomputable def propValue (t m : Prop) : V₃ := by
   unfold propValue
   repeat (split) <;> simp_all
 
-@[instance_reducible] noncomputable def decodeTarget (J : ℐᶜ σᵀ) : ℐᵂᴷ σ where
+@[instance_reducible]
+noncomputable def decodeTarget (J : ℐᶜ σᵀ) : ℐᵂᴷ σ where
   D := J.D
   inhabited := J.inhabited
   individualValuation := J.individualValuation
@@ -1080,8 +1044,7 @@ noncomputable instance : ToWK (ℐᶜ σᵀ) (ℐᵂᴷ σ) := ⟨decodeTarget�
 theorem translateConceptEncode (I : ℐᵂᴷ σ) (c : 𝒞 σ) (x : I.D) :
   (((τ c)^(Iᶜ)) x ↔ (c^I) x = 𝔱) ∧
   (((μ c)^(Iᶜ)) x ↔ (c^I) x ≠ 𝔢) := by
-  change ((@evalConceptC _ (Iᶜ) (τ c)) x ↔ (@evalConceptK _ I c) x = 𝔱) ∧
-    ((@evalConceptC _ (Iᶜ) (μ c)) x ↔ (@evalConceptK _ I c) x ≠ 𝔢)
+  simp only [Interpret.interpret]
   induction c generalizing x with
   | top | bot =>
       simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK]
@@ -1164,8 +1127,7 @@ theorem decodeConceptLocal (J : ℐᶜ σᵀ)
     (h : ∀ q ∈ conceptBridges c, J ⊨ᶜ q) (x : J.D) :
     (((τ c)^J) x ↔ (c^(decodeTarget J)) x = 𝔱) ∧
     (((μ c)^J) x ↔ (c^(decodeTarget J)) x ≠ 𝔢) := by
-  change ((@evalConceptC _ J (τ c)) x ↔ (@evalConceptK _ (decodeTarget J) c) x = 𝔱) ∧
-    ((@evalConceptC _ J (μ c)) x ↔ (@evalConceptK _ (decodeTarget J) c) x ≠ 𝔢)
+  simp only [Interpret.interpret]
   induction c generalizing x with
   | top | bot =>
       simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK]
@@ -1223,10 +1185,10 @@ private theorem allMemAppend {α : Type} (P : α → Prop) (xs ys : List α) :
 
 private theorem translateInclusion_iff (J : ℐᶜ σᵀ) (c d : 𝒞 σ) :
     (∀ q ∈ tauSubsumption c d, J ⊨ᶜ q) ↔
-      (∀ x, (@evalConceptC _ J (τ c)) x →
-        (@evalConceptC _ J (τ d)) x) ∧
-      ∃ x, (@evalConceptC _ J (μ c)) x ∧
-        (@evalConceptC _ J (μ d)) x := by
+      (∀ x, ((τ c)^J) x →
+        ((τ d)^J) x) ∧
+      ∃ x, ((μ c)^J) x ∧
+        ((μ d)^J) x := by
   simp only [tauSubsumption, List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp,
     forall_eq]
   rw [nonempty_iff]
@@ -1235,8 +1197,7 @@ private theorem translateInclusion_iff (J : ℐᶜ σᵀ) (c d : 𝒞 σ) :
 theorem translateInclusionEncode (I : ℐᵂᴷ σ) (c d : 𝒞 σ) :
     (∀ q ∈ tauSubsumption c d, (encodeWK I) ⊨ᶜ q) ↔
       ∀ₖ {((c^I) x, (d^I) x) | x : I.D} = 𝔱 := by
-  change (∀ q ∈ tauSubsumption c d, (encodeWK I) ⊨ᶜ q) ↔
-    ∀ₖ {((@evalConceptK _ I c) x, (@evalConceptK _ I d) x) | x : I.D} = 𝔱
+  simp only [Interpret.interpret]
   rw [translateInclusion_iff, forallK_t]
   exact and_congr
     (forall_congr' (fun x => imp_congr (translateConceptEncode I c x).1
@@ -1250,9 +1211,7 @@ theorem decodeInclusionLocal (J : ℐᶜ σᵀ)
     (hd : ∀ q ∈ conceptBridges d, J ⊨ᶜ q) :
     (∀ q ∈ tauSubsumption c d, J ⊨ᶜ q) ↔
       ∀ₖ {((c^(decodeTarget J)) x, (d^(decodeTarget J)) x) | x : J.D} = 𝔱 := by
-  change (∀ q ∈ tauSubsumption c d, J ⊨ᶜ q) ↔
-    ∀ₖ {((@evalConceptK _ (decodeTarget J) c) x,
-      (@evalConceptK _ (decodeTarget J) d) x) | x : J.D} = 𝔱
+  simp only [Interpret.interpret]
   rw [translateInclusion_iff, forallK_t]
   exact and_congr
     (forall_congr' (fun x => imp_congr (decodeConceptLocal J c hc x).1
