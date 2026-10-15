@@ -416,7 +416,7 @@ def evalSentenceC [ℐᶜ σ] : Φᵁ σ → Prop
 | C ≡ D => ∀ x, Cᴵ x ↔ Dᴵ x
 | R ⊑ᵣ S => ∀ x y, Rᴵ x y → Sᴵ x y
 
-notation  I "⊨ᶜ " S => @evalSentenceC _ I S
+notation  I "⊨ᶜ " φ => @evalSentenceC _ I φ
 
 /-- Classical entailment for ALCHRU. -/
 def entailmentC (Γ Δ : (Φᵁ σ)*) : Prop :=
@@ -459,7 +459,7 @@ noncomputable instance : Interpret σ V₃ (Φ σ) :=
 def satisfiesK [ℐᵂᴷ σ] (φ : Φ σ) : Prop :=
   φᴵ = 𝔱
 
-notation  I "⊨ᵂᴷ " S => @satisfiesK _ I S
+notation  I "⊨ᵂᴷ " φ => @satisfiesK _ I φ
 
 /-- Entailment for weak Kleene semantics -/
 def entailmentK (Γ Δ : (Φ σ)*) : Prop :=
@@ -502,7 +502,7 @@ noncomputable instance : Interpret σ V₃² (Φ σ) :=
 def satisfiesA [ℐᴬᶜ σ] (φ : Φ σ) : Prop :=
   (φᴵ)⁺ = 𝔱
 
-notation  I "⊨ᴬᶜ " S => @satisfiesA _ I S
+notation  I "⊨ᴬᶜ " φ => @satisfiesA _ I φ
 
 /-- Entailment for AC semantics -/
 def entailmentA (Γ Δ : (Φ σ)*) : Prop :=
@@ -907,9 +907,9 @@ WK interpretations such that we have for
 concepts c and individuals x:
 ((c^I) x)⁺ = (π c)^(○I) x
 Which we lift to sentences
-(π s)^(○I) = (s^I)⁺
+(π φ)^(○I) = (φ^I)⁺
 And then lift to entailment:
-(I ⊨ᴬᶜ s) ↔ (○I ⊨ᵂᴷ (π s))
+(I ⊨ᴬᶜ φ) ↔ (○I ⊨ᵂᴷ (π φ))
 from which we obtain
 Γ ⊨ᴬᶜ Δ ↔ π Γ ⊨ᵂᴷ π Δ
 -/
@@ -1005,45 +1005,45 @@ theorem acConceptSupport (I : ℐᴬᶜ σ) (c : 𝒞 σ) (x : Δᴵ) :
 ((π c)^(○I)) x = ((c^I) x)⁺ :=
   acConceptCoordinates I c x +ₚ
 
-theorem acSentenceSupport (I : ℐᴬᶜ σ) (s : Φ σ) :
-(π s)^(○I) = (s^I)⁺ := by
+theorem acSentenceSupport (I : ℐᴬᶜ σ) (φ : Φ σ) :
+(π φ)^(○I) = (φ^I)⁺ := by
   have hc (c : 𝒞 σ) : (π c)^(○I) = λ x => ((c^I) x)⁺ :=
     funext (acConceptSupport (I := I) c)
   simp only [Interpret.interpret, PiTranslation.piIze] at hc
-  cases s <;> simp only [
+  cases φ <;> simp only [
     Interpret.domain, Interpret.current,
     Interpret.interpret, PiTranslation.piIze, piSentence,
     evalSentenceK, evalSentenceA, forallA, andA, hc,
     acPositive, Set.image_ofValues] <;> rfl
 
-theorem acSentenceSupport_iff (I : ℐᴬᶜ σ) (s : Φ σ) :
-(I ⊨ᴬᶜ s) ↔ (○I ⊨ᵂᴷ π s) := by
-  change (s^I)⁺ = 𝔱 ↔ (π s)^(○I) = 𝔱
+theorem acSentenceSupport_iff (I : ℐᴬᶜ σ) (φ : Φ σ) :
+(I ⊨ᴬᶜ φ) ↔ (○I ⊨ᵂᴷ π φ) := by
+  change (φ^I)⁺ = 𝔱 ↔ (π φ)^(○I) = 𝔱
   rw [acSentenceSupport]
 
 theorem A_implies_pi_WK (Γ Δ : (Φ σ)*) :
 (Γ ⊨ᴬᶜ Δ) → (π Γ ⊨ᵂᴷ π Δ) := by
-  intro h K hΓ q hq
-  have hround : ○●K = K := acToWK_wkToAC K
-  rcases List.mem_map.mp hq with ⟨s, hs, rfl⟩
-  have hsource : ∀ p ∈ Γ, ●K ⊨ᴬᶜ p := by
-    intro p hp
-    have hk := hΓ (π p) (List.mem_map.mpr ⟨p, hp, rfl⟩)
-    exact (acSentenceSupport_iff (●K) p).mpr (hround ▸ hk)
-  have hout := h (●K) hsource s hs
-  exact hround ▸ (acSentenceSupport_iff (●K) s).mp hout
+  intro h I hΓ ψ hψ
+  have hround : ○●I = I := acToWK_wkToAC I
+  rcases List.mem_map.mp hψ with ⟨φ, hφ, rfl⟩
+  have hsource : ∀ ψ ∈ Γ, ●I ⊨ᴬᶜ ψ := by
+    intro ψ hψ
+    have htranslated := hΓ (π ψ) (List.mem_map.mpr ⟨ψ, hψ, rfl⟩)
+    exact (acSentenceSupport_iff (●I) ψ).mpr (hround ▸ htranslated)
+  have hout := h (●I) hsource φ hφ
+  exact hround ▸ (acSentenceSupport_iff (●I) φ).mp hout
 
 
 theorem pi_WK_implies_A (Γ Δ : (Φ σ)*) :
 (π Γ ⊨ᵂᴷ π Δ) → (Γ ⊨ᴬᶜ Δ) := by
-  intro h I hΓ s hs
-  have hprojected : ∀ p ∈ π Γ, ○I ⊨ᵂᴷ p := by
-    intro p hp
-    rcases List.mem_map.mp hp with ⟨q, hq, rfl⟩
-    exact (acSentenceSupport_iff I q).mp (hΓ q hq)
-  have hout := h (○I) hprojected (piSentence s)
-    (List.mem_map.mpr ⟨s, hs, rfl⟩)
-  exact (acSentenceSupport_iff I s).mpr hout
+  intro h I hΓ φ hφ
+  have hprojected : ∀ ψ ∈ π Γ, ○I ⊨ᵂᴷ ψ := by
+    intro ψ hψ
+    rcases List.mem_map.mp hψ with ⟨φ, hφ, rfl⟩
+    exact (acSentenceSupport_iff I φ).mp (hΓ φ hφ)
+  have hout := h (○I) hprojected (π φ)
+    (List.mem_map.mpr ⟨φ, hφ, rfl⟩)
+  exact (acSentenceSupport_iff I φ).mpr hout
 
 /-- The explicit WK entailment intermediate used in the final theorem. -/
 theorem A_iff_pi_WK (Γ Δ : (Φ σ)*) :
@@ -1065,10 +1065,22 @@ The core idea is that we define a construction
 □· on WK interpretations such that for concepts c we have
 ((τ c)^(□I)) x ↔ (c^I) x = 𝔱 and
 ((μ c)^(□I)) x ↔ (c^I) x ≠ 𝔢
-from this we lift to entailment
-I ⊨ᵂᴷ φ ↔ (∀ ψ ∈ τ φ, □I ⊨ᶜ ψ)
+along with an ■· construction such that
+((τ c)^I) x ↔ (c^■I) x = 𝔱 and
+((μ c)^I) x ↔ (c^■I) x ≠ 𝔢
 
+for □· we lift to satisfaction
+(∀ φ ∈ τ Γ, □I ⊨ᶜ φ) ↔ ∀ φ ∈ Γ, I ⊨ᵂᴷ φ
+and have for the bridging axioms 𝒟 that
+∀ ψ ∈ 𝒟 Γ, □I ⊨ᶜ ψ
 
+for ■· we have the following satisfaction lifting
+that depends on our aditional bridging axioms 𝒟.
+(∀ ψ ∈ 𝒟 φ, I ⊨ᶜ ψ) →
+(∀ ψ ∈ τ φ, I ⊨ᶜ ψ) ↔ ■I ⊨ᵂᴷ φ
+
+These three together then allow us to show
+(Γ ⊨ᵂᴷ Δ) ↔ ((τ Γ ++ 𝒟 Γ ++ 𝒟 Δ) ⊨ᶜ τ Δ)
 -/
 
 @[simp]
@@ -1165,7 +1177,7 @@ theorem encodedatomicRoleBridge (I : ℐᵂᴷ σ) (r : σ.Nr) :
 theorem encodedConceptBridges (I : ℐᵂᴷ σ) (c : 𝒞 σ) :
 ∀ φ ∈ 𝒟 c, □I ⊨ᶜ φ := by
   induction c with
-  | top | bot => intro q hq; cases hq
+  | top | bot => intro ψ hψ; cases hψ
   | atom a =>
       simpa only [conceptBridges, BridgeTranslation.bridge,
         List.mem_singleton, forall_eq] using
@@ -1195,10 +1207,10 @@ theorem encodedSentenceBridges (I : ℐᵂᴷ σ) (φ : Φ σ) :
         And.intro (encodedConceptBridges I c)
         (encodedConceptBridges I d)
   | rsub r s =>
-      intro q hq
+      intro ψ hψ
       simp only [sentenceBridges, BridgeTranslation.bridge,
-        List.mem_cons, List.not_mem_nil, or_false] at hq
-      rcases hq with rfl | rfl
+        List.mem_cons, List.not_mem_nil, or_false] at hψ
+      rcases hψ with rfl | rfl
       · exact encodedatomicRoleBridge I r
       · exact encodedatomicRoleBridge I s
 
@@ -1209,34 +1221,34 @@ noncomputable def propValue (t m : Prop) : V₃ := by
   exact if t then 𝔱 else if m then 𝔣 else 𝔢
 
 @[simp] theorem propValue_truth (t m : Prop) :
-    propValue t m = 𝔱 ↔ t := by
+propValue t m = 𝔱 ↔ t := by
   classical
   unfold propValue
   repeat (split) <;> simp_all
 
 @[simp] theorem propValue_meaningful (t m : Prop)
-    (h : t → m) : propValue t m ≠ 𝔢 ↔ m := by
+(h : t → m) : propValue t m ≠ 𝔢 ↔ m := by
   classical
   unfold propValue
   repeat (split) <;> simp_all
 
 @[instance_reducible]
-noncomputable def decodeTarget (J : ℐᶜ σᵀ) : ℐᵂᴷ σ where
-  D := J.D
-  inhabited := J.inhabited
-  individualValuation := J.individualValuation
+noncomputable def decodeTarget (I : ℐᶜ σᵀ) : ℐᵂᴷ σ where
+  D := I.D
+  inhabited := I.inhabited
+  individualValuation := I.individualValuation
   atomicConceptValuation := λ a x =>
-    propValue ((J.atomicConceptValuation (a, 𝕋)) x)
-      ((J.atomicConceptValuation (a, 𝕄)) x)
+    propValue ((I.atomicConceptValuation (a, 𝕋)) x)
+      ((I.atomicConceptValuation (a, 𝕄)) x)
   roleValuation := λ r x y =>
-    propValue ((J.roleValuation (r, 𝕋)) x y) ((J.roleValuation (r, 𝕄)) x y)
+    propValue ((I.roleValuation (r, 𝕋)) x y) ((I.roleValuation (r, 𝕄)) x y)
 
 prefix:max "■" => λ I => @decodeTarget _ I
 
 
 /-- Bridges are needed only for the names occurring in the concept being decoded. -/
 theorem decodeConceptLocal (I : ℐᶜ σᵀ) (c : 𝒞 σ)
-(h : ∀ q ∈ 𝒟 c, I ⊨ᶜ q) (x : I.D) :
+(h : ∀ ψ ∈ 𝒟 c, I ⊨ᶜ ψ) (x : I.D) :
 (((τ c)^I) x ↔ (c^■I) x = 𝔱) ∧
 (((μ c)^I) x ↔ (c^■I) x ≠ 𝔢) := by
   simp only [Interpret.interpret]
@@ -1256,14 +1268,14 @@ theorem decodeConceptLocal (I : ℐᶜ σᵀ) (c : 𝒞 σ)
       simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK,
         (hc x).1, (hc x).2, negK_t, negK_m, true_and]
   | conj c d ihc ihd =>
-      have hc := ihc (λ q hq => h q (List.mem_append_left _ hq))
-      have hd := ihd (λ q hq => h q (List.mem_append_right _ hq))
+      have hc := ihc (λ ψ hψ => h ψ (List.mem_append_left _ hψ))
+      have hd := ihd (λ ψ hψ => h ψ (List.mem_append_right _ hψ))
       simp only [concept_tau, concept_mu] at hc hd
       simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK,
         (hc x).1, (hc x).2, (hd x).1, (hd x).2, andK_t, andK_m, true_and]
   | disj c d ihc ihd =>
-      have hc := ihc (λ q hq => h q (List.mem_append_left _ hq))
-      have hd := ihd (λ q hq => h q (List.mem_append_right _ hq))
+      have hc := ihc (λ ψ hψ => h ψ (List.mem_append_left _ hψ))
+      have hd := ihd (λ ψ hψ => h ψ (List.mem_append_right _ hψ))
       simp only [concept_tau, concept_mu] at hc hd
       simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK,
         (hc x).1, (hc x).2, (hd x).1, (hd x).2, orK_t, orK_m, true_and]
@@ -1271,7 +1283,7 @@ theorem decodeConceptLocal (I : ℐᶜ σᵀ) (c : 𝒞 σ)
       have hr : ∀ y z, (I.roleValuation (r, 𝕋)) y z →
           (I.roleValuation (r, 𝕄)) y z :=
         h (atomicRoleBridge r) (by simp [conceptBridges, BridgeTranslation.bridge])
-      have hc := ih (λ q hq => h q (List.mem_cons_of_mem _ hq))
+      have hc := ih (λ ψ hψ => h ψ (List.mem_cons_of_mem _ hψ))
       simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, tauConcept, muConcept, decodeTarget, evalConceptK]
       simp only [existsK_t, existsK_m, Set.exists_mem_ofValues]
       simp only [Set.mem_ofValues, Prod.mk.injEq]
@@ -1282,7 +1294,7 @@ theorem decodeConceptLocal (I : ℐᶜ σᵀ) (c : 𝒞 σ)
       have hr : ∀ y z, (I.roleValuation (r, 𝕋)) y z →
           (I.roleValuation (r, 𝕄)) y z :=
         h (atomicRoleBridge r) (by simp [conceptBridges, BridgeTranslation.bridge])
-      have hc := ih (λ q hq => h q (List.mem_cons_of_mem _ hq))
+      have hc := ih (λ ψ hψ => h ψ (List.mem_cons_of_mem _ hψ))
       simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, tauConcept, muConcept, decodeTarget, evalConceptK]
       simp only [forallK_t, forallK_m, Set.forall_mem_ofValues, Set.exists_mem_ofValues]
       refine ⟨and_congr ?_ ?_, ?_⟩
@@ -1297,17 +1309,17 @@ theorem allMemAppend {α : Type} (P : α → Prop) (xs ys : α*) :
 (∀ x ∈ xs ++ ys, P x) ↔ (∀ x ∈ xs, P x) ∧ (∀ x ∈ ys, P x) := by
   simp only [List.mem_append, or_imp, forall_and]
 
-theorem translateInclusion_iff (J : ℐᶜ σᵀ) (c d : 𝒞 σ) :
-(∀ q ∈ tauSubsumption c d, J ⊨ᶜ q) ↔
-(∀ x, ((τ c)^J) x → ((τ d)^J) x) ∧
-∃ x, ((μ c)^J) x ∧ ((μ d)^J) x := by
+theorem translateInclusion_iff (I : ℐᶜ σᵀ) (c d : 𝒞 σ) :
+(∀ ψ ∈ tauSubsumption c d, I ⊨ᶜ ψ) ↔
+(∀ x, ((τ c)^I) x → ((τ d)^I) x) ∧
+∃ x, ((μ c)^I) x ∧ ((μ d)^I) x := by
   simp only [tauSubsumption, List.mem_cons,
     List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
   rw [nonempty_iff]
   rfl
 
 theorem translateInclusionEncode (I : ℐᵂᴷ σ) (c d : 𝒞 σ) :
-    (∀ q ∈ tauSubsumption c d, □I ⊨ᶜ q) ↔
+    (∀ ψ ∈ tauSubsumption c d, □I ⊨ᶜ ψ) ↔
       ∀ₖ {((c^I) x, (d^I) x) | x : I.D} = 𝔱 := by
   simp only [Interpret.interpret]
   rw [translateInclusion_iff, forallK_t]
@@ -1320,9 +1332,9 @@ theorem translateInclusionEncode (I : ℐᵂᴷ σ) (c d : 𝒞 σ) :
 
 theorem decodeInclusionLocal (I : ℐᶜ σᵀ)
 (c d : 𝒞 σ)
-(hc : ∀ q ∈ 𝒟 c, I ⊨ᶜ q)
-(hd : ∀ q ∈ 𝒟 d, I ⊨ᶜ q) :
-(∀ q ∈ tauSubsumption c d, I ⊨ᶜ q) ↔
+(hc : ∀ ψ ∈ 𝒟 c, I ⊨ᶜ ψ)
+(hd : ∀ ψ ∈ 𝒟 d, I ⊨ᶜ ψ) :
+(∀ ψ ∈ tauSubsumption c d, I ⊨ᶜ ψ) ↔
 ∀ₖ {((c^(■I)) x, (d^(■I)) x) | x : I.D} = 𝔱 := by
   simp only [Interpret.interpret]
   rw [translateInclusion_iff, forallK_t]
@@ -1365,7 +1377,7 @@ theorem tauSentenceEncode (I : ℐᵂᴷ σ) (φ : Φ σ) :
       simp only [Prod.forall, Prod.exists]
 
 theorem decodeSentenceLocal (I : ℐᶜ σᵀ) (φ : Φ σ)
-(h : ∀ q ∈ 𝒟 φ, I ⊨ᶜ q) :
+(h : ∀ ψ ∈ 𝒟 φ, I ⊨ᶜ ψ) :
 (∀ ψ ∈ τ φ, I ⊨ᶜ ψ) ↔ ■I ⊨ᵂᴷ φ := by
   cases φ with
   | isa a c =>
@@ -1381,13 +1393,13 @@ theorem decodeSentenceLocal (I : ℐᶜ σᵀ) (φ : Φ σ)
       exact (propValue_truth _ _).symm
   | sub c d =>
       exact decodeInclusionLocal I c d
-        (λ q hq => h q (List.mem_append_left _ hq))
-        (λ q hq => h q (List.mem_append_right _ hq))
+        (λ ψ hψ => h ψ (List.mem_append_left _ hψ))
+        (λ ψ hψ => h ψ (List.mem_append_right _ hψ))
   | equiv c d =>
-      have hc : ∀ q ∈ conceptBridges c, I ⊨ᶜ q :=
-        λ q hq => h q (List.mem_append_left _ hq)
-      have hd : ∀ q ∈ conceptBridges d, I ⊨ᶜ q :=
-        λ q hq => h q (List.mem_append_right _ hq)
+      have hc : ∀ ψ ∈ conceptBridges c, I ⊨ᶜ ψ :=
+        λ ψ hψ => h ψ (List.mem_append_left _ hψ)
+      have hd : ∀ ψ ∈ conceptBridges d, I ⊨ᶜ ψ :=
+        λ ψ hψ => h ψ (List.mem_append_right _ hψ)
       simp only [Interpret.current, Interpret.interpret,
         TauTranslation.tau, tauSentence, allMemAppend,
         decodeInclusionLocal I c d hc hd,
@@ -1427,35 +1439,35 @@ private theorem allMemFlatMap {α β : Type} (P : β → Prop) (f : α → β*)
 
 theorem translateKBEncode (I : ℐᵂᴷ σ) (Γ : (Φ σ)*) :
 (∀ φ ∈ τ Γ, □I ⊨ᶜ φ) ↔ ∀ φ ∈ Γ, I ⊨ᵂᴷ φ := by
-  simp only [TauTranslation.tau, tauSentenceSet,
-  allMemFlatMap, tauSentenceEncode]
+  simp only [TauTranslation.tau, tauSentenceSet, allMemFlatMap]
+  exact forall_congr' (λ φ => imp_congr Iff.rfl (tauSentenceEncode I φ))
 
 theorem encodedKBBridges (I : ℐᵂᴷ σ) (Γ : (Φ σ)*) :
-∀ q ∈ 𝒟 Γ, □I ⊨ᶜ q := by
+∀ ψ ∈ 𝒟 Γ, □I ⊨ᶜ ψ := by
   simp [BridgeTranslation.bridge]
   rw [sentenceSetBridges, allMemFlatMap]
-  exact λ s _ => encodedSentenceBridges I s
+  exact λ φ _ => encodedSentenceBridges I φ
 
-theorem decodeKBLocal (J : ℐᶜ σᵀ) (Γ : (Φ σ)*)
-(h : ∀ q ∈ 𝒟 Γ, J ⊨ᶜ q) :
-(∀ q ∈ τ Γ, J ⊨ᶜ q) ↔ ∀ s ∈ Γ, ■J ⊨ᵂᴷ s := by
+theorem decodeKBLocal (I : ℐᶜ σᵀ) (Γ : (Φ σ)*)
+(h : ∀ ψ ∈ 𝒟 Γ, I ⊨ᶜ ψ) :
+(∀ ψ ∈ τ Γ, I ⊨ᶜ ψ) ↔ ∀ φ ∈ Γ, ■I ⊨ᵂᴷ φ := by
   simp [TauTranslation.tau]
   rw [tauSentenceSet, allMemFlatMap]
   apply forall_congr'
-  intro s
+  intro φ
   apply forall_congr'
-  intro hs
-  exact decodeSentenceLocal J s (λ q hq => h q (List.mem_flatMap.mpr ⟨s, hs, hq⟩))
+  intro hφ
+  exact decodeSentenceLocal I φ (λ ψ hψ => h ψ (List.mem_flatMap.mpr ⟨φ, hφ, hψ⟩))
 
 /-- Classical models need bridges for the vocabulary of both premises and conclusions. -/
-theorem entailmentK_iff_classical (Γ Δ : List (Φ σ)) :
-    (Γ ⊨ᵂᴷ Δ) ↔ ((τ Γ ++ 𝒟 Γ ++ 𝒟 Δ) ⊨ᶜ τ Δ) := by
+theorem entailmentK_iff_classical (Γ Δ : (Φ σ)*) :
+(Γ ⊨ᵂᴷ Δ) ↔ ((τ Γ ++ 𝒟 Γ ++ 𝒟 Δ) ⊨ᶜ τ Δ) := by
   constructor
-  · intro h J hJ
-    rw [allMemAppend, allMemAppend] at hJ
-    rcases hJ with ⟨⟨hΓ, hBΓ⟩, hBΔ⟩
-    apply (decodeKBLocal J Δ hBΔ).mpr
-    exact h (decodeTarget J) ((decodeKBLocal J Γ hBΓ).mp hΓ)
+  · intro h I hI
+    rw [allMemAppend, allMemAppend] at hI
+    rcases hI with ⟨⟨hΓ, hBΓ⟩, hBΔ⟩
+    apply (decodeKBLocal I Δ hBΔ).mpr
+    exact h (■I) ((decodeKBLocal I Γ hBΓ).mp hΓ)
   · intro h I hI
     apply (translateKBEncode I Δ).mp
     apply h (□I)
@@ -1471,16 +1483,15 @@ def T (Γ : (Φ σ)*) : (Φᵁ (σᵂᴷ)ᵀ)* :=
   τ (π Γ)
 
 /-- Bridges for the names used by the polarized source KB. -/
-def B (Γ : List (Φ σ)) :
-    List (Φᵁ (σᵂᴷ)ᵀ) :=
-  τ (π Γ)
+def B (Γ : (Φ σ)*) : (Φᵁ (σᵂᴷ)ᵀ)* :=
+  𝒟 (π Γ)
 
 /-- AC entailment is exactly classical entailment of the translated KBs,
 with the bridges of both KBs included among the premises. -/
-theorem MainResult (σ : Signature) (Γ Δ : List (Φ σ)) :
-    (Γ ⊨ᴬᶜ Δ) ↔ ((T Γ ++ B Γ ++ B Δ) ⊨ᶜ T Δ) := by
+theorem MainResult (σ : Signature) (Γ Δ : (Φ σ)*) :
+(Γ ⊨ᴬᶜ Δ) ↔ ((T Γ ++ B Γ ++ B Δ) ⊨ᶜ T Δ) := by
   calc
     (Γ ⊨ᴬᶜ Δ) ↔ (π Γ ⊨ᵂᴷ π Δ)                  := A_iff_pi_WK Γ Δ
-    _         ↔ ((T Γ ++ B Γ ++ B Δ) ⊨ᶜ T Δ) := entailmentK_iff_classical (π Γ) (π Δ)
+    _         ↔ ((T Γ ++ B Γ ++ B Δ) ⊨ᶜ T Δ)    := entailmentK_iff_classical (π Γ) (π Δ)
 
 end ALCHAC

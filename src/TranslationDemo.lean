@@ -166,17 +166,17 @@ def Bpos : 𝒞 (σᵂᴷ) := [(ConceptName.B, +ₚ)]ₐ
   ((IndividualName.alice, IndividualName.bob) :ᵣ RoleName.r)).map showTargetSentence
 
 /- Assertions translate to one truth assertion; their bridges live in B. -/
-def premises : List (Φ σ) :=
+def premises : (Φ σ)* :=
   [IndividualName.alice :ₐ (∃[RoleName.r] (A ⊔ₜ B)),
     RoleName.r ⊑ᵣ RoleName.s]
 
-def conclusions : List (Φ σ) :=
+def conclusions : (Φ σ)* :=
   [IndividualName.alice :ₐ (∀[RoleName.s] (¬ₜ C))]
 
-#eval (T σ premises).map showTargetSentence
-#eval (ALCHAC.B σ premises).map showTargetSentence
-#eval (T σ conclusions).map showTargetSentence
-#eval (ALCHAC.B σ conclusions).map showTargetSentence
+#eval (T premises).map showTargetSentence
+#eval (ALCHAC.B premises).map showTargetSentence
+#eval (T conclusions).map showTargetSentence
+#eval (ALCHAC.B conclusions).map showTargetSentence
 -- B includes the conclusion's names because target models must decode it too.
 -- Repeated bridges remain repeated: B is a list traversal, not a deduplicator.
 -- The source ¬C appears as C- in T: polarize has already swapped coordinates.
