@@ -1143,16 +1143,18 @@ Our □· construction maps WK interpretations
 to classical ALCH interpretations.
 -/
 @[instance_reducible]
-def encodeWK (I : ℐᵂᴷ σ) : ℐᶜ σᵀ where
-  D := I.D
+def encodeWK [I : ℐᵂᴷ σ] : ℐᶜ σᵀ where
+  D := Δᴵ
   inhabited := I.inhabited
-  individualValuation := I.individualValuation
-  atomicConceptValuation := λ (a, bit) x => match bit with
-    | 𝕋 => (I.atomicConceptValuation a) x = 𝔱
-    | 𝕄 => (I.atomicConceptValuation a) x ≠ 𝔢
-  roleValuation := λ (r, bit) x y => match bit with
-    | 𝕋 => (I.roleValuation r) x y = 𝔱
-    | 𝕄 => (I.roleValuation r) x y ≠ 𝔢
+  individualValuation := λ x => xᴵ
+  atomicConceptValuation :=
+  λ (a, bit) x => match bit with
+  | 𝕋 =>  aᴵ x = 𝔱
+  | 𝕄 =>  aᴵ x ≠ 𝔢
+  roleValuation :=
+  λ (r, bit) x y => match bit with
+  | 𝕋 =>  rᴵ x y = 𝔱
+  | 𝕄 =>  rᴵ x y ≠ 𝔢
 
 prefix:max "□" => λI => @encodeWK _ I
 
@@ -1299,7 +1301,7 @@ theorem tauSentenceEncode (I : ℐᵂᴷ σ) (φ : Φ σ) :
       simp only [TauTranslation.tau,tauSentence,
         Set.mem_union, Set.mem_singleton,
         forall_eq_or_imp, forall_eq]
-      rw [overlap_iff (I := encodeWK I)]
+      rw [overlap_iff (I := @encodeWK _ I)]
       simp only [Interpret.domain, Interpret.current,
         Interpret.interpret, evalSentenceC, evalRoleC,
         encodeWK, satisfiesK, evalSentenceK]
@@ -1353,15 +1355,18 @@ propValue t m = 𝔱 ↔ t := by
   repeat (split) <;> simp_all
 
 @[instance_reducible]
-noncomputable def decodeTarget (I : ℐᶜ σᵀ) : ℐᵂᴷ σ where
-  D := I.D
+noncomputable def decodeTarget [I : ℐᶜ σᵀ] : ℐᵂᴷ σ where
+  D := Δᴵ
   inhabited := I.inhabited
-  individualValuation := I.individualValuation
+  individualValuation := λ x => xᴵ
   atomicConceptValuation := λ a x =>
-    propValue ((I.atomicConceptValuation (a, 𝕋)) x)
+    propValue
+      ((I.atomicConceptValuation (a, 𝕋)) x)
       ((I.atomicConceptValuation (a, 𝕄)) x)
   roleValuation := λ r x y =>
-    propValue ((I.roleValuation (r, 𝕋)) x y) ((I.roleValuation (r, 𝕄)) x y)
+    propValue
+      ((I.roleValuation (r, 𝕋)) x y)
+      ((I.roleValuation (r, 𝕄)) x y)
 
 prefix:max "■" => λ I => @decodeTarget _ I
 
