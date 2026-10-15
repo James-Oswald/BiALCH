@@ -5,10 +5,10 @@ BiALCH formalizes a faithful translation from anaclitic containment (AC) descrip
 The main result preserves and reflects entailment:
 
 ```lean
-(Γ ⊨ᴬᶜ Δ) ↔ ((T Γ ++ B Γ ++ B Δ) ⊨ᶜ T Δ)
+(Γ ⊨ᴬᶜ Δ) ↔ ((τ (π Γ) ∪ 𝒟 (π Γ) ∪ 𝒟 (π Δ)) ⊨ᶜ τ (π Δ))
 ```
 
-Here `T Γ = τ (π Γ)` translates the premises, and `B Γ = 𝒟 (π Γ)` supplies their bridge axioms. Bridges for the conclusions are included among the classical premises so that classical models can also decode the vocabulary of the query.
+Here `τ (π Γ)` translates the premises, and `𝒟 (π Γ)` supplies their bridge axioms. Bridges for the conclusions are included among the classical premises so that classical models can also decode the vocabulary of the query.
 
 ## Source files
 
@@ -17,7 +17,7 @@ All active Lean modules live in `src/` and are checked by `lake build`.
 | File | Contents |
 | --- | --- |
 | [Final.lean](src/Final.lean) | The logical languages, truth values, set-based quantifiers, classical/WK/AC semantics, translations, interpretation constructions, and proofs through `MainResult`. |
-| [TranslationDemo.lean](src/TranslationDemo.lean) | Language examples and printable translations showing polarity, truth, meaningfulness, inclusion witnesses, and the composed translation with bridges. |
+| [TranslationDemo.lean](src/TranslationDemo.lean) | Language examples, printable concept translations, and type-checked sentence and knowledge-base translations. |
 | [Utils.lean](src/Utils.lean) | A small set library, set-builder syntax, image and membership lemmas, top/bottom notation, and elementary logical helpers. |
 | [DefDel.lean](src/DefDel.lean) | The `def∇` and `inductive∇` syntax extensions, which let recursive declarations refer to themselves using `∇`, plus a small list example. |
 
@@ -26,9 +26,9 @@ All active Lean modules live in `src/` and are checked by `lake build`.
 1. **AC to WK:** `acConceptCoordinates` proves both concept coordinates together by structural induction; `acConceptSupport` selects the positive coordinate, and `acSentenceSupport_iff` lifts this to satisfaction. The entailment directions combine in `A_iff_pi_WK`.
 2. **WK to classical:** `translateConceptEncode` preserves truth and meaningfulness together; the decoding lemmas recover them wherever the bridge axioms hold. The sentence and knowledge-base results combine in `entailmentK_iff_classical`, which composes with the first stage to prove `MainResult`.
 
-The classical language includes the universal role and role intersection. These express the meaningfulness witnesses needed by restricted quantifiers and role inclusions. Quantifiers operate on sets of value pairs, and knowledge bases are finite lists of sentences.
+The classical language includes the universal role and role intersection. These express the meaningfulness witnesses needed by restricted quantifiers and role inclusions. Quantifiers operate on sets of value pairs, and knowledge bases are sets of sentences.
 
-Throughout the source, `I` names an interpretation, `φ` and `ψ` name sentences, `Γ` and `Δ` name knowledge bases, and postfix `*` denotes a list type.
+Throughout the source, `I` names an interpretation, `φ` and `ψ` name sentences, `Γ` and `Δ` name knowledge bases, and postfix `*` denotes a set type.
 
 ## Build and examples
 
@@ -38,7 +38,7 @@ The repository pins Lean `v4.33.0-rc2` in `lean-toolchain`; with Lean's Elan too
 lake build
 ```
 
-To check the examples and display their translation output:
+To check the examples and display the concept translation output:
 
 ```sh
 lake build TranslationDemo
@@ -50,15 +50,15 @@ The project is configured in `lakefile.toml`, with `src/` as its source director
 
 Each entry explains the notation's mathematical or programming meaning. Concept constructors describe syntax; their evaluation depends on whether the interpretation is classical, WK, or AC.
 
-### Lists, sets, and truth values
+### Sets and truth values
 
 | Notation | Meaning |
 | --- | --- |
-| `α*` | The type of finite lists whose elements have type `α`. |
-| `Γ ++ Δ` | Concatenate two lists of sentences. |
+| `α*` | The type of sets whose elements have type `α`. |
+| `Γ ∪ Δ` | Union two sets of sentences. |
 | `Set α` | A collection of elements of type `α`, represented by a membership condition. |
-| `x ∈ X` | The element `x` belongs to the set or list `X`. |
-| `x ∉ X` | The element `x` does not belong to the set or list `X`. |
+| `x ∈ X` | The element `x` belongs to the set `X`. |
+| `x ∉ X` | The element `x` does not belong to the set `X`. |
 | `{f x \| x : α}` | The set of all values of `f x` as `x` ranges over the type `α`. |
 | `V₃` | The three WK truth values: true, indeterminate, and false. |
 | `𝔱` | The WK value true. |
@@ -152,8 +152,8 @@ Each entry explains the notation's mathematical or programming meaning. Concept 
 | `●I` | Lift a WK interpretation to AC by pairing concept copies and assigning indeterminate negative role coordinates. |
 | `□I` | Encode a WK interpretation classically using separate truth and meaningfulness predicates. |
 | `■I` | Decode a classical interpretation to WK by reading its truth and meaningfulness predicates. |
-| `T Γ` | Translate an AC knowledge base all the way to classical sentences. |
-| `B Γ` | Collect the classical bridge axioms needed for the polarized names in an AC knowledge base. |
+| `τ (π Γ)` | Translate an AC knowledge base all the way to classical sentences. |
+| `𝒟 (π Γ)` | Collect the classical bridge axioms needed for the polarized names in an AC knowledge base. |
 
 ### Recursive declaration syntax
 

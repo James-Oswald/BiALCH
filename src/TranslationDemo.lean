@@ -26,7 +26,7 @@ instance : Coe σ.Nr (ALCHRU_Role σ) := ⟨ALCHRU_Role.atom⟩
 end Examples
 
 /-!
-Run `lake build TranslationDemo` to see the translations below.
+Run `lake build TranslationDemo` to see the concept translations below.
 The printers in this file only abbreviate the generated syntax; all translations
 come from `Final.lean`. A `+` or `-` labels an AC coordinate; `.t` and `.m`
 label the WK truth and meaningfulness concepts or roles.
@@ -158,27 +158,26 @@ def Bpos : 𝒞 (σᵂᴷ) := [(ConceptName.B, +ₚ)]ₐ
    produces a truth inclusion and an intersection witness on the same pair.
    Equivalence emits both inclusion directions; a role assertion emits one
    truth assertion. -/
-#eval (tauSentence (Apos ⊑ Bpos)).map showTargetSentence
-#eval (tauSentence (Apos ≡ Bpos)).map showTargetSentence
-#eval (tauSentence (RoleName.r ⊑ᵣ RoleName.s)).map
-  showTargetSentence
-#eval (tauSentence
-  ((IndividualName.alice, IndividualName.bob) :ᵣ RoleName.r)).map showTargetSentence
+#check tauSentence (Apos ⊑ Bpos)
+#check tauSentence (Apos ≡ Bpos)
+#check tauSentence (show Φ (σᵂᴷ) from RoleName.r ⊑ᵣ RoleName.s)
+#check tauSentence (show Φ (σᵂᴷ) from
+  (IndividualName.alice, IndividualName.bob) :ᵣ RoleName.r)
 
-/- Assertions translate to one truth assertion; their bridges live in B. -/
+/- Assertions translate to one truth assertion; their bridges live in 𝒟. -/
 def premises : (Φ σ)* :=
-  [IndividualName.alice :ₐ (∃[RoleName.r] (A ⊔ₜ B)),
-    RoleName.r ⊑ᵣ RoleName.s]
+  {IndividualName.alice :ₐ (∃[RoleName.r] (A ⊔ₜ B))} ∪
+    {RoleName.r ⊑ᵣ RoleName.s}
 
 def conclusions : (Φ σ)* :=
-  [IndividualName.alice :ₐ (∀[RoleName.s] (¬ₜ C))]
+  {IndividualName.alice :ₐ (∀[RoleName.s] (¬ₜ C))}
 
-#eval (T premises).map showTargetSentence
-#eval (ALCHAC.B premises).map showTargetSentence
-#eval (T conclusions).map showTargetSentence
-#eval (ALCHAC.B conclusions).map showTargetSentence
--- B includes the conclusion's names because target models must decode it too.
--- Repeated bridges remain repeated: B is a list traversal, not a deduplicator.
--- The source ¬C appears as C- in T: polarize has already swapped coordinates.
+#check τ (π premises)
+#check 𝒟 (π premises)
+#check τ (π conclusions)
+#check 𝒟 (π conclusions)
+-- Bridges include the conclusion's names because target models must decode it too.
+-- Union removes duplicate bridges by set extensionality.
+-- The source ¬C appears as C- after polarization swaps coordinates.
 
 end TranslationDemo
