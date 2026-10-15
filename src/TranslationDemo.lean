@@ -125,8 +125,8 @@ def showTargetSentence : Φᵁ ((σᵂᴷ)ᵀ) → String :=
   showSentence individualName targetAtomName (showUIRole targetRoleName)
 
 def showPolarities (c : 𝒞 σ) : String × String :=
-  (showWKConcept (c⁺),
-    showWKConcept (c⁻))
+  (showWKConcept (π c),
+    showWKConcept (π (¬ₜ c)))
 
 def showWKTranslation (c : 𝒞 (σᵂᴷ)) : String × String :=
   (showTargetConcept (τ c), showTargetConcept (μ c))
