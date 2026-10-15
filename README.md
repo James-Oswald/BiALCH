@@ -90,11 +90,11 @@ Each entry explains the notation's mathematical or programming meaning. Concept 
 
 | Notation | Meaning |
 | --- | --- |
-| `𝒞 σ` | The type of concepts over signature `σ` using atomic roles. |
-| `𝒞ᵁ σ` | The type of concepts over `σ` allowing the universal role and role intersection. |
-| `ℛᵁ σ` | The type of roles built from atomic roles, the universal role, and intersections. |
-| `Φ σ` | The type of sentences over `σ` using atomic roles. |
-| `Φᵁ σ` | The type of sentences over `σ` allowing universal and intersection roles. |
+| `𝒞 σ` | The type of ALCH concepts over signature `σ` (using atomic roles). |
+| `𝒞ᵁ σ` | The type of ALCHRU concepts over `σ` (allowing the universal role and role intersection.) |
+| `ℛᵁ σ` | The type of ALCHRU roles (built from atomic roles, the universal role, and intersections). |
+| `Φ σ` | The type of ALCH sentences over `σ` (using atomic roles). |
+| `Φᵁ σ` | The type of ALCHRU sentences over `σ` (allowing universal and intersection roles). |
 | `⊤` | The top concept, classically satisfied by every domain element. |
 | `⊥` | The bottom concept, classically satisfied by no domain element. |
 | `[a]ₐ` | Treat the atomic concept name `a` as a concept expression. |
@@ -111,8 +111,8 @@ Each entry explains the notation's mathematical or programming meaning. Concept 
 | `c ⊑ d` | Assert concept inclusion from `c` to `d`. |
 | `c ≡ d` | Assert concept equivalence through inclusion in both directions. |
 | `r ⊑ᵣ s` | Assert role inclusion from `r` to `s`. |
-| `∃₁ c` | Assert that at least one domain element satisfies the classical concept `c`. |
-| `r ⨅⁺ s` | Assert that the two classical atomic roles hold on at least one common pair of domain elements. |
+| `∃₁ c` | Assert that at least one domain element satisfies the classical concept `c`. Defined as the ALCHRU sentence `⊤ ⊑ ∃[𝒰] c` |
+| `r ⨅⁺ s` | Assert that the two classical atomic roles hold on at least one common pair of domain elements. Defined as the ALCHRU sentence `∃₁(∃[([r]ᵣ ⊓ᵣ [s]ᵣ)] ⊤)` |
 
 ### Interpretations and consequence
 
@@ -137,8 +137,6 @@ Each entry explains the notation's mathematical or programming meaning. Concept 
 | --- | --- |
 | `σᵂᴷ` | The signature with positive and negative copies of each concept name and the original role and individual names. |
 | `σᵀ` | The signature with truth and meaningfulness copies of each concept and role name and the original individual names. |
-| `xᴬᶜ` | A declared superscript marker for conversion to an AC counterpart; the interpretation construction is written `●I`. |
-| `xᶜ` | A declared superscript marker for conversion to a classical counterpart; the interpretation construction is written `□I`. |
 | `π c` | Translate an AC concept into a WK concept recording its support coordinate. |
 | `π φ` | Translate an AC sentence into the WK sentence that preserves its satisfaction. |
 | `π Γ` | Translate every sentence in an AC knowledge base to WK. |
