@@ -8,8 +8,11 @@ The main result preserves and reflects entailment:
 (Γ ⊨ᴬᶜ Δ) ↔ ((τ (π Γ) ∪ 𝒟 (π Γ) ∪ 𝒟 (π Δ)) ⊨ᶜ τ (π Δ))
 ```
 
-Here `τ (π Γ)` translates the premises, and `𝒟 (π Γ)` supplies
-their bridge axioms.
+where 
+- `π` is the AC to WK translation,
+- `τ` is the WK to classical translation,
+- `𝒟` creates bridge axioms relating truth 
+and meaningfulness.
 
 ## Source files
 
