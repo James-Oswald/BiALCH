@@ -2,12 +2,32 @@ import TranslationRender
 
 open ALCHAC TranslationRender
 
--- Each array enumerates an AC knowledge base. The renderer shows its
--- polarization, classical translation, and required bridge axioms.
-
 #eval showReduction
   #[alice :ₐ A]
-  #[alice :ₐ ¬ₜ A]
+  #[alice :ₐ ¬ₜA]
+
+-- Excluded middle is not forced by an unknown atomic concept.
+#eval showReduction
+  #[alice :ₐ ⊤]
+  #[alice :ₐ (A ⊔ₜ ¬ₜ A)]
+
+-- A contradiction need not entail an unrelated assertion (ex falso).
+#eval showReduction
+  #[alice :ₐ (A ⊓ₜ ¬ₜ A)]
+  #[bob :ₐ B]
+
+-- The paper's loan applicant and credit-card account example.
+-- The credit account has conflicting evidence about good standing;
+-- the conflict does not support an unrelated fraud-risk conclusion.
+#eval showReduction
+  #[hasCreditCardDebt ⊑ᵣ hasDebt,
+    hasMortgageDebt ⊑ᵣ hasDebt,
+    (applicant, creditAccount) :ᵣ hasCreditCardDebt,
+    (applicant, mortgageAccount) :ᵣ hasMortgageDebt,
+    applicant :ₐ ∀[hasDebt] GoodStandingAcc,
+    mortgageAccount :ₐ (GoodStandingAcc ⊓ₜ SecureAcc),
+    creditAccount :ₐ ¬ₜ GoodStandingAcc]
+  #[applicant :ₐ FraudRisk]
 
 #eval showReduction
   #[alice :ₐ ∃[r] (A ⊔ₜ B)]

@@ -577,7 +577,8 @@ instance : PiTranslation (𝒞 σ) (𝒞 σᵂᴷ) where
 /--
 transforms an ALCH sentence over the original signature
 σ to its weak Kleene counterpart over the signature σᵂᴷ
-by polarizing all concepts positively.
+by applying the π translation to each concept within
+the sentence.
 -/
 def piSentence : Φ σ → Φ σᵂᴷ
 | a :ₐ c => a :ₐ π c

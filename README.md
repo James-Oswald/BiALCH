@@ -158,7 +158,7 @@ Each entry explains the notation's mathematical or programming meaning. Concept 
 | `□I` | Encode a WK interpretation classically using separate truth and meaningfulness predicates. |
 | `■I` | Decode a classical interpretation to WK by reading its truth and meaningfulness predicates. |
 | `τ (π Γ)` | Translate an AC knowledge base all the way to classical sentences. |
-| `𝒟 (π Γ)` | Collect the classical bridge axioms needed for the polarized names in an AC knowledge base. |
+| `𝒟 (π Γ)` | Collect the classical bridge axioms needed for the names in an AC knowledge base. |
 
 ### Recursive declaration syntax
 

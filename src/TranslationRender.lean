@@ -5,15 +5,15 @@ open ALCHAC
 namespace TranslationRender
 
 inductive Atom where
-  | A | B | C
+  | A | B | C | GoodStandingAcc | SecureAcc | FraudRisk
   deriving Repr
 
 inductive Role where
-  | r | s
+  | r | s | hasCreditCardDebt | hasMortgageDebt | hasDebt
   deriving Repr
 
 inductive Individual where
-  | alice | bob
+  | alice | bob | applicant | mortgageAccount | creditAccount
   deriving Repr
 
 def σ : Signature where
@@ -25,23 +25,41 @@ def σ : Signature where
 def A : 𝒞 σ := [Atom.A]ₐ
 def B : 𝒞 σ := [Atom.B]ₐ
 def C : 𝒞 σ := [Atom.C]ₐ
+def GoodStandingAcc : 𝒞 σ := [Atom.GoodStandingAcc]ₐ
+def SecureAcc : 𝒞 σ := [Atom.SecureAcc]ₐ
+def FraudRisk : 𝒞 σ := [Atom.FraudRisk]ₐ
 abbrev r : σ.Nr := Role.r
 abbrev s : σ.Nr := Role.s
+abbrev hasCreditCardDebt : σ.Nr := Role.hasCreditCardDebt
+abbrev hasMortgageDebt : σ.Nr := Role.hasMortgageDebt
+abbrev hasDebt : σ.Nr := Role.hasDebt
 abbrev alice : σ.Ni := Individual.alice
 abbrev bob : σ.Ni := Individual.bob
+abbrev applicant : σ.Ni := Individual.applicant
+abbrev mortgageAccount : σ.Ni := Individual.mortgageAccount
+abbrev creditAccount : σ.Ni := Individual.creditAccount
 
 private def atomName : Atom → String
   | .A => "A"
   | .B => "B"
   | .C => "C"
+  | .GoodStandingAcc => "GoodStandingAcc"
+  | .SecureAcc => "SecureAcc"
+  | .FraudRisk => "FraudRisk"
 
 private def roleName : Role → String
   | .r => "r"
   | .s => "s"
+  | .hasCreditCardDebt => "hasCreditCardDebt"
+  | .hasMortgageDebt => "hasMortgageDebt"
+  | .hasDebt => "hasDebt"
 
 private def individualName : Individual → String
   | .alice => "alice"
   | .bob => "bob"
+  | .applicant => "applicant"
+  | .mortgageAccount => "mortgageAccount"
+  | .creditAccount => "creditAccount"
 
 private def sideName : Side → String
   | +ₚ => "⁺"
