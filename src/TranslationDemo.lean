@@ -2,24 +2,24 @@ import TranslationRender
 
 open ALCHAC TranslationRender
 
-#eval showReduction
+#eval showReductionAndEntailments
   #[alice :ₐ A]
   #[alice :ₐ ¬ₜA]
 
 -- Excluded middle is not forced by an unknown atomic concept.
-#eval showReduction
+#eval showReductionAndEntailments
   #[alice :ₐ ⊤]
   #[alice :ₐ (A ⊔ₜ ¬ₜ A)]
 
 -- A contradiction need not entail an unrelated assertion (ex falso).
-#eval showReduction
+#eval showReductionAndEntailments
   #[alice :ₐ (A ⊓ₜ ¬ₜ A)]
   #[bob :ₐ B]
 
 -- The paper's loan applicant and credit-card account example.
 -- The credit account has conflicting evidence about good standing;
 -- the conflict does not support an unrelated fraud-risk conclusion.
-#eval showReduction
+#eval showReductionAndEntailments
   #[hasCreditCardDebt ⊑ᵣ hasDebt,
     hasMortgageDebt ⊑ᵣ hasDebt,
     (applicant, creditAccount) :ᵣ hasCreditCardDebt,
@@ -29,20 +29,20 @@ open ALCHAC TranslationRender
     creditAccount :ₐ ¬ₜ GoodStandingAcc]
   #[applicant :ₐ FraudRisk]
 
-#eval showReduction
+#eval showReductionAndEntailments
   #[alice :ₐ ∃[r] (A ⊔ₜ B)]
   #[alice :ₐ ∀[r] (¬ₜ B)]
 
-#eval showReduction
+#eval showReductionAndEntailments
   #[A ⊑ B, B ≡ C]
   #[alice :ₐ C]
 
-#eval showReduction
+#eval showReductionAndEntailments
   #[r ⊑ᵣ s, (alice, bob) :ᵣ r]
   #[(alice, bob) :ᵣ s]
 
 -- Assertions together with concept inclusions.
-#eval showReduction
+#eval showReductionAndEntailments
   #[alice :ₐ A,
     bob :ₐ B,
     (alice, bob) :ᵣ r,
@@ -52,7 +52,7 @@ open ALCHAC TranslationRender
     bob :ₐ C]
 
 -- Negation, equivalence, and role inclusion in the same KB.
-#eval showReduction
+#eval showReductionAndEntailments
   #[alice :ₐ ¬ₜ (A ⊓ₜ ∃[r] B),
     bob :ₐ (A ⊔ₜ ¬ₜ C),
     A ≡ ∀[s] B,
@@ -64,7 +64,7 @@ open ALCHAC TranslationRender
     (alice, bob) :ᵣ r]
 
 -- A larger mixture of quantified concepts and role facts.
-#eval showReduction
+#eval showReductionWithClassicalCandidate largeClassicalCounterbranch
   #[alice :ₐ ∀[r] (¬ₜ A ⊔ₜ B),
     bob :ₐ ∃[s] (C ⊓ₜ ¬ₜ B),
     A ⊑ ∃[r] (B ⊔ₜ C),

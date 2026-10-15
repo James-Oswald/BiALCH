@@ -21,8 +21,9 @@ All active Lean modules live in `src/` and are checked by `lake build`.
 | File | Contents |
 | --- | --- |
 | [Final.lean](src/Final.lean) | The logical languages, truth values, set-based quantifiers, classical/WK/AC semantics, translations, interpretation constructions, and proofs through `MainResult`. |
+| [ClassicalTableauProver.lean](src/ClassicalTableauProver.lean) | Signed ALCHRU tableau branches, executable finite search, the small-model proof, and soundness and completeness for `entailmentC`. |
 | [TranslationRender.lean](src/TranslationRender.lean) | Formatting and finite enumeration of the set translations used by the demo. |
-| [TranslationDemo.lean](src/TranslationDemo.lean) | AC knowledge bases of increasing size and their printed WK and classical translations. |
+| [TranslationDemo.lean](src/TranslationDemo.lean) | AC knowledge bases of increasing size, their WK and classical translations, and prover results for the direct classical and translated entailments. |
 | [Utils.lean](src/Utils.lean) | A small set library, set-builder syntax, image and membership lemmas, top/bottom notation, and elementary logical helpers. |
 | [DefDel.lean](src/DefDel.lean) | The `def∇` and `inductive∇` syntax extensions, which let recursive declarations refer to themselves using `∇`, plus a small list example. |
 
@@ -43,13 +44,20 @@ The repository pins Lean `v4.33.0-rc2` in `lean-toolchain`; with Lean's Elan too
 lake build
 ```
 
-To display the complete translations of the example knowledge bases:
+To display the complete translations and classical entailment comparisons of the example knowledge bases:
 
 ```sh
 lake build TranslationDemo
 ```
 
-The project is configured in `lakefile.toml`, with `src/` as its source directory and all five modules as library roots.
+The project is configured in `lakefile.toml`, with `src/` as its source directory and all six modules as library roots.
+
+For a finite indexed signature, `ALCHAC.ClassicalTableau.SmallModel.decideEntailment nc nr ni Γ Δ`
+returns a `Bool`. Its correctness theorem states that it returns `true` exactly when the
+sets enumerated by `Γ` and `Δ` satisfy `entailmentC`. The search explores complete
+atomic labels and role edges, so its running time can grow quickly with the number
+of names and subformulas. The largest translation example uses an explicitly checked
+three-node counterbranch for its direct classical reading.
 
 ## Symbol glossary
 
