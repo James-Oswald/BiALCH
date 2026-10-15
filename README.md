@@ -1,6 +1,6 @@
 # BiALCH
 
-BiALCH formalizes a faithful translation from anaclitic containment (AC) description logic to classical description logic in Lean. It first separates AC support and refutation into weak Kleene (WK) concepts, then represents WK truth and meaningfulness with classical concepts and roles.
+BiALCH formalizes a faithful translation from analytic containment (AC) for ALCH to classical ALCHRU in Lean.
 
 The main result preserves and reflects entailment:
 
@@ -8,7 +8,8 @@ The main result preserves and reflects entailment:
 (Γ ⊨ᴬᶜ Δ) ↔ ((τ (π Γ) ∪ 𝒟 (π Γ) ∪ 𝒟 (π Δ)) ⊨ᶜ τ (π Δ))
 ```
 
-Here `τ (π Γ)` translates the premises, and `𝒟 (π Γ)` supplies their bridge axioms. Bridges for the conclusions are included among the classical premises so that classical models can also decode the vocabulary of the query.
+Here `τ (π Γ)` translates the premises, and `𝒟 (π Γ)` supplies
+their bridge axioms.
 
 ## Source files
 

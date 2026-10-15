@@ -528,8 +528,6 @@ Some examples of the π translation:
 π (C ⊑ ∀[r] D) = [C, +ₚ]ₐ ⊑ ∀[r] [D, +ₚ]ₐ
 -/
 
-
-
 /--
 Given a signature σ, the weak Kleene signature
 σᵂᴷ is defined by pairing each original concept with
@@ -543,6 +541,9 @@ abbrev wkSignature (σ : Signature) : Signature where
 /-- σᵂᴷ shorthand for the weak Kleene signature of σ -/
 instance toWKSignature : ToWK Signature Signature where
   wkIze := wkSignature
+
+instance : Interpret σᵂᴷ V (σ.Nc × Side) :=
+  ⟨λ I => I.D → V, (·.atomicConceptValuation)⟩
 
 /--
 piConcept recursively transforms an ALCH concept into its
@@ -637,6 +638,12 @@ abbrev targetSignature (σ : Signature) : Signature where
 
 postfix:max "ᵀ" => targetSignature
 
+instance : Interpret σᵀ V (σ.Nc × Bit) :=
+  ⟨λ I => I.D → V, (·.atomicConceptValuation)⟩
+
+instance : Interpret σᵀ V (σ.Nr × Bit) :=
+  ⟨λ I => I.D → I.D → V, (·.roleValuation)⟩
+
 /-- The meaningfulness component of a translated concept. -/
 def∇ muConcept : 𝒞 σ → 𝒞ᵁ σᵀ
 | ⊤ => ⊤
@@ -673,7 +680,6 @@ def nonempty (c : 𝒞ᵁ σ) : Φᵁ σ :=
 
 prefix:max "∃₁" => nonempty
 
-
 /--
 Intersection forces both roles to hold on the same pair.
 Classically this resolves
@@ -684,11 +690,18 @@ def overlap (r s : σ.Nr) : Φᵁ σ :=
 
 infixl:70 " ⨅⁺ " => overlap
 
+/--
+translation for subsumption sentences C ⊑ D into
+the target signature.
 
+-/
 def tauSubsumption (c d : 𝒞 σ) : (Φᵁ σᵀ)* :=
   {τ c ⊑ τ d} ∪ {∃₁(μ c ⊓ₜ μ d)}
 
-
+/--
+Translation of ALCH sentences into ALCHU sentences with
+the target signature.
+-/
 def tauSentence : Φ σ → (Φᵁ σᵀ)*
 | a :ₐ c => ({show Φᵁ σᵀ from a :ₐ τ c} : (Φᵁ σᵀ)*)
 | (a, b) :ᵣ r => ({show Φᵁ σᵀ from (a, b) :ᵣ [(r, 𝕋)]ᵣ} : (Φᵁ σᵀ)*)
@@ -787,7 +800,6 @@ entails the corresponding classical entailment
 (Γ ⊨ᵂᴷ Δ) ↔ ((τ Γ ∪ 𝒟 Γ ∪ 𝒟 Δ) ⊨ᶜ τ Δ)
 -/
 
-
 -- MARK: WK Lemmas
 /- ## WK Lemmas -/
 
@@ -853,9 +865,6 @@ private theorem forallK_true (X : Set V₃²) :
   unfold forallK
   repeat (split <;> (try rfl) <;> (try grind only))
 
-/--
-
--/
 theorem forallK_t_aux (X : Set V₃²) :
 ((𝔱, 𝔣) ∉ X ∧ (𝔱, 𝔢) ∉ X) ↔ ∀ p ∈ X, p.1 = 𝔱 → p.2 = 𝔱 := by
   constructor
@@ -913,7 +922,6 @@ in the domain of I such that both r and s relate x to y.
   simp only [Interpret.current, Interpret.interpret,
   overlap, nonempty_iff, evalConceptC, evalRoleC, and_true]
 
-
 -- MARK: AC to WK Theorems
 /-! ## AC to Weak Kleene Theorems -/
 /-!
@@ -932,7 +940,6 @@ And then lift to entailment:
 from which we obtain
 Γ ⊨ᴬᶜ Δ ↔ π Γ ⊨ᵂᴷ π Δ
 -/
-
 
 /--
 Construction ○· from AC interpretations to
@@ -957,10 +964,7 @@ def wkToAC [I : ℐᵂᴷ σᵂᴷ] : ℐᴬᶜ σ where
   D :=                      Δᴵ
   inhabited :=              I.inhabited
   individualValuation :=    λ x => xᴵ
-  atomicConceptValuation := λ a x =>
-    let pos : σᵂᴷ.Nc := ⟨a, +ₚ⟩
-    let neg : σᵂᴷ.Nc := ⟨a, -ₚ⟩
-    (posᴵ x, negᴵ x)
+  atomicConceptValuation := λ a x => ((a, +ₚ)ᴵ x, (a, -ₚ)ᴵ x)
   roleValuation :=          λ r x y => (rᴵ x y, 𝔢)
 
 prefix:max "●" => λx => @wkToAC _ x
@@ -1051,7 +1055,6 @@ theorem A_implies_pi_WK (Γ Δ : (Φ σ)*) :
     exact (acSentenceSupport_iff (●I) ψ).mpr (hround ▸ htranslated)
   have hout := h (●I) hsource φ hφ
   exact hround ▸ (acSentenceSupport_iff (●I) φ).mp hout
-
 
 theorem pi_WK_implies_A (Γ Δ : (Φ σ)*) :
 (π Γ ⊨ᵂᴷ π Δ) → (Γ ⊨ᴬᶜ Δ) := by
@@ -1309,7 +1312,6 @@ theorem tauSentenceEncode (I : ℐᵂᴷ σ) (φ : Φ σ) :
       simp only [Set.forall_mem_ofValues, Set.exists_mem_ofValues]
       simp only [Prod.forall, Prod.exists]
 
-
 theorem translateKBEncode (I : ℐᵂᴷ σ) (Γ : (Φ σ)*) :
 (∀ φ ∈ τ Γ, □I ⊨ᶜ φ) ↔ ∀ φ ∈ Γ, I ⊨ᵂᴷ φ := by
   simp only [TauTranslation.tau, tauSentenceSet, allMemBind]
@@ -1329,8 +1331,6 @@ theorem classical_imp_entailmentK (Γ Δ : (Φ σ)*) :
   rw [allMemUnion, allMemUnion]
   exact ⟨⟨(translateKBEncode I Γ).mpr hI, encodedKBBridges I Γ⟩,
     encodedKBBridges I Δ⟩
-
-
 
 -- MARK: Decoding
 /-!
@@ -1359,19 +1359,17 @@ noncomputable def decodeTarget [I : ℐᶜ σᵀ] : ℐᵂᴷ σ where
   D := Δᴵ
   inhabited := I.inhabited
   individualValuation := λ x => xᴵ
-  atomicConceptValuation := λ a x =>
-    propValue
-      ((I.atomicConceptValuation (a, 𝕋)) x)
-      ((I.atomicConceptValuation (a, 𝕄)) x)
-  roleValuation := λ r x y =>
-    propValue
-      ((I.roleValuation (r, 𝕋)) x y)
-      ((I.roleValuation (r, 𝕄)) x y)
+  atomicConceptValuation :=
+    λ a x => propValue ((a, 𝕋)ᴵ x) ((a, 𝕄)ᴵ x)
+  roleValuation :=
+    λ r x y => propValue ((r, 𝕋)ᴵ x y) ((r, 𝕄)ᴵ x y)
 
 prefix:max "■" => λ I => @decodeTarget _ I
 
-
-/-- Bridges are needed only for the names occurring in the concept being decoded. -/
+/--
+Bridges are needed only for the names occurring in the
+concept being decoded.
+-/
 theorem decodeConceptLocal (I : ℐᶜ σᵀ) (c : 𝒞 σ)
 (h : ∀ ψ ∈ 𝒟 c, I ⊨ᶜ ψ) (x : I.D) :
 (((τ c)^I) x ↔ (c^■I) x = 𝔱) ∧
@@ -1383,45 +1381,56 @@ theorem decodeConceptLocal (I : ℐᶜ σᵀ) (c : 𝒞 σ)
         muConcept, evalConceptC, evalConceptK]
       decide
   | atom a =>
-      have ha : ∀ y, (I.atomicConceptValuation (a, 𝕋)) y →
-          (I.atomicConceptValuation (a, 𝕄)) y :=
-        h (atomicConceptBridge a) (by simp only [conceptBridges, BridgeTranslation.bridge, Set.mem_singleton])
-      exact ⟨(propValue_truth _ _).symm, (propValue_meaningful _ _ (ha x)).symm⟩
+      have ha : ∀ y, ((a, 𝕋)^I) y → ((a, 𝕄)^I) y :=
+        h (atomicConceptBridge a)
+        (by simp only [conceptBridges,
+        BridgeTranslation.bridge, Set.mem_singleton])
+      exact ⟨(propValue_truth _ _).symm,
+        (propValue_meaningful _ _ (ha x)).symm⟩
   | neg c ih =>
       have hc := ih h
       simp only [concept_tau, concept_mu] at hc
-      simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK,
+      simp only [concept_tau, concept_mu, tauConcept,
+        muConcept, evalConceptC, evalConceptK,
         (hc x).1, (hc x).2, negK_t, negK_m, true_and]
   | conj c d ihc ihd =>
       have hc := ihc (λ ψ hψ => h ψ (Set.mem_union_left _ hψ))
       have hd := ihd (λ ψ hψ => h ψ (Set.mem_union_right _ hψ))
       simp only [concept_tau, concept_mu] at hc hd
-      simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK,
-        (hc x).1, (hc x).2, (hd x).1, (hd x).2, andK_t, andK_m, true_and]
+      simp only [concept_tau, concept_mu, tauConcept,
+        muConcept, evalConceptC, evalConceptK, (hc x).1,
+        (hc x).2, (hd x).1, (hd x).2, andK_t, andK_m, true_and]
   | disj c d ihc ihd =>
       have hc := ihc (λ ψ hψ => h ψ (Set.mem_union_left _ hψ))
       have hd := ihd (λ ψ hψ => h ψ (Set.mem_union_right _ hψ))
       simp only [concept_tau, concept_mu] at hc hd
-      simp only [concept_tau, concept_mu, tauConcept, muConcept, evalConceptC, evalConceptK,
-        (hc x).1, (hc x).2, (hd x).1, (hd x).2, orK_t, orK_m, true_and]
+      simp only [concept_tau, concept_mu, tauConcept,
+        muConcept, evalConceptC, evalConceptK, (hc x).1,
+        (hc x).2, (hd x).1, (hd x).2, orK_t, orK_m, true_and]
   | ex r c ih =>
-      have hr : ∀ y z, (I.roleValuation (r, 𝕋)) y z →
-          (I.roleValuation (r, 𝕄)) y z :=
-        h (atomicRoleBridge r) (by simp [conceptBridges, BridgeTranslation.bridge])
+      have hr : ∀ y z, ((r, 𝕋)ᴵ) y z → ((r, 𝕄)ᴵ) y z :=
+        h (atomicRoleBridge r)
+        (by simp [conceptBridges, BridgeTranslation.bridge])
       have hc := ih (λ ψ hψ => h ψ (Or.inr hψ))
-      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, tauConcept, muConcept, decodeTarget, evalConceptK]
+      simp only [Interpret.current, Interpret.interpret,
+        evalConceptC, evalRoleC, concept_tau, concept_mu,
+        tauConcept, muConcept, decodeTarget, evalConceptK]
       simp only [existsK_t, existsK_m, Set.exists_mem_ofValues]
       simp only [Set.mem_ofValues, Prod.mk.injEq]
-      exact ⟨exists_congr (λ y => and_congr (propValue_truth _ _).symm (hc y).1),
-        exists_congr (λ y => and_congr (propValue_meaningful _ _ (hr x y)).symm
-          (hc y).2)⟩
+      exact ⟨exists_congr
+        (λ y => and_congr (propValue_truth _ _).symm (hc y).1),
+        exists_congr (λ y => and_congr
+          (propValue_meaningful _ _ (hr x y)).symm (hc y).2)⟩
   | all r c ih =>
-      have hr : ∀ y z, (I.roleValuation (r, 𝕋)) y z →
-          (I.roleValuation (r, 𝕄)) y z :=
-        h (atomicRoleBridge r) (by simp [conceptBridges, BridgeTranslation.bridge])
+      have hr : ∀ y z, ((r, 𝕋)ᴵ) y z → ((r, 𝕄)ᴵ) y z :=
+        h (atomicRoleBridge r)
+        (by simp [conceptBridges, BridgeTranslation.bridge])
       have hc := ih (λ ψ hψ => h ψ (Or.inr hψ))
-      simp only [Interpret.current, Interpret.interpret, evalConceptC, evalRoleC, concept_tau, concept_mu, tauConcept, muConcept, decodeTarget, evalConceptK]
-      simp only [forallK_t, forallK_m, Set.forall_mem_ofValues, Set.exists_mem_ofValues]
+      simp only [Interpret.current, Interpret.interpret,
+        evalConceptC, evalRoleC, concept_tau, concept_mu,
+        tauConcept, muConcept, decodeTarget, evalConceptK]
+      simp only [forallK_t, forallK_m,
+        Set.forall_mem_ofValues, Set.exists_mem_ofValues]
       refine ⟨and_congr ?_ ?_, ?_⟩
       · exact forall_congr' (λ y =>
           imp_congr (propValue_truth _ _).symm (hc y).1)
@@ -1429,8 +1438,6 @@ theorem decodeConceptLocal (I : ℐᶜ σᵀ) (c : 𝒞 σ)
           and_congr (propValue_meaningful _ _ (hr x y)).symm (hc y).2)
       · exact exists_congr (λ y =>
           and_congr (propValue_meaningful _ _ (hr x y)).symm (hc y).2)
-
-
 
 theorem decodeInclusionLocal (I : ℐᶜ σᵀ)
 (c d : 𝒞 σ)
@@ -1446,8 +1453,6 @@ theorem decodeInclusionLocal (I : ℐᶜ σᵀ)
       (decodeConceptLocal I d hd x).1))
     (exists_congr (λ x => and_congr (decodeConceptLocal I c hc x).2
       (decodeConceptLocal I d hd x).2))
-
-
 
 theorem decodeSentenceLocal (I : ℐᶜ σᵀ) (φ : Φ σ)
 (h : ∀ ψ ∈ 𝒟 φ, I ⊨ᶜ ψ) :
@@ -1510,7 +1515,6 @@ theorem decodeKBLocal (I : ℐᶜ σᵀ) (Γ : (Φ σ)*)
   apply forall_congr'
   intro hφ
   exact decodeSentenceLocal I φ (λ ψ hψ => h ψ (Set.mem_bind.mpr ⟨φ, hφ, hψ⟩))
-
 
 theorem entailmentK_imp_classical (Γ Δ : (Φ σ)*) :
 (Γ ⊨ᵂᴷ Δ) → ((τ Γ ∪ 𝒟 Γ ∪ 𝒟 Δ) ⊨ᶜ τ Δ)  := by
