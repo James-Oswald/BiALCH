@@ -21,7 +21,8 @@ All active Lean modules live in `src/` and are checked by `lake build`.
 | File | Contents |
 | --- | --- |
 | [Final.lean](src/Final.lean) | The logical languages, truth values, set-based quantifiers, classical/WK/AC semantics, translations, interpretation constructions, and proofs through `MainResult`. |
-| [TranslationDemo.lean](src/TranslationDemo.lean) | Language examples, printable concept translations, and type-checked sentence and knowledge-base translations. |
+| [TranslationRender.lean](src/TranslationRender.lean) | Formatting and finite enumeration of the set translations used by the demo. |
+| [TranslationDemo.lean](src/TranslationDemo.lean) | AC knowledge bases of increasing size and their printed WK and classical translations. |
 | [Utils.lean](src/Utils.lean) | A small set library, set-builder syntax, image and membership lemmas, top/bottom notation, and elementary logical helpers. |
 | [DefDel.lean](src/DefDel.lean) | The `def∇` and `inductive∇` syntax extensions, which let recursive declarations refer to themselves using `∇`, plus a small list example. |
 
@@ -42,13 +43,13 @@ The repository pins Lean `v4.33.0-rc2` in `lean-toolchain`; with Lean's Elan too
 lake build
 ```
 
-To check the examples and display the concept translation output:
+To display the complete translations of the example knowledge bases:
 
 ```sh
 lake build TranslationDemo
 ```
 
-The project is configured in `lakefile.toml`, with `src/` as its source directory and all four modules as library roots.
+The project is configured in `lakefile.toml`, with `src/` as its source directory and all five modules as library roots.
 
 ## Symbol glossary
 

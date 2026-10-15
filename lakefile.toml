@@ -5,4 +5,4 @@ defaultTargets = ["BiALCH"]
 [[lean_lib]]
 name = "BiALCH"
 srcDir = "src"
-roots = ["Final", "TranslationDemo", "DefDel", "Utils"]
+roots = ["Final", "TranslationRender", "TranslationDemo", "DefDel", "Utils"]

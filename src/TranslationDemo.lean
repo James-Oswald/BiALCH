@@ -1,183 +1,59 @@
-import Final
+import TranslationRender
 
-open ALCHAC
-section Examples
-variable {σ : Signature}
+open ALCHAC TranslationRender
 
--- ALCH Examples
-example (A B : σ.Nc) (r : σ.Nr) : 𝒞 σ :=
-  A ⊓ₜ (∃[r] B) ⊓ₜ (∀[r] ¬ₜA)
+-- Each array enumerates an AC knowledge base. The renderer shows its
+-- polarization, classical translation, and required bridge axioms.
 
-example (a : σ.Ni) (A : σ.Nc) (r : σ.Nr) : Φ σ :=
-  (a :ₐ (A ⊓ₜ (∃[r] A)))
+#eval showReduction
+  #[alice :ₐ A]
+  #[alice :ₐ ¬ₜ A]
 
-example (a b : σ.Ni) (r : σ.Nr) : Φ σ :=
-  (a, b) :ᵣ r
+#eval showReduction
+  #[alice :ₐ ∃[r] (A ⊔ₜ B)]
+  #[alice :ₐ ∀[r] (¬ₜ B)]
 
-example (r s : σ.Nr) : Φ σ := r ⊑ᵣ s
+#eval showReduction
+  #[A ⊑ B, B ≡ C]
+  #[alice :ₐ C]
 
--- ALCHRU Examples with compound roles and universal roles
+#eval showReduction
+  #[r ⊑ᵣ s, (alice, bob) :ᵣ r]
+  #[(alice, bob) :ᵣ s]
 
-example (A B : σ.Nc) (r s : ALCHRU_Role σ) : 𝒞ᵁ σ :=
-  A ⊓ₜ (∃[r ⊓ᵣ s] B) ⊓ₜ (∀[𝒰] A)
+-- Assertions together with concept inclusions.
+#eval showReduction
+  #[alice :ₐ A,
+    bob :ₐ B,
+    (alice, bob) :ᵣ r,
+    A ⊑ ∃[r] B,
+    B ⊑ C]
+  #[alice :ₐ ∃[r] C,
+    bob :ₐ C]
 
-instance : Coe σ.Nr (ALCHRU_Role σ) := ⟨ALCHRU_Role.atom⟩
+-- Negation, equivalence, and role inclusion in the same KB.
+#eval showReduction
+  #[alice :ₐ ¬ₜ (A ⊓ₜ ∃[r] B),
+    bob :ₐ (A ⊔ₜ ¬ₜ C),
+    A ≡ ∀[s] B,
+    B ⊑ ¬ₜ C,
+    (alice, bob) :ᵣ s,
+    r ⊑ᵣ s]
+  #[alice :ₐ ∀[s] (¬ₜ C),
+    bob :ₐ ¬ₜ A,
+    (alice, bob) :ᵣ r]
 
-end Examples
-
-/-!
-Run `lake build TranslationDemo` to see the concept translations below.
-The printers in this file only abbreviate the generated syntax; all translations
-come from `Final.lean`. A `+` or `-` labels an AC coordinate; `.t` and `.m`
-label the WK truth and meaningfulness concepts or roles.
--/
-
-
-namespace TranslationDemo
-
-open ALCHAC
-
-inductive ConceptName where
-| A | B | C
-deriving Repr
-
-inductive RoleName where
-| r | s
-deriving Repr
-
-inductive IndividualName where
-| alice | bob
-deriving Repr
-
-def σ : Signature where
-  Nc := ConceptName
-  Nr := RoleName
-  Ni := IndividualName
-
-def atomName : ConceptName → String
-| .A => "A"
-| .B => "B"
-| .C => "C"
-
-def roleName : RoleName → String
-| .r => "r"
-| .s => "s"
-
-def individualName : IndividualName → String
-| .alice => "alice"
-| .bob => "bob"
-
-def sideName : Side → String
-| +ₚ => "+"
-| -ₚ => "-"
-
-def bitName : Bit → String
-| 𝕋 => "t"
-| 𝕄 => "m"
-
-def wkAtomName (a : ConceptName × Side) : String :=
-  atomName a.1 ++ sideName a.2
-
-def targetAtomName (a : (ConceptName × Side) × Bit) : String :=
-  wkAtomName a.1 ++ "." ++ bitName a.2
-
-def targetRoleName (r : RoleName × Bit) : String :=
-  roleName r.1 ++ "." ++ bitName r.2
-
-def showConcept {sig : Signature} {R : Type}
-    (showAtom : sig.Nc → String) (showRole : R → String) : Concept sig R → String
-| ⊤ => "⊤"
-| ⊥ => "⊥"
-| [a]ₐ => showAtom a
-| ¬ₜ c => "¬(" ++ showConcept showAtom showRole c ++ ")"
-| c ⊓ₜ d => "(" ++ showConcept showAtom showRole c ++ " ⊓ " ++
-    showConcept showAtom showRole d ++ ")"
-| c ⊔ₜ d => "(" ++ showConcept showAtom showRole c ++ " ⊔ " ++
-    showConcept showAtom showRole d ++ ")"
-| ∃[r] c => "∃" ++ showRole r ++ ".(" ++ showConcept showAtom showRole c ++ ")"
-| ∀[r] c => "∀" ++ showRole r ++ ".(" ++ showConcept showAtom showRole c ++ ")"
-
-def showUIRole {sig : Signature} (showAtom : sig.Nr → String) :
-    ℛᵁ sig → String
-| [r]ᵣ => showAtom r
-| 𝒰 => "U"
-| r ⊓ᵣ s => "(" ++ showUIRole showAtom r ++ " ∩ " ++ showUIRole showAtom s ++ ")"
-
-def showSentence {sig : Signature} {R : Type}
-    (showIndividual : sig.Ni → String) (showAtom : sig.Nc → String)
-    (showRole : R → String) : Sentence sig R → String
-| a :ₐ c => showIndividual a ++ " : " ++ showConcept showAtom showRole c
-| (a, b) :ᵣ r => "(" ++ showIndividual a ++ ", " ++ showIndividual b ++
-    ") : " ++ showRole r
-| c ⊑ d => showConcept showAtom showRole c ++ " ⊑ " ++
-    showConcept showAtom showRole d
-| c ≡ d => showConcept showAtom showRole c ++ " ≡ " ++
-    showConcept showAtom showRole d
-| r ⊑ᵣ s => showRole r ++ " ⊑ᵣ " ++ showRole s
-
-def showWKConcept : 𝒞 (σᵂᴷ) → String :=
-  showConcept wkAtomName roleName
-
-def showTargetConcept : 𝒞ᵁ ((σᵂᴷ)ᵀ) → String :=
-  showConcept targetAtomName (showUIRole targetRoleName)
-
-def showTargetSentence : Φᵁ ((σᵂᴷ)ᵀ) → String :=
-  showSentence individualName targetAtomName (showUIRole targetRoleName)
-
-def showPolarities (c : 𝒞 σ) : String × String :=
-  (showWKConcept (π c),
-    showWKConcept (π (¬ₜ c)))
-
-def showWKTranslation (c : 𝒞 (σᵂᴷ)) : String × String :=
-  (showTargetConcept (τ c), showTargetConcept (μ c))
-
-def A : 𝒞 σ := [ConceptName.A]ₐ
-def B : 𝒞 σ := [ConceptName.B]ₐ
-def C : 𝒞 σ := [ConceptName.C]ₐ
-
-def Apos : 𝒞 (σᵂᴷ) := [(ConceptName.A, +ₚ)]ₐ
-def Bpos : 𝒞 (σᵂᴷ) := [(ConceptName.B, +ₚ)]ₐ
-
-/- The first and second entries are the positive and negative coordinates. -/
-#eval showPolarities (⊤ : 𝒞 σ)       -- (⊤, ⊥)
-#eval showPolarities (⊥ : 𝒞 σ)       -- (⊥, ⊤)
-#eval showPolarities (¬ₜ A)                     -- (A-, A+)
-#eval showPolarities (¬ₜ (A ⊓ₜ B))             -- (A- ⊔ B-, A+ ⊓ B+)
-#eval showPolarities (¬ₜ (∃[RoleName.r] (A ⊔ₜ B)))
--- The last positive coordinate uses ∀r and an intersection of negative atoms.
-
-/- WK truth and meaningfulness are distinct. In particular, negation needs
-   meaningfulness, disjunction needs both operands meaningful, and ∀ needs a
-   meaningful witness even when its ordinary universal part is vacuous. -/
-#eval showWKTranslation (¬ₜ Apos)
-#eval showWKTranslation (Apos ⊔ₜ Bpos)
-#eval showWKTranslation (∃[RoleName.r] Apos)
-#eval showWKTranslation (∀[RoleName.r] Apos)
-
-/- Inclusion produces a truth GCI and a U-based shared witness. Role inclusion
-   produces a truth inclusion and an intersection witness on the same pair.
-   Equivalence emits both inclusion directions; a role assertion emits one
-   truth assertion. -/
-#check tauSentence (Apos ⊑ Bpos)
-#check tauSentence (Apos ≡ Bpos)
-#check tauSentence (show Φ (σᵂᴷ) from RoleName.r ⊑ᵣ RoleName.s)
-#check tauSentence (show Φ (σᵂᴷ) from
-  (IndividualName.alice, IndividualName.bob) :ᵣ RoleName.r)
-
-/- Assertions translate to one truth assertion; their bridges live in 𝒟. -/
-def premises : (Φ σ)* :=
-  {IndividualName.alice :ₐ (∃[RoleName.r] (A ⊔ₜ B))} ∪
-    {RoleName.r ⊑ᵣ RoleName.s}
-
-def conclusions : (Φ σ)* :=
-  {IndividualName.alice :ₐ (∀[RoleName.s] (¬ₜ C))}
-
-#check τ (π premises)
-#check 𝒟 (π premises)
-#check τ (π conclusions)
-#check 𝒟 (π conclusions)
--- Bridges include the conclusion's names because target models must decode it too.
--- Union removes duplicate bridges by set extensionality.
--- The source ¬C appears as C- after polarization swaps coordinates.
-
-end TranslationDemo
+-- A larger mixture of quantified concepts and role facts.
+#eval showReduction
+  #[alice :ₐ ∀[r] (¬ₜ A ⊔ₜ B),
+    bob :ₐ ∃[s] (C ⊓ₜ ¬ₜ B),
+    A ⊑ ∃[r] (B ⊔ₜ C),
+    B ≡ ¬ₜ C,
+    C ⊑ ∀[s] A,
+    (alice, bob) :ᵣ r,
+    (bob, alice) :ᵣ s,
+    r ⊑ᵣ s]
+  #[alice :ₐ ∃[s] C,
+    bob :ₐ ∀[r] B,
+    A ⊑ C,
+    (alice, bob) :ᵣ s]
