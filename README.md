@@ -50,6 +50,18 @@ To display the complete translations and classical entailment comparisons of the
 lake build TranslationDemo
 ```
 
+To render the Myne document from only `src/Final.lean`, build a Myne version
+with `[declarationMap]` support and run:
+
+```sh
+myne -i src
+cd myne-out/tex && latexmk -pdf -interaction=nonstopmode -halt-on-error Final.tex
+```
+
+The website is written to `myne-out/html/`, and the TeX source and PDF are
+written to `myne-out/tex/`. Each top-level section is a separate website page.
+Lean imports continue to support the proof build but are not Myne inputs.
+
 The project is configured in `lakefile.toml`, with `src/` as its source directory and all six modules as library roots.
 
 For a finite indexed signature, `ALCHAC.ClassicalTableau.SmallModel.decideEntailment nc nr ni Γ Δ`

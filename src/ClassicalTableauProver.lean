@@ -14,10 +14,10 @@ structure Branch (σ : Signature) where
   Node : Type
   nonempty : Nonempty Node
   name : σ.Ni → Node
-  posConcept : Node → 𝒞ᵁ σ → Prop
-  negConcept : Node → 𝒞ᵁ σ → Prop
-  posRole : Node → Node → ℛᵁ σ → Prop
-  negRole : Node → Node → ℛᵁ σ → Prop
+  posConcept : Node → 𝒞ᵁ σ → V₂
+  negConcept : Node → 𝒞ᵁ σ → V₂
+  posRole : Node → Node → ℛᵁ σ → V₂
+  negRole : Node → Node → ℛᵁ σ → V₂
   concept_decided : ∀ x c, posConcept x c ∨ negConcept x c
   concept_clash : ∀ x c, ¬(posConcept x c ∧ negConcept x c)
   role_decided : ∀ x y r, posRole x y r ∨ negRole x y r

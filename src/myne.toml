@@ -1,0 +1,10 @@
+root = "Final.lean"
+format = "both"
+outputDir = "../myne-out"
+
+[declarationMap]
+"def∇" = "def"
+"inductive∇" = "def"
+
+[web]
+pageHeading = "section"

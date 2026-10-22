@@ -1,11 +1,16 @@
 import DefDel
 import Utils
 
+/-!
+# BiALCH: Analytic Containment to Classical $\mathcal{ALCHRU}$
+
+This document formalizes the translation of analytic-containment entailment
+through weak Kleene semantics into classical $\mathcal{ALCHRU}$ entailment.
+-/
+
 namespace ALCHAC
 
 -- MARK: Notation
-
-/-- Operator overload for superscript WK -/
 class ToWK (α : Type u) (γ : outParam (Type w)) where
   wkIze : α → γ
 
@@ -45,11 +50,22 @@ prefix:max "𝒟" => BridgeTranslation.bridge
 
 
 postfix:max "*" => Set
+--myne:end
 
 -- MARK: Truth Values
-/- # Truth Values -/
+/-! \section{$\mathsf{WK}$ and $\mathsf{AC}$} -/
+/-! \subsection{Truth Values and Pairs} -/
 
-/-- The type of Weak kleene truth values 𝔱 , 𝔢 , and 𝔣 -/
+/--
+@name Truth values and pairs
+@capture block
+@nl
+The classical truth values $V_2$ are $\{\mathsf{True},\mathsf{False}\}$; the weak Kleene truth values $V_3$ are ${\mathfrak{t}, \mathfrak{e}, \mathfrak{f}}$. The AC truth values $V_3^2$ are pairs of Weak Kleene truth values.
+@formula
+$$V_2:=\mathsf{Prop},\quad V_3:=\{\mathfrak{t},\mathfrak{e},\mathfrak{f}\},\quad V_3^2:=V_3\times V_3$$
+-/
+abbrev V₂ := Prop
+
 inductive V₃ where
 | t
 | e
@@ -60,21 +76,21 @@ notation "𝔱" => V₃.t
 notation "𝔢" => V₃.e
 notation "𝔣" => V₃.f
 
-/-- Pairs of weak kleene truth values -/
 abbrev V32 := V₃ × V₃
 notation "V₃²" => V32
+--myne:end
 
 /--
-Use v⁺ and v⁻ to access the positive and
-negative components of a V₃² vector.
+@name Weak Kleene side access
+@capture block
+@nl
+For a pair $(v^+,v^-)$ in $V_3^2$, the postfixes $+$ and $-$ select its first and second coordinates. The side-indexed accessor selects either coordinate using a value of type `Side`.
+@formula
+$$v[+_{\mathrm p}]:=v^+,\quad v[-_{\mathrm p}]:=v^-$$
 -/
 postfix:max "⁺" => Prod.fst
 postfix:max "⁻" => Prod.snd
 
-/--
-WK side indicator, used for accessing the positive or
-negative component of a V₃² vector.
--/
 inductive Side where
 | positive --pi
 | negative --nu
@@ -87,34 +103,55 @@ def V32.coordinate (v : V₃²) : Side → V₃
 | +ₚ => v⁺
 | -ₚ => v⁻
 
-/--
-v[s] overload for V₃² vectors.
-We can use v[+ₚ] and v[-ₚ] to access the positive and
-negative components respectively, but this is primarily used
-parameterize sides in theorems.
-Note v[+ₚ] = v⁺ and v[-ₚ] = v⁻.
--/
 instance : GetElem (V₃²) Side V₃ (λ _ _ => True) where
   getElem := λ v s _ => v.coordinate s
+--myne:end
 
 
 -- MARK: WK Operators
-/- # Weak Kleene Operators -/
+/-! \subsection{Weak Kleene Operators} -/
 
-/-- Negation of weak kleene truth values -/
+/--
+@name Weak Kleene connectives
+@capture block
+@nl
+Each connective takes values in $V_3$. Negation exchanges $\mathfrak{t}$ and $\mathfrak{f}$ and leaves $\mathfrak{e}$ unchanged. Conjunction and disjunction return $\mathfrak{e}$ whenever either input is $\mathfrak{e}$; when both inputs are in $\{\mathfrak{t},\mathfrak{f}\}$, they use the ordinary two-valued tables.
+@formula
+$$
+\begin{array}{c|c}
+v & \neg_K v\\\hline
+\mathfrak{t} & \mathfrak{f}\\
+\mathfrak{e} & \mathfrak{e}\\
+\mathfrak{f} & \mathfrak{t}
+\end{array}
+\qquad
+\begin{array}{c|ccc}
+\wedge_K & \mathfrak{t} & \mathfrak{e} & \mathfrak{f}\\\hline
+\mathfrak{t} & \mathfrak{t} & \mathfrak{e} & \mathfrak{f}\\
+\mathfrak{e} & \mathfrak{e} & \mathfrak{e} & \mathfrak{e}\\
+\mathfrak{f} & \mathfrak{f} & \mathfrak{e} & \mathfrak{f}
+\end{array}
+\qquad
+\begin{array}{c|ccc}
+\vee_K & \mathfrak{t} & \mathfrak{e} & \mathfrak{f}\\\hline
+\mathfrak{t} & \mathfrak{t} & \mathfrak{e} & \mathfrak{t}\\
+\mathfrak{e} & \mathfrak{e} & \mathfrak{e} & \mathfrak{e}\\
+\mathfrak{f} & \mathfrak{t} & \mathfrak{e} & \mathfrak{f}
+\end{array}
+$$
+-/
+
 def negK : V₃ → V₃
 | 𝔱 => 𝔣
 | 𝔢 => 𝔢
 | 𝔣 => 𝔱
 
-/-- Conjunction of weak kleene truth values -/
 def andK : V₃ → V₃ → V₃
 | 𝔢, _
 | _, 𝔢 => 𝔢
 | 𝔱, 𝔱 => 𝔱
 | _, _ => 𝔣
 
-/-- Disjunction of weak kleene truth values -/
 def orK : V₃ → V₃ → V₃
 | 𝔢, _
 | _, 𝔢 => 𝔢
@@ -124,8 +161,20 @@ def orK : V₃ → V₃ → V₃
 prefix:70 "¬ₖ " => negK
 infixl:70 " ∧ₖ " => andK
 infixl:65 " ∨ₖ " => orK
+--myne:end
 
-/-- Fergusonian Restricted existential quantifier -/
+/--
+@name Restricted weak Kleene existential
+@nl
+A restricted weak Kleene existential evaluates $\exists r.C$ at an element $x$ by combining the role and concept values for every candidate $y$. In interpretation $I$, its input is $X=\{(r^I(x,y),C^I(y)):y\in\Delta^I\}\subseteq V_3^2$, with the role value first. It returns $\mathfrak{t}$ if some candidate has pair $(\mathfrak{t},\mathfrak{t})$. If none does, it returns $\mathfrak{e}$ when every candidate's pair has an $\mathfrak{e}$ coordinate; otherwise it returns $\mathfrak{f}$. An empty candidate set yields $\mathfrak{e}$ by the universal condition.
+@formula
+$$\exists_K X:=\begin{cases}
+\mathfrak{t} & \text{if }(\mathfrak{t},\mathfrak{t})\in X,\\
+\mathfrak{e} & \text{if }(\mathfrak{t},\mathfrak{t})\notin X\land\forall(v,w)\in X,\ v=\mathfrak{e}\lor w=\mathfrak{e},\\
+\mathfrak{f} & \text{if }(\mathfrak{t},\mathfrak{t})\notin X\land\exists(v,w)\in X,\ v,w\ne\mathfrak{e}
+\end{cases}$$
+-/
+
 noncomputable def existsK (X : Set V₃²) : V₃ := by
   classical
   exact
@@ -142,7 +191,18 @@ noncomputable def existsK (X : Set V₃²) : V₃ := by
   -- Impossible case
   else by grind only -- Impossible case
 
-/-- Fergusonian Restricted universal quantifier -/
+/--
+@name Restricted weak Kleene universal
+@nl
+A restricted weak Kleene universal evaluates $\forall r.C$ at an element $x$ by combining the role and concept values for every candidate $y$. In interpretation $I$, its input is $X=\{(r^I(x,y),C^I(y)):y\in\Delta^I\}\subseteq V_3^2$, with the role value first. It returns $\mathfrak{t}$ when neither $(\mathfrak{t},\mathfrak{f})$ nor $(\mathfrak{t},\mathfrak{e})$ occurs and some pair has no $\mathfrak{e}$ coordinate. It returns $\mathfrak{e}$ when every pair has an $\mathfrak{e}$ coordinate, and $\mathfrak{f}$ when one of those two counterexample pairs occurs and some pair has no $\mathfrak{e}$ coordinate. An empty candidate set yields $\mathfrak{e}$.
+@formula
+$$\forall_K X:=\begin{cases}
+\mathfrak{t} & \text{if }(\mathfrak{t},\mathfrak{f})\notin X\land(\mathfrak{t},\mathfrak{e})\notin X\land\exists(v,w)\in X,\ v,w\ne\mathfrak{e},\\
+\mathfrak{e} & \text{if }\forall(v,w)\in X,\ v=\mathfrak{e}\lor w=\mathfrak{e},\\
+\mathfrak{f} & \text{if }((\mathfrak{t},\mathfrak{f})\in X\lor(\mathfrak{t},\mathfrak{e})\in X)\land\exists(v,w)\in X,\ v,w\ne\mathfrak{e}
+\end{cases}$$
+-/
+
 noncomputable def forallK (X : Set V₃²) : V₃ := by
   classical
   exact
@@ -159,12 +219,31 @@ noncomputable def forallK (X : Set V₃²) : V₃ := by
     𝔣
   else by grind only -- Impossible case
 
+/--
+@name Restricted quantifier notation
+@capture block
+@nl
+These notations apply the restricted existential and universal operations to the pairs formed from role valuations at $(x,y)$ and concept evaluations at $y$ for the candidates in a quantified formula.
+-/
 prefix:75 "∃ₖ " => existsK
 prefix:75 "∀ₖ " => forallK
+--myne:end
 
 -- MARK: AC Operators
-/- # AC Operators -/
+/-! \subsection{Analytic Containment Operators} -/
 
+/--
+@name Analytic containment connectives
+@capture block
+@nl
+An analytic-containment value is a pair $(v^+,v^-)$ in $V_3^2$. Negation swaps its coordinates. Conjunction combines the positive coordinates with weak Kleene conjunction and the negative coordinates with weak Kleene disjunction; disjunction uses the dual pair of operations.
+@formula
+$$\begin{aligned}
+\sim_A(v^+,v^-) &:= (v^-,v^+),\\
+(v^+,v^-)\wedge_A(w^+,w^-) &:= (v^+\wedge_K w^+,v^-\vee_K w^-),\\
+(v^+,v^-)\vee_A(w^+,w^-) &:= (v^+\vee_K w^+,v^-\wedge_K w^-)
+\end{aligned}$$
+-/
 @[simp]
 def negA (v : V₃²) : V₃² := (v⁻, v⁺)
 @[simp]
@@ -175,12 +254,25 @@ def orA (v w : V₃²) : V₃² := (v⁺ ∨ₖ w⁺, v⁻ ∧ₖ w⁻)
 prefix:70 "∼ₐ " => negA
 infixl:70 " ∧ₐ " => andA
 infixl:65 " ∨ₐ " => orA
+--myne:end
 
-/-- Project the positive coordinates of AC role/concept pairs. -/
+/--
+@name Analytic containment quantifiers
+@capture block
+@nl
+An AC existential or universal restriction returns a pair: its positive coordinate records the result of one WK quantifier, and its negative coordinate records the dual result. To evaluate $\exists R.C$ or $\forall R.C$ at $x$ in interpretation $I$, form $X=\{(R^I(x,y),C^I(y)):y\in\Delta^I\}$, where each entry is a pair of AC values. $P^+(X)$ keeps the positive coordinates of both entries; $P^-(X)$ keeps the role's positive coordinate and the concept's negative coordinate. The existential uses $\exists_K$ on $P^+(X)$ and $\forall_K$ on $P^-(X)$; the universal uses $\forall_K$ and $\exists_K$, respectively. The notations $\exists_A$ and $\forall_A$ name these operations.
+@formula
+$$\begin{aligned}
+P^+(X) &:= \{(r^+,c^+):(r,c)\in X\},\\
+P^-(X) &:= \{(r^+,c^-):(r,c)\in X\},\\
+\exists_A X &:= (\exists_K P^+(X),\forall_K P^-(X)),\\
+\forall_A X &:= (\forall_K P^+(X),\exists_K P^-(X))
+\end{aligned}$$
+-/
+
 def acPositive (X : Set (V₃² × V₃²)) : Set V₃² :=
   Set.image (λ q => (q.1.1, q.2.1)) X
 
-/-- Project the role's positive and the concept's negative coordinates. -/
 def acNegative (X : Set (V₃² × V₃²)) : Set V₃² :=
   Set.image (λ q => (q.1.1, q.2.2)) X
 
@@ -189,13 +281,20 @@ noncomputable def existsA (X : Set (V₃² × V₃²)) : V₃² :=
 
 noncomputable def forallA (X : Set (V₃² × V₃²)) : V₃² :=
   (∀ₖ (acPositive X), ∃ₖ (acNegative X))
-
 prefix:75 "∃ₐ " => existsA
 prefix:75 "∀ₐ " => forallA
+--myne:end
 
 -- MARK: Language
-/- # ALCH(RU) Language -/
-
+/-! \section{$\mathcal{ALCH}$ and $\mathcal{ALCHRU}$ Languages} -/
+/-! \subsection{Signatures} -/
+/--
+@name Signature
+@nl
+A signature $\sigma=(N_C,N_R,N_I)$ consists of the sets of atomic concept names, atomic role names, and individual names, respectively.
+@formula
+$$\sigma:=(N_C,N_R,N_I)$$
+-/
 structure Signature where
   Nc : Type
   [reprNc : Repr Nc]
@@ -209,19 +308,34 @@ attribute [instance] Signature.reprNr
 attribute [instance] Signature.reprNi
 
 /--
-The type of ALCHRU Roles (ALCHRU role language).
+@name $\mathcal{ALCHRU}$ role grammar
+@capture block
+@nl
+An $\mathcal{ALCHRU}$ role is built from an atomic role, the universal role $\mathcal{U}$, or the intersection of two roles. The grammar defines exactly which expressions may appear as roles in $\mathcal{ALCHRU}$ concepts and sentences.
+@formula
+$$\mathcal{R} ::= r \mid \mathcal{U} \mid \mathcal{R}\sqcap\mathcal{R}$$
 -/
 inductive∇ ALCHRU_Role (σ : Signature) where
 | atom : σ.Nr → ∇
 | universal : ∇
 | inter : ∇ → ∇ → ∇
+
 notation "ℛᵁ" => ALCHRU_Role
+notation "[" r "]ᵣ" => ALCHRU_Role.atom r
+infixl:70 " ⊓ᵣ " => ALCHRU_Role.inter
+notation "𝒰" => ALCHRU_Role.universal
+--myne:end
 
 /--
-The type of generalized Concepts (The concept language).
-The role type is parameterized such that we can
-get ALCH by using the atomic roles from the signature,
-and ALCHRU by using the roles from the ALCHRU role language.
+@name Concept grammar for $\mathcal{ALCH}$ and $\mathcal{ALCHRU}$
+@capture block
+@nl
+The nonterminal $\mathcal{C}$ describes $\mathcal{ALCH}$ concepts, whose quantifiers use atomic roles $r$. The nonterminal $\mathcal{C}^U$ describes $\mathcal{ALCHRU}$ concepts, whose quantifiers may use any role $R$ from the role grammar, including universal roles and intersections.
+@formula
+$$\begin{aligned}
+\mathcal{C} &::= \top \mid \bot \mid A \mid \neg\mathcal{C} \mid \mathcal{C}\sqcap\mathcal{C} \mid \mathcal{C}\sqcup\mathcal{C} \mid \exists r.\mathcal{C} \mid \forall r.\mathcal{C},\\
+\mathcal{C}^U &::= \top \mid \bot \mid A \mid \neg\mathcal{C}^U \mid \mathcal{C}^U\sqcap\mathcal{C}^U \mid \mathcal{C}^U\sqcup\mathcal{C}^U \mid \exists R.\mathcal{C}^U \mid \forall R.\mathcal{C}^U
+\end{aligned}$$
 -/
 inductive∇ Concept (σ : Signature) (R : Type) where
 | top
@@ -234,19 +348,40 @@ inductive∇ Concept (σ : Signature) (R : Type) where
 | all : R → ∇ → ∇
 deriving Repr
 
-/-- The type of ALCH Concepts (ALCH Concept Language). -/
+/-- $\mathcal{ALCH}$ concepts over atomic roles. -/
+-- Classical concepts use atomic roles only.
 abbrev ALCH_Concept (σ : Signature) := Concept σ σ.Nr
 notation "𝒞" => ALCH_Concept
 
-/-- The type of ALCHRU Concepts (ALCHRU Concept Language). -/
+-- $\mathcal{ALCHRU}$ concepts use the extended role language.
 abbrev ALCHRU_Concept (σ : Signature) := Concept σ (ℛᵁ σ)
 notation "𝒞ᵁ" => ALCHRU_Concept
 
+variable {σ : Signature}
+
+-- Concept notations
+instance : Top (Concept σ R) := ⟨.top⟩
+instance : Bot (Concept σ R) := ⟨.bot⟩
+instance : Coe σ.Nc (Concept σ R) := ⟨Concept.atom⟩
+
+notation "[" a "]ₐ" => Concept.atom a
+infixl:70 " ⊓ₜ " => Concept.conj
+infixl:65 " ⊔ₜ " => Concept.disj
+notation "¬ₜ " c:75 => Concept.neg c
+notation "∃[" r "]" c:75 => Concept.ex r c
+notation "∀[" r "]" c:75 => Concept.all r c
+--myne:end
+
 /--
-The type of generalized Sentences (The sentence language).
-The role type is parameterized such that we can
-get ALCH by using the atomic roles from the signature,
-and ALCHRU by using the roles from the ALCHRU role language.
+@name Sentence grammar for $\mathcal{ALCH}$ and $\mathcal{ALCHRU}$
+@capture block
+@nl
+The grammar for $\Phi$ allows concept and role assertions, concept inclusions and equivalences, and inclusions between atomic roles. The grammar for $\Phi^U$ has the same sentence forms but allows any $\mathcal{ALCHRU}$ role in role assertions and role inclusions; here $r,s$ are atomic roles and $R,S$ are arbitrary $\mathcal{ALCHRU}$ roles.
+@formula
+$$\begin{aligned}
+\Phi &::= i:\mathcal{C} \mid (i,j):r \mid \mathcal{C}\sqsubseteq\mathcal{C} \mid \mathcal{C}\equiv\mathcal{C} \mid r\sqsubseteq s,\\
+\Phi^U &::= i:\mathcal{C}^U \mid (i,j):R \mid \mathcal{C}^U\sqsubseteq\mathcal{C}^U \mid \mathcal{C}^U\equiv\mathcal{C}^U \mid R\sqsubseteq S
+\end{aligned}$$
 -/
 inductive∇ Sentence (σ : Signature) (R : Type) where
 | isa : σ.Ni → Concept σ R → ∇
@@ -256,52 +391,41 @@ inductive∇ Sentence (σ : Signature) (R : Type) where
 | rsub : R → R → ∇
 deriving Repr
 
-/-- The type of ALCH Sentences -/
+-- $\mathcal{ALCH}$ sentences over atomic roles.
 abbrev ALCH_Sentence (σ : Signature) := Sentence σ σ.Nr
 notation "Φ" => ALCH_Sentence
 
-/-- The type of ALCHRU Sentences -/
+-- $\mathcal{ALCHRU}$ sentences over $\mathcal{ALCHRU}$ roles.
 abbrev ALCHRU_Sentence (σ : Signature) := Sentence σ (ℛᵁ σ)
 notation "Φᵁ" => ALCHRU_Sentence
 
-variable {σ : Signature}
-
--- Concept Notations
-instance : Top (Concept σ R) := ⟨.top⟩
-instance : Bot (Concept σ R) := ⟨.bot⟩
-instance : Coe σ.Nc (Concept σ R) := ⟨Concept.atom⟩
-notation "[" a "]ₐ" => Concept.atom a
-infixl:70 " ⊓ₜ " => Concept.conj
-infixl:65 " ⊔ₜ " => Concept.disj
-notation "¬ₜ " c:75 => Concept.neg c
-notation "∃[" r "]" c:75 => Concept.ex r c
-notation "∀[" r "]" c:75 => Concept.all r c
-
-/-- Role Notations -/
-notation "[" r "]ᵣ" => ALCHRU_Role.atom r
-infixl:70 " ⊓ᵣ " => ALCHRU_Role.inter
-notation "𝒰" => ALCHRU_Role.universal
-
-/-- Sentence Notations -/
+-- Sentence notations
 notation a " :ₐ " c:50 => Sentence.isa a c
 notation "(" a ", " b ")" " :ᵣ " r:50 => Sentence.role a b r
 infix:50 " ⊑ " => Sentence.sub
 infix:50 " ≡ " => Sentence.equiv
 infix:50 " ⊑ᵣ " => Sentence.rsub
+--myne:end
 
 -- MARK: Interpretations
-/- # Interpretations -/
+/-! \section{Semantics} -/
 
 /--
-The type of interpretations on a signature.
-Parameterized over the type of truth values V,
-which allows us to use this structure to define
-classical, WK, and AC interpretations.
-
-Both parameters are outParams so the current interpretation determines
-the signature and truth-value type during instance search.
-(This is needed for our ·ᴵ notation)
+@name Interpretations
+@capture block
+@nl
+An interpretation $\mathcal I$ for a signature $\sigma=(N_C,N_R,N_I)$ is a tuple $(\Delta^{\mathcal I},\eta^{\mathcal I},\kappa^{\mathcal I},\rho^{\mathcal I})$. Here $\Delta^{\mathcal I}$ is a nonempty domain; $\eta^{\mathcal I}$ assigns each individual name $a$ to $a^{\mathcal I}\in\Delta^{\mathcal I}$; $\kappa^{\mathcal I}$ assigns each atomic concept name $c$ the $V$-valued predicate $c^{\mathcal I}$; and $\rho^{\mathcal I}$ assigns each atomic role name $r$ the $V$-valued binary relation $r^{\mathcal I}$. Thus $c$ ranges over atomic concept names and $r$ over atomic role names. Taking $V=V_2$, $V=V_3$, or $V=V_3^2$ gives the classical, weak Kleene, or analytic-containment semantics, respectively.
+@formula
+$$\begin{aligned}
+\mathcal I&:=(\Delta^{\mathcal I},\eta^{\mathcal I},\kappa^{\mathcal I},\rho^{\mathcal I}),\qquad \Delta^{\mathcal I}\ne\varnothing,\\
+\eta^{\mathcal I}&:N_I\to\Delta^{\mathcal I},\\
+\kappa^{\mathcal I}&:N_C\to(\Delta^{\mathcal I}\to V),\\
+\rho^{\mathcal I}&:N_R\to(\Delta^{\mathcal I}\times\Delta^{\mathcal I}\to V)
+\end{aligned}$$
 -/
+-- Both parameters are outParams so the current interpretation determines
+-- the signature and truth-value type during instance search. This supports
+-- inference for the `·ᴵ` notation.
 structure Interpretation (σ : outParam Signature) (V : outParam Type) where
   D : Type
   inhabited : Nonempty D
@@ -311,90 +435,94 @@ structure Interpretation (σ : outParam Signature) (V : outParam Type) where
 
 attribute [class] Interpretation
 
-/--
-The type of classical Interpretations.
-Uses the two-valued type (`Prop`) for valuations.
--/
 abbrev CInterpretation (σ : Signature) :=
-  Interpretation σ Prop
+  Interpretation σ V₂
 notation "ℐᶜ" => CInterpretation
 
-/--
-The type of Weak Kleene Interpretations
-Uses the three-valued Kleene domain (`V₃`) for valuations.
--/
 abbrev WKInterpretation (σ : Signature) :=
   Interpretation σ V₃
 notation "ℐᵂᴷ" => WKInterpretation
 
-/--
-The type of Analytic Containment Interpretations.
-Uses pairs of three-valued Kleene (`V₃²`) for valuations.
--/
 abbrev ACInterpretation (σ : Signature) :=
   Interpretation σ V₃²
 notation "ℐᴬᶜ" => ACInterpretation
 
-/-! ## Interpretation Notation -/
-
-/--
-Operator for allowing superscript I notation for interpretations
--/
+-- Operator for allowing superscript I notation for interpretations.
 class Interpret (σ : Signature) (V : Type) (α : Type u) where
   Result : Interpretation σ V → Type
   interpret (I : Interpretation σ V) : α → Result I
 
-/-- ·ᴵ for interpretations of individuals -/
+-- The ·ᴵ notation for individuals.
 instance : Interpret σ V σ.Ni :=
   ⟨(·.D), (·.individualValuation)⟩
 
-/-- ·ᴵ for interpretations of atomic role names -/
+-- The ·ᴵ notation for atomic role names.
 instance : Interpret σ V σ.Nr :=
   ⟨λ I => I.D → I.D → V, (·.roleValuation)⟩
 
-/-- ·ᴵ for interpretations of atomic concept names -/
+-- The ·ᴵ notation for atomic concept names.
 instance : Interpret σ V σ.Nc :=
   ⟨λ I => I.D → V, (·.atomicConceptValuation)⟩
 
-
-/-- Infer the signature and truth-value type from the interpretation in scope. -/
+-- Infer the signature and value type from the interpretation in scope.
 abbrev Interpret.current {V : Type}
 [I : Interpretation σ V] [h : Interpret σ V α] (a : α) :
 h.Result I := h.interpret I a
 
 postfix:max "ᴵ" => Interpret.current
 
-
-/--
-Interpret an expression under an explicitly
-supplied interpretation. We need to use this if
-we have multiple interpretations in scope and want to
-specify which one to use.
--/
+-- Use this notation to select an interpretation when several are in scope.
 scoped notation:80 a:81 "^" I:80 => Interpret.interpret I a
 
-
-/-- The domain of the current interpretation. -/
+-- The domain of the current interpretation.
 abbrev Interpret.domain {V : Type}
 [I : Interpretation σ V] : Type := I.D
 
 notation "Δᴵ" => Interpret.domain
+--myne:end
 
 -- MARK: Classical Semantics
-/- # Classical Semantics -/
+/-! \subsection{Classical Semantics} -/
 
-/-- Classical Role evaluation for ALCHRU -/
-def∇ evalRoleC [ℐᶜ σ] : ℛᵁ σ → Δᴵ → Δᴵ → Prop
+/--
+@name Classical role semantics
+@capture block
+@nl
+We lift a classical interpretation to the role language. Let $\mathcal I$ be a classical interpretation. The universal role relates every pair of domain elements, and role intersection holds of a pair exactly when both roles do. Here $r$ is an atomic role name.
+@formula
+$$\begin{aligned}
+\mathcal U^{\mathcal I}(x,y)&:=\top,\\
+(R\sqcap S)^{\mathcal I}(x,y)&:=R^{\mathcal I}(x,y)\land S^{\mathcal I}(x,y)
+\end{aligned}$$
+-/
+
+def∇ evalRoleC [ℐᶜ σ] : ℛᵁ σ → Δᴵ → Δᴵ → V₂
 | [r]ᵣ, x, y => rᴵ x y
 | 𝒰, _, _ => True
 | r ⊓ᵣ s, x, y => ∇ r x y ∧ ∇ s x y
 
-/-- ·ᴵ for ALCHRU roles in classical semantics -/
-instance : Interpret σ Prop (ℛᵁ σ) :=
-  ⟨λ I => I.D → I.D → Prop, λ_=>evalRoleC⟩
+-- Interpretation of ALCHRU role expressions in the classical semantics.
+instance : Interpret σ V₂ (ℛᵁ σ) :=
+  ⟨λ I => I.D → I.D → V₂, λ_=>evalRoleC⟩
+--myne:end
 
--- Classical Concept evaluation on ALCHRU concepts
-def∇ evalConceptC [ℐᶜ σ] : 𝒞ᵁ σ → Δᴵ → Prop
+/--
+@name Classical concept semantics
+@capture block
+@nl
+We lift a classical interpretation to the concept language. Let $\mathcal I$ be a classical interpretation. The clauses give the truth conditions for the constants, Boolean connectives, and quantifiers of $\mathcal{ALCHRU}$ concepts. Here $c$ is an atomic concept name.
+@formula
+$$\begin{aligned}
+\top^{\mathcal I}(x)&:=\top,\\
+\bot^{\mathcal I}(x)&:=\bot,\\
+(\neg C)^{\mathcal I}(x)&:=\neg C^{\mathcal I}(x),\\
+(C\sqcap D)^{\mathcal I}(x)&:=C^{\mathcal I}(x)\land D^{\mathcal I}(x),\\
+(C\sqcup D)^{\mathcal I}(x)&:=C^{\mathcal I}(x)\lor D^{\mathcal I}(x),\\
+(\exists R.C)^{\mathcal I}(x)&:=\exists y\,(R^{\mathcal I}(x,y)\land C^{\mathcal I}(y)),\\
+(\forall R.C)^{\mathcal I}(x)&:=\forall y\,(R^{\mathcal I}(x,y)\rightarrow C^{\mathcal I}(y))
+\end{aligned}$$
+-/
+def∇ evalConceptC [ℐᶜ σ] : 𝒞ᵁ σ → Δᴵ → V₂
 | ⊤, _ => True
 | ⊥, _ => False
 | [C]ₐ, x => Cᴵ x
@@ -404,12 +532,27 @@ def∇ evalConceptC [ℐᶜ σ] : 𝒞ᵁ σ → Δᴵ → Prop
 | ∃[R] C, x => ∃ y, Rᴵ x y ∧ ∇ C y
 | ∀[R] C, x => ∀ y, Rᴵ x y → ∇ C y
 
-/-- ·ᴵ for ALCHRU concepts in classical semantics -/
-instance : Interpret σ Prop (𝒞ᵁ σ) :=
-  ⟨(·.D → Prop), λ_=> evalConceptC⟩
+-- Interpretation of ALCHRU concepts in the classical semantics.
+instance : Interpret σ V₂ (𝒞ᵁ σ) :=
+  ⟨(·.D → V₂), λ_=> evalConceptC⟩
+--myne:end
 
-/-- Classical sentence semantics for ALCHRU. -/
-def evalSentenceC [ℐᶜ σ] : Φᵁ σ → Prop
+/--
+@name Classical sentence semantics
+@capture block
+@nl
+We lift a classical interpretation to the sentence language. Let $\mathcal I$ be a classical interpretation. Extend it to sentences by evaluating assertions at their named individuals, inclusions pointwise over the domain, and role inclusions over all pairs. Here $c$ and $r$ are atomic concept and role names, respectively; $C,D$ and $R,S$ range over the concepts and roles allowed in $\mathcal{ALCHRU}$ sentences.
+@formula
+$$\begin{aligned}
+(i:C)^{\mathcal I}&:=C^{\mathcal I}(i^{\mathcal I}),\\
+((i,j):R)^{\mathcal I}&:=R^{\mathcal I}(i^{\mathcal I},j^{\mathcal I}),\\
+(C\sqsubseteq D)^{\mathcal I}&:=\forall x\in\Delta^{\mathcal I},\ C^{\mathcal I}(x)\rightarrow D^{\mathcal I}(x),\\
+(C\equiv D)^{\mathcal I}&:=\forall x\in\Delta^{\mathcal I},\ C^{\mathcal I}(x)\leftrightarrow D^{\mathcal I}(x),\\
+(R\sqsubseteq S)^{\mathcal I}&:=\forall x,y\in\Delta^{\mathcal I},\ R^{\mathcal I}(x,y)\rightarrow S^{\mathcal I}(x,y)
+\end{aligned}$$
+-/
+
+def evalSentenceC [ℐᶜ σ] : Φᵁ σ → V₂
 | a :ₐ C => Cᴵ aᴵ
 | (a, b) :ᵣ R => Rᴵ aᴵ bᴵ
 | C ⊑ D => ∀ x, Cᴵ x → Dᴵ x
@@ -417,17 +560,43 @@ def evalSentenceC [ℐᶜ σ] : Φᵁ σ → Prop
 | R ⊑ᵣ S => ∀ x y, Rᴵ x y → Sᴵ x y
 
 notation  I "⊨ᶜ " φ => @evalSentenceC _ I φ
+--myne:end
 
-/-- Classical entailment for ALCHRU. -/
+/--
+@name Classical entailment
+@capture block
+@nl
+For knowledge bases $\Gamma$ and $\Delta$, classical entailment holds when every classical interpretation that satisfies every sentence in $\Gamma$ also satisfies every sentence in $\Delta$.
+@formula
+$$\Gamma\models_C\Delta := \forall \mathcal I,\ (\mathcal I\models_C\Gamma\rightarrow \mathcal I\models_C\Delta)$$
+-/
+
 def entailmentC (Γ Δ : (Φᵁ σ)*) : Prop :=
   ∀ I, (∀ ψ ∈ Γ, I ⊨ᶜ ψ) → (∀ φ ∈ Δ, I ⊨ᶜ φ)
 
 notation Γ " ⊨ᶜ " Δ => entailmentC Γ Δ
+--myne:end
 
 -- MARK: WK Semantics
-/- # Weak Kleene Semantics -/
+/-! \subsection{Weak Kleene Semantics} -/
 
-/-- Weak Kleene concept semantics for ALCHRU. -/
+/--
+@name Weak Kleene concept semantics
+@capture block
+@nl
+We lift a weak Kleene interpretation to the concept language. Let $\mathcal I$ be a weak Kleene interpretation. The Boolean constructors use the weak Kleene operations; the quantifiers aggregate pairs formed from role and concept values over the domain. Here $r$ is an atomic role name and $c$ is an atomic concept name.
+@formula
+$$\begin{aligned}
+\top^{\mathcal I}(x)&:=\mathfrak{t},\\
+\bot^{\mathcal I}(x)&:=\mathfrak{f},\\
+(\neg C)^{\mathcal I}(x)&:=\neg_K C^{\mathcal I}(x),\\
+(C\sqcap D)^{\mathcal I}(x)&:=C^{\mathcal I}(x)\wedge_K D^{\mathcal I}(x),\\
+(C\sqcup D)^{\mathcal I}(x)&:=C^{\mathcal I}(x)\vee_K D^{\mathcal I}(x),\\
+(\exists r.C)^{\mathcal I}(x)&:=\exists_K\{(r^{\mathcal I}(x,y),C^{\mathcal I}(y))\mid y\in\Delta^{\mathcal I}\},\\
+(\forall r.C)^{\mathcal I}(x)&:=\forall_K\{(r^{\mathcal I}(x,y),C^{\mathcal I}(y))\mid y\in\Delta^{\mathcal I}\}
+\end{aligned}$$
+-/
+
 noncomputable def∇ evalConceptK [ℐᵂᴷ σ] : 𝒞 σ → Δᴵ → V₃
 | ⊤, _ => 𝔱
 | ⊥, _ => 𝔣
@@ -438,11 +607,30 @@ noncomputable def∇ evalConceptK [ℐᵂᴷ σ] : 𝒞 σ → Δᴵ → V₃
 | ∃[R] C, x => ∃ₖ {(Rᴵ x y, ∇ C y) | y : Δᴵ}
 | ∀[R] C, x => ∀ₖ {(Rᴵ x y, ∇ C y) | y : Δᴵ}
 
-/-- ·ᴵ for ALCHRU concepts in weak Kleene semantics -/
+-- Interpretation of ALCH concepts in the weak Kleene semantics.
 noncomputable instance : Interpret σ V₃ (𝒞 σ) :=
   ⟨(·.D → V₃), λ_=> evalConceptK⟩
+--myne:end
 
-/-- Weak Kleene sentence semantics for ALCHRU. -/
+/--
+@name Weak Kleene sentence semantics
+@capture block
+@nl
+We lift a weak Kleene interpretation to the sentence language. Let $\mathcal I$ be a weak Kleene interpretation. Assertions inherit the value at the named individuals. Concept inclusions, equivalences, and role inclusions aggregate their pointwise value pairs with the restricted universal quantifier. Here $c$ and $r$ are atomic concept and role names, respectively, and $C,D$ are arbitrary $\mathcal{ALCH}$ concepts.
+@formula
+$$\begin{aligned}
+(i:C)^{\mathcal I}&:=C^{\mathcal I}(i^{\mathcal I}),\\
+((i,j):r)^{\mathcal I}&:=r^{\mathcal I}(i^{\mathcal I},j^{\mathcal I}),\\
+(C\sqsubseteq D)^{\mathcal I}&:=\forall_K\{(C^{\mathcal I}(x),D^{\mathcal I}(x)):x\in\Delta^{\mathcal I}\},\\
+(C\equiv D)^{\mathcal I}&:=
+\begin{gathered}
+\forall_K\{(C^{\mathcal I}(x),D^{\mathcal I}(x)):x\in\Delta^{\mathcal I}\}\\
+\wedge_K\forall_K\{(D^{\mathcal I}(x),C^{\mathcal I}(x)):x\in\Delta^{\mathcal I}\}
+\end{gathered},\\
+(r\sqsubseteq s)^{\mathcal I}&:=\forall_K\{(r^{\mathcal I}(x,y),s^{\mathcal I}(x,y))\mid x,y\in\Delta^{\mathcal I}\}
+\end{aligned}$$
+-/
+
 noncomputable def evalSentenceK [ℐᵂᴷ σ] : Φ σ → V₃
 | a :ₐ C => Cᴵ aᴵ
 | (a, b) :ᵣ r => rᴵ aᴵ bᴵ
@@ -451,25 +639,60 @@ noncomputable def evalSentenceK [ℐᵂᴷ σ] : Φ σ → V₃
     (∀ₖ {(Dᴵ x, Cᴵ x) | x : Δᴵ})
 | R ⊑ᵣ S => ∀ₖ {(Rᴵ p.1 p.2, Sᴵ p.1 p.2) | p : Δᴵ × Δᴵ}
 
-/-- ·ᴵ for ALCHRU sentences in weak Kleene semantics -/
+-- Interpretation of ALCH sentences in the weak Kleene semantics.
 noncomputable instance : Interpret σ V₃ (Φ σ) :=
   ⟨λ_=>V₃, λ_=> evalSentenceK⟩
+--myne:end
 
-/-- Satisfaction relation for weak Kleene semantics -/
+/--
+@name Weak Kleene satisfaction
+@capture block
+@nl
+A weak Kleene interpretation $\mathcal I$ satisfies a sentence $\varphi$ exactly when its value under $\mathcal I$ is $\mathfrak{t}$:
+@formula
+$$\mathcal I\models_K\varphi:=\varphi^{\mathcal I}=\mathfrak{t}$$
+-/
+
 def satisfiesK [ℐᵂᴷ σ] (φ : Φ σ) : Prop :=
   φᴵ = 𝔱
 
 notation  I "⊨ᵂᴷ " φ => @satisfiesK _ I φ
+--myne:end
 
-/-- Entailment for weak Kleene semantics -/
+/--
+@name Weak Kleene entailment
+@capture block
+@nl
+For weak Kleene knowledge bases $\Gamma$ and $\Delta$, entailment holds when every interpretation that gives each sentence of $\Gamma$ the value $\mathfrak{t}$ also gives each sentence of $\Delta$ the value $\mathfrak{t}$.
+@formula
+$$\Gamma\models_K\Delta := \forall \mathcal I,\ (\mathcal I\models_K\Gamma\rightarrow \mathcal I\models_K\Delta)$$
+-/
+
 def entailmentK (Γ Δ : (Φ σ)*) : Prop :=
   ∀ (I : ℐᵂᴷ σ), (∀ ψ ∈ Γ, I ⊨ᵂᴷ ψ) → (∀ φ ∈ Δ, I ⊨ᵂᴷ φ)
 
 notation  Γ " ⊨ᵂᴷ " Δ => entailmentK Γ Δ
+--myne:end
 
 -- MARK: AC Semantics
-/- # Analytic Containment Semantics -/
+/-! \subsection{Analytic Containment Semantics} -/
 
+/--
+@name Analytic containment concept semantics
+@capture block
+@nl
+We lift an analytic-containment interpretation to the concept language. Let $\mathcal I$ be an analytic-containment interpretation. The connectives act coordinatewise, and the restricted quantifiers aggregate pairs formed from role and concept values over the domain. Here $r$ is an atomic role name and $c$ is an atomic concept name.
+@formula
+$$\begin{aligned}
+\top^{\mathcal I}(x)&:=(\mathfrak{t},\mathfrak{f}),\\
+\bot^{\mathcal I}(x)&:=(\mathfrak{f},\mathfrak{t}),\\
+(\neg C)^{\mathcal I}(x)&:=\sim_A C^{\mathcal I}(x),\\
+(C\sqcap D)^{\mathcal I}(x)&:=C^{\mathcal I}(x)\wedge_A D^{\mathcal I}(x),\\
+(C\sqcup D)^{\mathcal I}(x)&:=C^{\mathcal I}(x)\vee_A D^{\mathcal I}(x),\\
+(\exists r.C)^{\mathcal I}(x)&:=\exists_A\{(r^{\mathcal I}(x,y),C^{\mathcal I}(y))\mid y\in\Delta^{\mathcal I}\},\\
+(\forall r.C)^{\mathcal I}(x)&:=\forall_A\{(r^{\mathcal I}(x,y),C^{\mathcal I}(y))\mid y\in\Delta^{\mathcal I}\}
+\end{aligned}$$
+-/
 @[simp]
 noncomputable def∇ evalConceptA [ℐᴬᶜ σ] : 𝒞 σ → Δᴵ → V₃²
 | ⊤, _ => (𝔱, 𝔣)
@@ -481,11 +704,30 @@ noncomputable def∇ evalConceptA [ℐᴬᶜ σ] : 𝒞 σ → Δᴵ → V₃²
 | ∃[r] c, x => ∃ₐ {(rᴵ x y, ∇ c y) | y : Δᴵ}
 | ∀[r] c, x => ∀ₐ {(rᴵ x y, ∇ c y) | y : Δᴵ}
 
-/-- ·ᴵ for ALCH concepts in AC semantics -/
+-- Interpretation of ALCH concepts in analytic-containment semantics.
 noncomputable instance : Interpret σ V₃² (𝒞 σ) :=
   ⟨(·.D → V₃²), λ_=>evalConceptA⟩
+--myne:end
 
-/-- AC sentence semantics for ALCH. -/
+/--
+@name Analytic containment sentence semantics
+@capture block
+@nl
+We lift an analytic-containment interpretation to the sentence language. Let $\mathcal I$ be an analytic-containment interpretation. Assertions inherit the value at the named individuals. Inclusions aggregate the pointwise pair values; equivalence conjoins the two directed inclusions, and role inclusion aggregates over all ordered pairs. Here $c$ and $r$ are atomic concept and role names, respectively, and $C,D$ are arbitrary $\mathcal{ALCH}$ concepts.
+@formula
+$$\begin{aligned}
+(i:C)^{\mathcal I}&:=C^{\mathcal I}(i^{\mathcal I}),\\
+((i,j):r)^{\mathcal I}&:=r^{\mathcal I}(i^{\mathcal I},j^{\mathcal I}),\\
+(C\sqsubseteq D)^{\mathcal I}&:=\forall_A\{(C^{\mathcal I}(x),D^{\mathcal I}(x)):x\in\Delta^{\mathcal I}\},\\
+(C\equiv D)^{\mathcal I}&:=
+\begin{gathered}
+\forall_A\{(C^{\mathcal I}(x),D^{\mathcal I}(x)):x\in\Delta^{\mathcal I}\}\\
+\wedge_A\forall_A\{(D^{\mathcal I}(x),C^{\mathcal I}(x)):x\in\Delta^{\mathcal I}\}
+\end{gathered},\\
+(r\sqsubseteq s)^{\mathcal I}&:=\forall_A\{(r^{\mathcal I}(x,y),s^{\mathcal I}(x,y))\mid x,y\in\Delta^{\mathcal I}\}
+\end{aligned}$$
+-/
+
 noncomputable def evalSentenceA [ℐᴬᶜ σ] : Φ σ → V₃²
 | a :ₐ c => cᴵ aᴵ
 | (a, b) :ᵣ r => rᴵ aᴵ bᴵ
@@ -494,65 +736,90 @@ noncomputable def evalSentenceA [ℐᴬᶜ σ] : Φ σ → V₃²
     (∀ₐ {(dᴵ x, cᴵ x) | x : Δᴵ})
 | r ⊑ᵣ s => ∀ₐ {(rᴵ p.1 p.2, sᴵ p.1 p.2) | p : Δᴵ × Δᴵ}
 
-/-- ·ᴵ for ALCH sentences in AC semantics -/
+-- Interpretation of ALCH sentences in analytic-containment semantics.
 noncomputable instance : Interpret σ V₃² (Φ σ) :=
   ⟨λ_=>V₃²,λ_=>evalSentenceA⟩
+--myne:end
 
-/-- Satisfaction relation for AC semantics -/
+/--
+@name Analytic containment satisfaction
+@capture block
+@nl
+An analytic-containment interpretation $\mathcal I$ satisfies $\varphi$ exactly when the positive coordinate of $\varphi^{\mathcal I}$ is $\mathfrak{t}$:
+@formula
+$$\mathcal I\models_A\varphi:=(\varphi^{\mathcal I})^+=\mathfrak{t}$$
+-/
+
 def satisfiesA [ℐᴬᶜ σ] (φ : Φ σ) : Prop :=
   (φᴵ)⁺ = 𝔱
 
 notation  I "⊨ᴬᶜ " φ => @satisfiesA _ I φ
+--myne:end
 
-/-- Entailment for AC semantics -/
+/--
+@name Analytic containment entailment
+@capture block
+@nl
+For analytic-containment knowledge bases $\Gamma$ and $\Delta$, entailment holds when every interpretation satisfying all premises also satisfies all conclusions, using the positive-coordinate satisfaction condition above.
+@formula
+$$\Gamma\models_A\Delta := \forall \mathcal I,\ (\mathcal I\models_A\Gamma\rightarrow \mathcal I\models_A\Delta)$$
+-/
+
 def entailmentA (Γ Δ : (Φ σ)*) : Prop :=
   ∀ (I : ℐᴬᶜ σ), (∀ ψ ∈ Γ, I ⊨ᴬᶜ ψ) → (∀ φ ∈ Δ, I ⊨ᴬᶜ φ)
 
 notation  Γ " ⊨ᴬᶜ " Δ => entailmentA Γ Δ
+--myne:end
 
 -- MARK: AC to WK
-/-! # AC to WK Translation -/
+/-! \section{Translations} -/
+/-! \subsection{AC to Weak Kleene} -/
 /-!
-We want a translation π such that (Γ ⊨ᴬᶜ Δ) ↔ (π Γ ⊨ʷᴷ π Δ).
-
-We use the same idea from the mutual
-π ν translation in the original paper,
-modifying the signature to have π and ν
-side indicators for concepts, and turning
-ALCH concepts into their weak Kleene counterparts. We
-prefer + and - over pi and nu for notational
-(no unicode for superscript pi and nu)
-
-Some examples of the π translation:
-π (a : ¬(A ⊓ ∃[r] B)) = a : [(A, -ₚ)]ₐ ⊔ₜ ∀[r] [(B, -ₚ)]ₐ
-π (C ⊑ ∀[r] D) = [C, +ₚ]ₐ ⊑ ∀[r] [D, +ₚ]ₐ
+The translation $\pi$ preserves and reflects entailment between analytic
+containment and weak Kleene semantics. It uses positive and negative copies
+of each atomic concept, indexed by $+$ and $-$, while retaining the roles.
+The side-indexed concept translation handles negation by exchanging sides.
 -/
 
 /--
-Given a signature σ, the weak Kleene signature
-σᵂᴷ is defined by pairing each original concept with
-a side indicator (+ₚ or -ₚ)
+@name Weak Kleene signature
+@capture block
+@nl
+The weak Kleene signature replaces each atomic concept name by its positive and negative copies while preserving role and individual names. These instances transport interpretations of atomic concepts to the corresponding names in the translated signature.
+@formula
+$$N_C^{WK}:=N_C\times\{+,-\},\quad N_R^{WK}:=N_R,\quad N_I^{WK}:=N_I$$
 -/
 abbrev wkSignature (σ : Signature) : Signature where
   Nc := σ.Nc × Side
   Nr := σ.Nr
   Ni := σ.Ni
 
-/-- σᵂᴷ shorthand for the weak Kleene signature of σ -/
 instance toWKSignature : ToWK Signature Signature where
   wkIze := wkSignature
 
 instance : Interpret σᵂᴷ V (σ.Nc × Side) :=
   ⟨λ I => I.D → V, (·.atomicConceptValuation)⟩
+--myne:end
 
 /--
-piConcept recursively transforms an ALCH concept into its
-weak Kleene counterpart based on the given side indicator
-(+ₚ or -ₚ). Note that we don't use a seperate ν translation;
-the side indicator is passed directly to piConcept.
-π is `piConcept C +ₚ`, while ν would be `piConcept C -ₚ`,
-but we really only need the π translation for our purposes.
+@name Side-indexed AC translation
+@capture block
+@nl
+For a concept $C$ and side $s\in\{+,-\}$, $\pi^s(C)$ is a weak Kleene concept whose value matches coordinate $s$ of the AC value of $C$. The recursion swaps sides under negation, uses the dual connective for the negative side, and exchanges existential with universal restrictions there.
+@formula
+$$\begin{array}{c|c}
+\text{Positive} & \text{Negative}\\\hline
+\pi^+(\top):=\top & \pi^-(\top):=\bot\\
+\pi^+(\bot):=\bot & \pi^-(\bot):=\top\\
+\pi^+(A):=A^+ & \pi^-(A):=A^-\\
+\pi^+(\neg C):=\pi^-(C) & \pi^-(\neg C):=\pi^+(C)\\
+\pi^+(C\sqcap D):=\pi^+(C)\sqcap\pi^+(D) & \pi^-(C\sqcap D):=\pi^-(C)\sqcup\pi^-(D)\\
+\pi^+(C\sqcup D):=\pi^+(C)\sqcup\pi^+(D) & \pi^-(C\sqcup D):=\pi^-(C)\sqcap\pi^-(D)\\
+\pi^+(\exists r.C):=\exists r.\pi^+(C) & \pi^-(\exists r.C):=\forall r.\pi^-(C)\\
+\pi^+(\forall r.C):=\forall r.\pi^+(C) & \pi^-(\forall r.C):=\exists r.\pi^-(C)
+\end{array}$$
 -/
+
 def∇ piConcept {σ : Signature} : 𝒞 σ → Side → 𝒞 σᵂᴷ
 | ⊤, +ₚ => ⊤
 | ⊤, -ₚ => ⊥
@@ -570,16 +837,25 @@ def∇ piConcept {σ : Signature} : 𝒞 σ → Side → 𝒞 σᵂᴷ
 | ∀[r] c, +ₚ => ∀[r] ∇ c +ₚ
 | ∀[r] c, -ₚ => ∃[r] ∇ c -ₚ
 
-/-- π c notation for sentences -/
 instance : PiTranslation (𝒞 σ) (𝒞 σᵂᴷ) where
   piIze C := piConcept C +ₚ
+--myne:end
 
 /--
-transforms an ALCH sentence over the original signature
-σ to its weak Kleene counterpart over the signature σᵂᴷ
-by applying the π translation to each concept within
-the sentence.
+@name AC sentence translation
+@capture block
+@nl
+The sentence translation replaces each concept by its positive weak Kleene copy. It leaves role assertions and role inclusions unchanged and translates concept inclusions and equivalences using those positive copies.
+@formula
+$$\begin{aligned}
+\pi(i:C)&:=i:\pi^+(C),\\
+\pi((i,j):r)&:=(i,j):r,\\
+\pi(C\sqsubseteq D)&:=\pi^+(C)\sqsubseteq\pi^+(D),\\
+\pi(C\equiv D)&:=\pi^+(C)\equiv\pi^+(D),\\
+\pi(r\sqsubseteq s)&:=r\sqsubseteq s
+\end{aligned}$$
 -/
+
 def piSentence : Φ σ → Φ σᵂᴷ
 | a :ₐ c => a :ₐ π c
 | (a, b) :ᵣ r => (a, b) :ᵣ r
@@ -587,29 +863,36 @@ def piSentence : Φ σ → Φ σᵂᴷ
 | c ≡ d => π c ≡ π d
 | r ⊑ᵣ s => r ⊑ᵣ s
 
-/-- π φ notationfor sentences -/
 instance : PiTranslation (Φ σ) (Φ σᵂᴷ) where
   piIze := piSentence
+--myne:end
 
-/-- Transforms a set of ALCH sentences over the original
-signature to their weak Kleene counterparts over the
-signature σᵂᴷ -/
+/--
+@name AC knowledge base translation
+@capture block
+@nl
+The translation applies $\pi$ to every sentence in a knowledge base and collects the results in the translated signature.
+@formula
+$$\pi(\Gamma):=\{\pi(\varphi):\varphi\in\Gamma\}$$
+-/
 abbrev piSentenceSet : (Φ σ)* → (Φ σᵂᴷ)* :=
   Set.image piSentence
 
 instance : PiTranslation (Φ σ)* (Φ σᵂᴷ)* where
   piIze := piSentenceSet
+--myne:end
 
 -- MARK: WK to C
-/-! # Weak Kleene to Classical Translation -/
+/-! \subsection{Weak Kleene to Classical} -/
 /-!
 Similar idea to the original tau / mu translation
 with some fixes. We modify the signature to include a bit
-indicator for each concept and role, representing
-if the concept or role is true or meaningful.
+indicator for each atomic concept and role. At each element (for a concept)
+or ordered pair of elements (for a role), the two copies record whether its
+valuation is $\mathfrak{t}$ and whether that valuation differs from $\mathfrak{e}$.
 
 The core distinction is that we can use the universal role
-to express nonemptiness of concepts and overlap of roles,
+to express $\exists_1 C$ and $r\sqcap^+s$,
 and then use this information to encode the wk
 semantics through the translation.
 
@@ -617,6 +900,14 @@ We also add bridge axioms to connect the truth and
 meaningfulness components of concepts and roles.
 -/
 
+/--
+@name Truth and meaningfulness signature copies
+@capture block
+@nl
+The target signature gives every atomic concept and role a truth copy and a meaningfulness copy, while preserving individual names. The truth and meaningfulness markers identify those two copies.
+@formula
+$$N_C^T:=N_C\times\{\mathsf T,\mathsf M\},\quad N_R^T:=N_R\times\{\mathsf T,\mathsf M\},\quad N_I^T:=N_I$$
+-/
 inductive Bit where
 | truth
 | meaningful
@@ -644,8 +935,26 @@ instance : Interpret σᵀ V (σ.Nc × Bit) :=
 
 instance : Interpret σᵀ V (σ.Nr × Bit) :=
   ⟨λ I => I.D → I.D → V, (·.roleValuation)⟩
+--myne:end
 
-/-- The meaningfulness component of a translated concept. -/
+/--
+@name Meaningfulness translation
+@capture block
+@nl
+For each domain element, $\mu(C)$ holds exactly when the weak Kleene value of $C$ differs from $\mathfrak{e}$. Its recursive clauses build this classical concept from the meaningfulness copies of atomic concepts and roles.
+@formula
+$$\begin{aligned}
+\mu(\top)&:=\top,\\
+\mu(\bot)&:=\top,\\
+\mu(A)&:=A^{\mathsf M},\\
+\mu(\neg C)&:=\mu(C),\\
+\mu(C\sqcap D)&:=\mu(C)\sqcap\mu(D),\\
+\mu(C\sqcup D)&:=\mu(C)\sqcap\mu(D),\\
+\mu(\exists r.C)&:=\exists r^{\mathsf M}.\mu(C),\\
+\mu(\forall r.C)&:=\exists r^{\mathsf M}.\mu(C)
+\end{aligned}$$
+-/
+
 def∇ muConcept : 𝒞 σ → 𝒞ᵁ σᵀ
 | ⊤ => ⊤
 | ⊥ => ⊤
@@ -657,8 +966,26 @@ def∇ muConcept : 𝒞 σ → 𝒞ᵁ σᵀ
 | ∀[r] c => ∃[[(r, 𝕄)]ᵣ] (∇ c)
 
 instance : MuTranslation (𝒞 σ) (𝒞ᵁ σᵀ) := ⟨muConcept⟩
+--myne:end
 
-/-- The truth component of a translated concept. -/
+/--
+@name Truth translation
+@capture block
+@nl
+For each domain element, $\tau(C)$ holds exactly when the weak Kleene value of $C$ is $\mathfrak{t}$. Its clauses use the truth and meaningfulness copies together where the weak Kleene connective requires them.
+@formula
+$$\begin{aligned}
+\tau(\top)&:=\top,\\
+\tau(\bot)&:=\bot,\\
+\tau(A)&:=A^{\mathsf T},\\
+\tau(\neg C)&:=\mu(C)\sqcap\neg\tau(C),\\
+\tau(C\sqcap D)&:=\tau(C)\sqcap\tau(D),\\
+\tau(C\sqcup D)&:=(\tau(C)\sqcup\tau(D))\sqcap(\mu(C)\sqcap\mu(D)),\\
+\tau(\exists r.C)&:=\exists r^{\mathsf T}.\tau(C),\\
+\tau(\forall r.C)&:=(\forall r^{\mathsf T}.\tau(C))\sqcap\exists r^{\mathsf M}.\mu(C)
+\end{aligned}$$
+-/
+
 def∇ tauConcept : 𝒞 σ → 𝒞ᵁ σᵀ
 | ⊤ => ⊤
 | ⊥ => ⊥
@@ -669,40 +996,101 @@ def∇ tauConcept : 𝒞 σ → 𝒞ᵁ σᵀ
 | ∃[r] c => ∃[[(r, 𝕋)]ᵣ] (∇ c)
 | ∀[r] c => (∀[[(r, 𝕋)]ᵣ] (∇ c)) ⊓ₜ ∃[[(r, 𝕄)]ᵣ] (μ c)
 
-/-- τ for concepts -/
+/-- The $\tau$ notation for concepts. -/
 instance : TauTranslation (𝒞 σ) (𝒞ᵁ σᵀ) := ⟨tauConcept⟩
+--myne:end
 
 /--
-We can express that C is nonempty in classical ALC using
-the universal role. ⊤ ⊑ ∃[𝒰] c -> ∀x, ∃y, c(y) -> ∃y, c(y)
+@name Concept nonemptiness sentence
+@capture block
+@nl
+For a classical concept $C$, the sentence $\exists_1 C$ holds exactly when some domain element belongs to $C$.
+@formula
+$$\exists_1 C:=\top\sqsubseteq\exists\mathcal U.C$$
 -/
+
 def nonempty (c : 𝒞ᵁ σ) : Φᵁ σ :=
   ⊤ ⊑ ∃[𝒰] c
 
 prefix:max "∃₁" => nonempty
+--myne:end
 
 /--
-Intersection forces both roles to hold on the same pair.
-Classically this resolves
-∃₁(∃[(r ⊓ᵣ s)] ⊤) ->
+@name Nonemptiness has a witness
+@nl
+For any classical concept $C$, $\exists_1 C$ holds exactly when some domain element belongs to $C$; that element is its witness.
+@formula
+$$I\models_C\exists_1 C\leftrightarrow\exists x\in\Delta^I,\ C^I(x)$$
+@proof
+Expand the universal role and use the interpretation domain being inhabited.
 -/
+
+@[simp]
+theorem nonempty_iff [I : ℐᶜ σ] (c : 𝒞ᵁ σ) :
+(I ⊨ᶜ ∃₁c) ↔ ∃ x, cᴵ x := by
+  simp only [Interpret.current, Interpret.interpret,
+  nonempty, evalSentenceC, evalConceptC, evalRoleC,
+  true_implies, true_and]
+  constructor
+  · intro h
+    obtain ⟨x⟩ := I.inhabited
+    exact h x
+  · intro h _
+    exact h
+
+
+
+/--
+@name Role overlap sentence
+@capture block
+@nl
+For atomic roles $r$ and $s$, $r\sqcap^+s$ holds exactly when there are domain elements $x,y$ related by both $r$ and $s$. It is the nonemptiness test for their intersection.
+@formula
+$$r\sqcap^+s:=\exists_1(\exists(r\sqcap s).\top)$$
+-/
+
 def overlap (r s : σ.Nr) : Φᵁ σ :=
   ∃₁(∃[([r]ᵣ ⊓ᵣ [s]ᵣ)] ⊤)
 
 infixl:70 " ⨅⁺ " => overlap
+--myne:end
 
 /--
-translation for subsumption sentences C ⊑ D into
-the target signature.
-
+@name Role overlap has a common edge
+@nl
+For atomic roles $r$ and $s$, $r\sqcap^+s$ holds exactly when there are elements $x,y$ with both $r(x,y)$ and $s(x,y)$. Thus $r\sqcap^+s$ detects a shared edge, not merely separate nonempty roles.
+@formula
+$$I\models_C(r\sqcap^+s)\leftrightarrow\exists x,y\in\Delta^I,\ r^I(x,y)\land s^I(x,y)$$
+@proof
+Expand overlap and apply the nonemptiness characterization.
 -/
+
+@[simp] theorem overlap_iff [I : ℐᶜ σ] (r s : σ.Nr) :
+(I ⊨ᶜ (r ⨅⁺ s)) ↔ ∃ x y, rᴵ x y ∧ sᴵ x y := by
+  simp only [Interpret.current, Interpret.interpret,
+  overlap, nonempty_iff, evalConceptC, evalRoleC, and_true]
+
+
+
+/--
+@name Weak Kleene sentence translation
+@capture block
+@nl
+The map $\tau$ sends each $\mathcal{ALCH}$ sentence to a set of classical $\mathcal{ALCHRU}$ sentences over the truth and meaningfulness copies of its atomic symbols. For an inclusion $C\sqsubseteq D$, it requires both $\tau(C)\sqsubseteq\tau(D)$ and a nonempty intersection of their meaningfulness concepts, expressed by $\exists_1(\mu(C)\sqcap\mu(D))$. Equivalence applies this condition in both directions. A role inclusion requires truth-copy inclusion and uses the overlap notation $r^{\mathsf M}\sqcap^+s^{\mathsf M}$ for its meaningfulness copies.
+@formula
+$$\begin{aligned}
+\tau(i:C)&:=\{i:\tau(C)\},\\
+\tau((i,j):r)&:=\{(i,j):r^{\mathsf T}\},\\
+\tau(C\sqsubseteq D)&:=\{\tau(C)\sqsubseteq\tau(D),\ \exists_1(\mu(C)\sqcap\mu(D))\},\\
+\tau(C\equiv D)&:=\{\tau(C)\sqsubseteq\tau(D),\ \exists_1(\mu(C)\sqcap\mu(D))\}\\
+&\qquad\cup\{\tau(D)\sqsubseteq\tau(C),\ \exists_1(\mu(D)\sqcap\mu(C))\},\\
+\tau(r\sqsubseteq s)&:=\{r^{\mathsf T}\sqsubseteq s^{\mathsf T},\ r^{\mathsf M}\sqcap^+s^{\mathsf M}\}
+\end{aligned}$$
+-/
+
 def tauSubsumption (c d : 𝒞 σ) : (Φᵁ σᵀ)* :=
   {τ c ⊑ τ d} ∪ {∃₁(μ c ⊓ₜ μ d)}
 
-/--
-Translation of ALCH sentences into ALCHU sentences with
-the target signature.
--/
 def tauSentence : Φ σ → (Φᵁ σᵀ)*
 | a :ₐ c => ({show Φᵁ σᵀ from a :ₐ τ c} : (Φᵁ σᵀ)*)
 | (a, b) :ᵣ r => ({show Φᵁ σᵀ from (a, b) :ᵣ [(r, 𝕋)]ᵣ} : (Φᵁ σᵀ)*)
@@ -712,12 +1100,22 @@ def tauSentence : Φ σ → (Φᵁ σᵀ)*
 
 instance : TauTranslation (Φ σ) (Φᵁ σᵀ)* :=
   ⟨tauSentence⟩
+--myne:end
 
+/--
+@name Weak Kleene knowledge base translation
+@capture block
+@nl
+The translation of a knowledge base is the union of the sentence translations of its members.
+@formula
+$$\tau(\Gamma):=\bigcup_{\varphi\in\Gamma}\tau(\varphi)$$
+-/
 def tauSentenceSet (Γ : (Φ σ)*) : (Φᵁ σᵀ)* :=
   Set.bind Γ tauSentence
 
 instance : TauTranslation (Φ σ)* (Φᵁ σᵀ)* :=
   ⟨tauSentenceSet⟩
+--myne:end
 
 -- MARK: WK To C Bridges
 /-!
@@ -727,32 +1125,55 @@ components are properly related through bridge axioms.
 -/
 
 /--
-Bridge axiom for atomic concepts.
-Ensures that the truth component
-implies the meaningfulness component.
+@name Atomic concept bridge
+@capture block
+@nl
+At each element, membership in the truth copy of an atomic concept implies membership in its meaningfulness copy. Equivalently, if the WK valuation of that atomic concept is $\mathfrak{t}$ at the element, it is not $\mathfrak{e}$ there.
+@formula
+$$\mathcal{D}(a):=[(a,\mathsf T)]\sqsubseteq[(a,\mathsf M)]$$
 -/
+
 def atomicConceptBridge (a : σ.Nc) : Φᵁ σᵀ :=
   [(a, 𝕋)]ₐ ⊑ [(a, 𝕄)]ₐ
 
 instance : BridgeTranslation (σ.Nc) (Φᵁ σᵀ) :=
 ⟨atomicConceptBridge⟩
+--myne:end
 
 /--
-Bridge axiom for atomic roles.
-Ensures that the truth component
-implies the meaningfulness component.
+@name Atomic role bridge
+@capture block
+@nl
+At each ordered pair of elements, membership in the truth copy of an atomic role implies membership in its meaningfulness copy. Equivalently, if the WK valuation of that atomic role is $\mathfrak{t}$ at the pair, it is not $\mathfrak{e}$ there.
+@formula
+$$\mathcal{D}(r):=[(r,\mathsf T)]\sqsubseteq[(r,\mathsf M)]$$
 -/
+
 def atomicRoleBridge (r : σ.Nr) : Φᵁ σᵀ :=
   [(r, 𝕋)]ᵣ ⊑ᵣ [(r, 𝕄)]ᵣ
 
 instance : BridgeTranslation (σ.Nr) (Φᵁ σᵀ) :=
  ⟨atomicRoleBridge⟩
+--myne:end
 
 /--
-Bridge axioms for concepts.
-Ensures that the truth and meaningfulness components
-are properly related for complex concepts.
+@name Concept bridge axioms
+@capture block
+@nl
+The bridge set $\mathcal D(C)$ contains the atomic concept and role bridge sentences for every name occurring in $C$. For a compound concept it is the union of the bridge sets for its parts, together with the role bridge for a quantified restriction.
+@formula
+$$\begin{aligned}
+\mathcal D(\top)&:=\varnothing,\\
+\mathcal D(\bot)&:=\varnothing,\\
+\mathcal D(A)&:=\{A^{\mathsf T}\sqsubseteq A^{\mathsf M}\},\\
+\mathcal D(\neg C)&:=\mathcal D(C),\\
+\mathcal D(C\sqcap D)&:=\mathcal D(C)\cup\mathcal D(D),\\
+\mathcal D(C\sqcup D)&:=\mathcal D(C)\cup\mathcal D(D),\\
+\mathcal D(\exists r.C)&:=\{r^{\mathsf T}\sqsubseteq r^{\mathsf M}\}\cup\mathcal D(C),\\
+\mathcal D(\forall r.C)&:=\{r^{\mathsf T}\sqsubseteq r^{\mathsf M}\}\cup\mathcal D(C)
+\end{aligned}$$
 -/
+
 def∇ conceptBridges : 𝒞 σ → (Φᵁ σᵀ)*
 | ⊤ => ∅
 | ⊥ => ∅
@@ -765,7 +1186,22 @@ def∇ conceptBridges : 𝒞 σ → (Φᵁ σᵀ)*
 
 instance : BridgeTranslation (𝒞 σ) (Φᵁ σᵀ)* :=
  ⟨conceptBridges⟩
+--myne:end
 
+/--
+@name Sentence bridge axioms
+@capture block
+@nl
+The bridge set of a sentence contains the bridge axioms for every atomic concept and role name that occurs in it.
+@formula
+$$\begin{aligned}
+\mathcal D(i:C)&:=\mathcal D(C),\\
+\mathcal D((i,j):r)&:=\{\mathcal D(r)\},\\
+\mathcal D(C\sqsubseteq D)&:=\mathcal D(C)\cup\mathcal D(D),\\
+\mathcal D(C\equiv D)&:=\mathcal D(C)\cup\mathcal D(D),\\
+\mathcal D(r\sqsubseteq s)&:=\{\mathcal D(r)\}\cup\{\mathcal D(s)\}
+\end{aligned}$$
+-/
 def sentenceBridges : Φ σ → (Φᵁ σᵀ)*
 | _ :ₐ c => 𝒟 c
 | (_, _) :ᵣ r => {𝒟 r}
@@ -775,83 +1211,161 @@ def sentenceBridges : Φ σ → (Φᵁ σᵀ)*
 
 instance : BridgeTranslation (Φ σ) (Φᵁ σᵀ)* :=
  ⟨sentenceBridges⟩
+--myne:end
 
+/--
+@name Knowledge base bridge axioms
+@capture block
+@nl
+The bridge set of a knowledge base is the union of the bridge sets of its sentences.
+@formula
+$$\mathcal{D}(\Gamma):=\bigcup_{\varphi\in\Gamma}\mathcal{D}(\varphi)$$
+-/
 def sentenceSetBridges (Γ : (Φ σ)*) : (Φᵁ σᵀ)* :=
   Set.bind Γ sentenceBridges
 
 instance : BridgeTranslation ((Φ σ)*) (Φᵁ σᵀ)* :=
  ⟨sentenceSetBridges⟩
+--myne:end
 
 -- MARK: Theorems
-/-! # Theorems -/
+/-! \section{Correctness Theorems} -/
 /-!
-Beginning here we prove our main result:
-(Γ ⊨ᴬᶜ Δ) ↔ ((τ (π Γ) ∪ 𝒟 (π Γ) ∪ 𝒟 (π Δ)) ⊨ᶜ τ (π Δ))
-Where π is our AC to WK translation,
-τ is our WK to C translation,
-and 𝒟 represents the bridge axioms.
-
-Proof Sketch: We break the proof into two lemmas,
-first showing we can translate the AC entailment
-into the WK framework:
-Γ ⊨ᴬᶜ Δ ↔ π Γ ⊨ᵂᴷ π Δ
-and then demonstrating that
-the WK translation, together with the bridge axioms,
-entails the corresponding classical entailment
-(Γ ⊨ᵂᴷ Δ) ↔ ((τ Γ ∪ 𝒟 Γ ∪ 𝒟 Δ) ⊨ᶜ τ Δ)
+The main result composes the AC-to-WK translation $\pi$ with the WK-to-classical
+translation $\tau$. The bridge set $\mathcal D$ relates truth and
+meaningfulness copies. We establish equivalence at each translation stage,
+then compose those equivalences for knowledge-base entailment.
 -/
 
 -- MARK: WK Lemmas
-/- ## WK Lemmas -/
+--myne:appendix_start Weak Kleene Lemmas
 
-/-- ¬v is 𝔱 iff v is neither 𝔢 nor 𝔱 -/
+/--
+@name WK negation returns $\mathfrak{t}$
+@nl
+Negation returns $\mathfrak{t}$ precisely when its input is $\mathfrak{f}$.
+@formula
+$$\neg_K v=\mathfrak{t}\leftrightarrow v\ne\mathfrak{e}\land v\ne\mathfrak{t}$$
+@proof
+Check the three possible weak Kleene values.
+-/
+
 @[simp]
 theorem negK_t (v : V₃) : ¬ₖv = 𝔱 ↔ v ≠ 𝔢 ∧ v ≠ 𝔱 := by
   cases v <;> decide
 
-/-- v is not 𝔢 iff ¬v is not 𝔢 -/
+/--
+@name WK negation preserves meaningfulness
+@nl
+Negation changes the sign of a value but does not change whether that value differs from $\mathfrak{e}$.
+@formula
+$$\neg_K v\ne\mathfrak{e}\leftrightarrow v\ne\mathfrak{e}$$
+@proof
+Check each of the three possible input values.
+-/
+
 @[simp]
 theorem negK_m (v : V₃) : ¬ₖv ≠ 𝔢 ↔ v ≠ 𝔢 := by
   cases v <;> decide
 
-/-- v ∧ₖ w is 𝔱 iff both v and w are 𝔱 -/
+/--
+@name WK conjunction returns $\mathfrak{t}$
+@nl
+Conjunction returns $\mathfrak{t}$ exactly when both inputs are $\mathfrak{t}$.
+@formula
+$$v\wedge_K w=\mathfrak{t}\leftrightarrow v=\mathfrak{t}\land w=\mathfrak{t}$$
+@proof
+Check the finite pairs of weak Kleene values.
+-/
+
 @[simp]
 theorem andK_t (v w : V₃) : v ∧ₖ w = 𝔱 ↔ v = 𝔱 ∧ w = 𝔱 := by
   cases v <;> cases w <;> decide
 
-/-- v ∧ₖ w is not 𝔢 iff both v and w are not 𝔢 -/
+/--
+@name WK conjunction is meaningful
+@nl
+The conjunction differs from $\mathfrak{e}$ exactly when both input values differ from $\mathfrak{e}$.
+@formula
+$$v\wedge_K w\ne\mathfrak{e}\leftrightarrow v\ne\mathfrak{e}\land w\ne\mathfrak{e}$$
+@proof
+Check the finite pairs of weak Kleene values.
+-/
+
 @[simp]
 theorem andK_m (v w : V₃) : v ∧ₖ w ≠ 𝔢 ↔ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
   cases v <;> cases w <;> decide
 
 /--
-v ∨ₖ w is 𝔱 iff at least one of v and w is 𝔱
-and both are not 𝔢
+@name WK disjunction returns $\mathfrak{t}$
+@nl
+Disjunction returns $\mathfrak{t}$ when at least one input is $\mathfrak{t}$ and neither is $\mathfrak{e}$.
+@formula
+$$v\vee_K w=\mathfrak{t}\leftrightarrow(v=\mathfrak{t}\lor w=\mathfrak{t})\land v,w\ne\mathfrak{e}$$
+@proof
+Check the finite pairs of weak Kleene values.
 -/
+
 @[simp]
 theorem orK_t (v w : V₃) :
 v ∨ₖ w = 𝔱 ↔ (v = 𝔱 ∨ w = 𝔱) ∧ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
   cases v <;> cases w <;> decide
 
+/--
+@name WK disjunction is meaningful
+@nl
+The disjunction differs from $\mathfrak{e}$ exactly when both input values differ from $\mathfrak{e}$.
+@formula
+$$v\vee_K w\ne\mathfrak{e}\leftrightarrow v\ne\mathfrak{e}\land w\ne\mathfrak{e}$$
+@proof
+Check the finite pairs of weak Kleene values.
+-/
 @[simp]
 theorem orK_m (v w : V₃) : v ∨ₖ w ≠ 𝔢 ↔ v ≠ 𝔢 ∧ w ≠ 𝔢 := by
   cases v <;> cases w <;> decide
 
-/-- ∃ₖ X is true iff X contains (𝔱, 𝔱). -/
+/--
+@name Restricted existential returns $\mathfrak{t}$
+@nl
+The restricted existential returns $\mathfrak{t}$ exactly when a pair of $\mathfrak{t}$ values occurs.
+@formula
+$$\exists_K X=\mathfrak{t}\leftrightarrow(\mathfrak{t},\mathfrak{t})\in X$$
+@proof
+Unfold the quantifier and eliminate the remaining conditional branches.
+-/
+
 @[simp] theorem existsK_t (X : Set V₃²) :
 ∃ₖ X = 𝔱 ↔ (𝔱, 𝔱) ∈ X := by
   classical
   unfold existsK
   repeat (split <;> (try rfl) <;> (try grind only))
 
-/-- ∃ₖ X is meaningful when a pair is fully meaningful. -/
+/--
+@name Restricted existential meaningfulness
+@nl
+The restricted existential differs from $\mathfrak{e}$ exactly when at least one candidate pair has both coordinates different from $\mathfrak{e}$. For a set $X$ of role-concept value pairs, this means $X$ contains such a pair.
+@formula
+$$\exists_K X\ne\mathfrak{e}\leftrightarrow\exists(v,w)\in X:\ v,w\ne\mathfrak{e}$$
+@proof
+Unfold the quantifier and analyze the $\mathfrak{t}$, $\mathfrak{e}$, and $\mathfrak{f}$ cases.
+-/
+
 @[simp] theorem existsK_m (X : Set V₃²) :
 ∃ₖ X ≠ 𝔢 ↔ ∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢 := by
   classical
   unfold existsK
   repeat (split <;> (try rfl) <;> (try grind only))
 
-/-- ∀ₖ X is true exactly under its set-based true clause. -/
+/--
+@name Restricted universal returns $\mathfrak{t}$
+@nl
+For $X\subseteq V_3^2$, the restricted universal returns $\mathfrak{t}$ exactly when neither $(\mathfrak{t},\mathfrak{f})$ nor $(\mathfrak{t},\mathfrak{e})$ occurs in $X$, and $X$ contains at least one pair whose coordinates both differ from $\mathfrak{e}$.
+@formula
+$$\forall_K X=\mathfrak{t}\leftrightarrow(\mathfrak{t},\mathfrak{f})\notin X\land(\mathfrak{t},\mathfrak{e})\notin X\land\exists(v,w)\in X:\ v,w\ne\mathfrak{e}$$
+@proof
+Unfold the quantifier and discharge the other conditional branches.
+-/
+
 private theorem forallK_true (X : Set V₃²) :
 ∀ₖ X = 𝔱 ↔
 (𝔱, 𝔣) ∉ X ∧ (𝔱, 𝔢) ∉ X ∧ ∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢 := by
@@ -859,13 +1373,31 @@ private theorem forallK_true (X : Set V₃²) :
   unfold forallK
   repeat (split <;> (try rfl) <;> (try grind only))
 
-/-- ∀ₖ X is meaningful exactly when a pair is fully meaningful. -/
+/--
+@name Restricted universal meaningfulness
+@nl
+The restricted universal differs from $\mathfrak{e}$ exactly when at least one candidate pair has both coordinates different from $\mathfrak{e}$. For a set $X$ of role-concept value pairs, this means $X$ contains such a pair.
+@formula
+$$\forall_K X\ne\mathfrak{e}\leftrightarrow\exists(v,w)\in X:\ v,w\ne\mathfrak{e}$$
+@proof
+Unfold the quantifier and analyze its three conditional outcomes.
+-/
+
 @[simp] theorem forallK_m (X : Set V₃²) :
 ∀ₖ X ≠ 𝔢 ↔ ∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢 := by
   classical
   unfold forallK
   repeat (split <;> (try rfl) <;> (try grind only))
 
+/--
+@name Universal counterexample condition
+@nl
+For a set $X$ of role-concept value pairs, excluding $(\mathfrak{t},\mathfrak{f})$ and $(\mathfrak{t},\mathfrak{e})$ is equivalent to requiring a $\mathfrak{t}$ concept coordinate whenever the role coordinate is $\mathfrak{t}$.
+@formula
+$$(\mathfrak{t},\mathfrak{f}),(\mathfrak{t},\mathfrak{e})\notin X\leftrightarrow\forall(r,c)\in X,\ r=\mathfrak{t}\rightarrow c=\mathfrak{t}$$
+@proof
+Forwards, split on the concept value; backwards, apply the stated implication to either forbidden pair.
+-/
 theorem forallK_t_aux (X : Set V₃²) :
 ((𝔱, 𝔣) ∉ X ∧ (𝔱, 𝔢) ∉ X) ↔ ∀ p ∈ X, p.1 = 𝔱 → p.2 = 𝔱 := by
   constructor
@@ -883,9 +1415,15 @@ theorem forallK_t_aux (X : Set V₃²) :
       contradiction
 
 /--
-∀ₖ X is true iff every true role coordinate has a true
-concept coordinate and X contains a fully meaningful pair.
+@name Restricted universal returns $\mathfrak{t}$
+@nl
+The universal returns $\mathfrak{t}$ when every $\mathfrak{t}$ role coordinate has a $\mathfrak{t}$ concept coordinate and a pair without an $\mathfrak{e}$ coordinate occurs.
+@formula
+$$\forall_K X=\mathfrak{t}\leftrightarrow\bigl(\forall(r,c)\in X,\ r=\mathfrak{t}\rightarrow c=\mathfrak{t}\bigr)\land\exists(r,c)\in X:\ r,c\ne\mathfrak{e}$$
+@proof
+Combine the set-based truth clause with the counterexample characterization.
 -/
+
 @[simp]
 theorem forallK_t (X : Set V₃²) :
 ∀ₖ X = 𝔱 ↔
@@ -893,59 +1431,52 @@ theorem forallK_t (X : Set V₃²) :
 ∃ p ∈ X, p.1 ≠ 𝔢 ∧ p.2 ≠ 𝔢 := by
   rw [forallK_true, ←and_assoc, forallK_t_aux]
 
+/--
+@name Universal membership over bound sets
+@nl
+For a source set $S$ and a set-valued map $F$, the bound set $\bigcup_{x\in S}F(x)$ satisfies a property everywhere exactly when each $F(x)$ satisfies it everywhere for every $x\in S$.
+@formula
+$$\forall y\in\operatorname{bind}(X,f),\ P(y)\iff\forall x\in X,\forall y\in f(x),\ P(y)$$
+@proof
+Unpack and repack the witness in bound-set membership.
+-/
+private theorem allMemBind {α β : Type} (P : β → Prop) (f : α → β*)
+(xs : α*) :
+(∀ y ∈ Set.bind xs f, P y) ↔ ∀ x ∈ xs, ∀ y ∈ f x, P y := by
+  constructor
+  · intro h x hx y hy
+    exact h y (Set.mem_bind.mpr ⟨x, hx, hy⟩)
+  · intro h y hy
+    obtain ⟨x, hx, hy⟩ := Set.mem_bind.mp hy
+    exact h x hx y hy
+
+--myne:appendix_end
+
 -- MARK: Other Lemmas
 
-/--
-Given a classical interpretation I and a concept c,
-I entails nonemptiness of c iff there exists an element x
-in the domain of I such that x satisfies c.
--/
-@[simp]
-theorem nonempty_iff [I : ℐᶜ σ] (c : 𝒞ᵁ σ) :
-(I ⊨ᶜ ∃₁c) ↔ ∃ x, cᴵ x := by
-  simp only [Interpret.current, Interpret.interpret,
-  nonempty, evalSentenceC, evalConceptC, evalRoleC,
-  true_implies, true_and]
-  constructor
-  · intro h
-    obtain ⟨x⟩ := I.inhabited
-    exact h x
-  · intro h _
-    exact h
-
-/--
-Given a classical interpretation I and two roles r and s,
-I entails that r and s overlap iff there exist elements x and y
-in the domain of I such that both r and s relate x to y.
--/
-@[simp] theorem overlap_iff [I : ℐᶜ σ] (r s : σ.Nr) :
-(I ⊨ᶜ (r ⨅⁺ s)) ↔ ∃ x y, rᴵ x y ∧ sᴵ x y := by
-  simp only [Interpret.current, Interpret.interpret,
-  overlap, nonempty_iff, evalConceptC, evalRoleC, and_true]
-
 -- MARK: AC to WK Theorems
-/-! ## AC to Weak Kleene Theorems -/
+/-! \subsection{AC to Weak Kleene Theorems} -/
 /-!
-In this section we prove π preserves entailment.
-Γ ⊨ᴬᶜ Δ ↔ π Γ ⊨ᵂᴷ π Δ
-
-Proof.
-We give a construction ·○ on AC interpretations to
-WK interpretations such that we have for
-concepts c and individuals x:
-((c^I) x)⁺ = (π c)^(○I) x
-Which we lift to sentences
-(π φ)^(○I) = (φ^I)⁺
-And then lift to entailment:
-(I ⊨ᴬᶜ φ) ↔ (○I ⊨ᵂᴷ (π φ))
-from which we obtain
-Γ ⊨ᴬᶜ Δ ↔ π Γ ⊨ᵂᴷ π Δ
+The projection $\circ I$ of an AC interpretation records both concept
+coordinates as separate WK atoms. Structural induction on concepts shows
+that this projection preserves each selected coordinate. The sentence and
+entailment results then follow from that correspondence and the reverse
+lifting $\bullet I$.
 -/
 
 /--
-Construction ○· from AC interpretations to
-WK interpretations on the translated signature σᵂᴷ.
+@name AC interpretation projection
+@nl
+Given an analytic-containment interpretation $\mathcal I$, the projection to the weak Kleene signature keeps the same domain and individual assignment. It interprets each side-indexed concept name $(c,s)$ by coordinate $s$ of $c^\mathcal I$, and each atomic role $r$ by the positive coordinate of $r^\mathcal I$. Here $c\in N_C$, $r\in N_R$, and $s\in\{+,-\}$.
+@formula
+$$\begin{aligned}
+\Delta^{\circ\mathcal I}&:=\Delta^\mathcal I,\\
+a^{\circ\mathcal I}&:=a^\mathcal I,\\
+(c,s)^{\circ\mathcal I}(x)&:=\bigl(c^\mathcal I(x)\bigr)^s,\\
+r^{\circ\mathcal I}(x,y)&:=\bigl(r^\mathcal I(x,y)\bigr)^+.
+\end{aligned}$$
 -/
+
 @[instance_reducible]
 def acToWK [I : ℐᴬᶜ σ] : ℐᵂᴷ σᵂᴷ where
   D :=                      Δᴵ
@@ -957,9 +1488,18 @@ def acToWK [I : ℐᴬᶜ σ] : ℐᵂᴷ σᵂᴷ where
 prefix:max "○" => λx => @acToWK _ x
 
 /--
-Construction ●· from WK interpretations on
-the translated signature σᵂᴷ to AC interpretations on σ.
+@name Lift WK interpretations to AC
+@nl
+Given a weak Kleene interpretation $\mathcal I$ over the side-indexed concept signature, the lift to analytic containment keeps the same domain and individual assignment. It combines the two copies of each atomic concept $c$ into the positive and negative coordinates of $c$, and places each atomic role's WK value in its positive coordinate with $\mathfrak{e}$ in its negative coordinate. Here $c\in N_C$ ranges over atomic concepts and $r\in N_R$ over atomic roles.
+@formula
+$$\begin{aligned}
+\Delta^{\bullet\mathcal I}&:=\Delta^\mathcal I,\\
+a^{\bullet\mathcal I}&:=a^\mathcal I,\\
+c^{\bullet\mathcal I}(x)&:=\bigl((c,+)^\mathcal I(x),(c,-)^\mathcal I(x)\bigr),\\
+r^{\bullet\mathcal I}(x,y)&:=\bigl(r^\mathcal I(x,y),\mathfrak{e}\bigr).
+\end{aligned}$$
 -/
+
 @[instance_reducible]
 def wkToAC [I : ℐᵂᴷ σᵂᴷ] : ℐᴬᶜ σ where
   D :=                      Δᴵ
@@ -971,8 +1511,15 @@ def wkToAC [I : ℐᵂᴷ σᵂᴷ] : ℐᴬᶜ σ where
 prefix:max "●" => λx => @wkToAC _ x
 
 /--
-○ and ● are inverses of each other.
+@name Projection after lifting
+@nl
+If a WK interpretation is first lifted to AC and then projected back, every atomic concept and role valuation, along with the domain and individual assignment, is recovered unchanged.
+@formula
+$$\circ(\bullet I)=I$$
+@proof
+Compare interpretation fields; split on the side of each atomic concept copy.
 -/
+
 theorem acToWK_wkToAC (I : ℐᵂᴷ σᵂᴷ) : ○●I = I := by
   cases I with
   | mk D inhabited individuals atoms roles =>
@@ -983,18 +1530,15 @@ theorem acToWK_wkToAC (I : ℐᵂᴷ σᵂᴷ) : ○●I = I := by
       cases side <;> rfl
 
 /--
-Given an AC interpretation I, an individual x in Δᴵ,
-an ALCH concept C, we have that our translations π and
-ν preserve the positive and negative coordinates in their
-in the WK ○I interpretation.
-
-((c^I) x)⁺ = ((π c)^(○I)) x
-((c^I) x)⁻ = ((ν c)^(○I)) x
-
-Note that we prove a general side independent version
-despite only needing ((c^I) x)⁺ = ((π c)^(○I)) x,
-since the proof is much nicer.
+@name AC concept coordinates are preserved
+@nl
+For every concept $C$, domain element $x$, and side $s$, evaluating $\pi^s(C)$ in the projected WK interpretation gives coordinate $s$ of the original AC value of $C$ at $x$.
+@formula
+$$(\pi^s(C))^{\circ\mathcal I}(x)=(C^\mathcal I(x))^s$$
+@proof
+Proceed by structural induction on the concept, splitting by side and simplifying each connective and quantifier case.
 -/
+
 theorem acConceptCoordinates (I : ℐᴬᶜ σ) (c : 𝒞 σ)
 (x : I.D) (s : Side) :
 ((piConcept c s)^(○I)) x = ((c^I) x)[s] := by
@@ -1024,11 +1568,29 @@ theorem acConceptCoordinates (I : ℐᴬᶜ σ) (c : 𝒞 σ)
           acPositive, acNegative, Set.image_ofValues, ih,
           GetElem.getElem, V32.coordinate] <;> rfl
 
-/-- Translating a concept preserves its positive AC coordinate. -/
+/--
+@name Positive AC concept support
+@nl
+For every $\mathcal{ALCH}$ concept and domain element, its positive WK translation evaluated in the projection equals the first coordinate of its AC value.
+@formula
+$$(\pi(C))^{\circ I}(x)=(C^I(x))^+$$
+@proof
+Specialize the side-independent coordinate theorem to the positive side.
+-/
+
 theorem acConceptSupport (I : ℐᴬᶜ σ) (c : 𝒞 σ) (x : Δᴵ) :
 ((π c)^(○I)) x = ((c^I) x)⁺ :=
   acConceptCoordinates I c x +ₚ
 
+/--
+@name Positive AC sentence support
+@nl
+For every $\mathcal{ALCH}$ sentence, the translated WK sentence has the same value as the positive coordinate of the AC sentence value in the projected interpretation.
+@formula
+$$(\pi(\varphi))^{\circ I}=(\varphi^I)^+$$
+@proof
+Use the concept-coordinate theorem and split on the sentence constructors.
+-/
 theorem acSentenceSupport (I : ℐᴬᶜ σ) (φ : Φ σ) :
 (π φ)^(○I) = (φ^I)⁺ := by
   have hc (c : 𝒞 σ) : (π c)^(○I) = λ x => ((c^I) x)⁺ :=
@@ -1040,11 +1602,29 @@ theorem acSentenceSupport (I : ℐᴬᶜ σ) (φ : Φ σ) :
     evalSentenceK, evalSentenceA, forallA, andA, hc,
     acPositive, Set.image_ofValues] <;> rfl
 
+/--
+@name AC and WK satisfaction correspond
+@nl
+For each AC interpretation and $\mathcal{ALCH}$ sentence, satisfaction on the AC side is equivalent to satisfaction of its positive translation in the projected WK interpretation.
+@formula
+$$I\models^{\mathsf{AC}}\varphi\iff\circ I\models^{\mathsf{WK}}\pi(\varphi)$$
+@proof
+Rewrite satisfaction using the sentence-support equality.
+-/
 theorem acSentenceSupport_iff (I : ℐᴬᶜ σ) (φ : Φ σ) :
 (I ⊨ᴬᶜ φ) ↔ (○I ⊨ᵂᴷ π φ) := by
   change (φ^I)⁺ = 𝔱 ↔ (π φ)^(○I) = 𝔱
   rw [acSentenceSupport]
 
+/--
+@name AC entailment implies translated WK entailment
+@nl
+If an AC knowledge base entails another, their positive WK translations are entailed in every projected WK interpretation; the theorem establishes this forward preservation for arbitrary premise and conclusion sets.
+@formula
+$$\Gamma\models^{\mathsf{AC}}\Delta\implies\pi(\Gamma)\models^{\mathsf{WK}}\pi(\Delta)$$
+@proof
+Lift a WK counterinterpretation to AC, use sentence satisfaction correspondence, and project it back.
+-/
 theorem A_implies_pi_WK (Γ Δ : (Φ σ)*) :
 (Γ ⊨ᴬᶜ Δ) → (π Γ ⊨ᵂᴷ π Δ) := by
   intro h I hΓ ψ hψ
@@ -1057,6 +1637,15 @@ theorem A_implies_pi_WK (Γ Δ : (Φ σ)*) :
   have hout := h (●I) hsource φ hφ
   exact hround ▸ (acSentenceSupport_iff (●I) φ).mp hout
 
+/--
+@name Translated WK entailment implies AC entailment
+@nl
+If the positive WK translations entail one another, lifting a WK counterexample would give an AC counterexample. The theorem rules this out and recovers entailment between the original AC knowledge bases.
+@formula
+$$\pi(\Gamma)\models^{\mathsf{WK}}\pi(\Delta)\implies\Gamma\models^{\mathsf{AC}}\Delta$$
+@proof
+Project an arbitrary AC interpretation to WK and use sentence satisfaction correspondence.
+-/
 theorem pi_WK_implies_A (Γ Δ : (Φ σ)*) :
 (π Γ ⊨ᵂᴷ π Δ) → (Γ ⊨ᴬᶜ Δ) := by
   intro h I hΓ φ hφ
@@ -1068,42 +1657,29 @@ theorem pi_WK_implies_A (Γ Δ : (Φ σ)*) :
     (Set.mem_image.mpr ⟨φ, hφ, rfl⟩)
   exact (acSentenceSupport_iff I φ).mpr hout
 
-/-- The explicit WK entailment intermediate used in the final theorem. -/
+/--
+@name AC and translated WK entailment coincide
+@nl
+For any premise and conclusion knowledge bases, AC entailment holds exactly when their positive WK translations are entailed. The two preceding results establish the forward and reverse directions.
+@formula
+$$\Gamma\models^{\mathsf{AC}}\Delta\iff\pi(\Gamma)\models^{\mathsf{WK}}\pi(\Delta)$$
+@proof
+Combine the two entailment directions.
+-/
+
 theorem A_iff_pi_WK (Γ Δ : (Φ σ)*) :
 (Γ ⊨ᴬᶜ Δ) ↔ (π Γ ⊨ᵂᴷ π Δ) :=
   Iff.intro (A_implies_pi_WK Γ Δ) (pi_WK_implies_A Γ Δ)
 
 
 -- MARK: WK to C
-/-! ## WK to classical ALCH -/
-/--
-In this section, we prove that τ and bridging axioms 𝒟
-correctly translate WK entailment into classical ALCH
-entailment.
-
-(Γ ⊨ᵂᴷ Δ) ↔ ((τ Γ ∪ 𝒟 Γ ∪ 𝒟 Δ) ⊨ᶜ τ Δ)
-
-Proof Sketch:
-The core idea is that we define a construction
-□· on WK interpretations such that for concepts c we have
-((τ c)^(□I)) x ↔ (c^I) x = 𝔱 and
-((μ c)^(□I)) x ↔ (c^I) x ≠ 𝔢
-along with an ■· construction such that
-((τ c)^I) x ↔ (c^■I) x = 𝔱 and
-((μ c)^I) x ↔ (c^■I) x ≠ 𝔢
-
-for □· we lift to satisfaction
-(∀ φ ∈ τ Γ, □I ⊨ᶜ φ) ↔ ∀ φ ∈ Γ, I ⊨ᵂᴷ φ
-and have for the bridging axioms 𝒟 that
-∀ ψ ∈ 𝒟 Γ, □I ⊨ᶜ ψ
-
-for ■· we have the following satisfaction lifting
-that depends on our aditional bridging axioms 𝒟.
-(∀ ψ ∈ 𝒟 φ, I ⊨ᶜ ψ) →
-(∀ ψ ∈ τ φ, I ⊨ᶜ ψ) ↔ ■I ⊨ᵂᴷ φ
-
-These three together then allow us to show
-(Γ ⊨ᵂᴷ Δ) ↔ ((τ Γ ∪ 𝒟 Γ ∪ 𝒟 Δ) ⊨ᶜ τ Δ)
+/-! \subsection{Weak Kleene to Classical Theorems} -/
+/-!
+The classical encoding $\Box I$ uses truth and meaningfulness predicates
+for every WK atom. Structural induction on concepts shows that $\tau(C)$
+expresses truth and $\mu(C)$ expresses meaningfulness. The decoding
+$\blacksquare I$ reverses this correspondence wherever the bridge axioms
+for the relevant names hold.
 -/
 
 -- MARK: Lemmas
@@ -1113,10 +1689,28 @@ theorem concept_mu (c : 𝒞 σ) : μ c = muConcept c := rfl
 @[simp]
 theorem concept_tau (c : 𝒞 σ) : τ c = tauConcept c := rfl
 
+/--
+@name Universal membership over unions
+@nl
+For a predicate $P$ and sets $A,B$, every element of $A\cup B$ satisfies $P$ exactly when every element of $A$ satisfies $P$ and every element of $B$ satisfies $P$.
+@formula
+$$(\forall x\in X\cup Y,\ P(x))\iff(\forall x\in X,\ P(x))\land(\forall x\in Y,\ P(x))$$
+@proof
+Expand membership in a union and distribute the universal implication.
+-/
 theorem allMemUnion {α : Type} (P : α → Prop) (xs ys : α*) :
 (∀ x ∈ xs ∪ ys, P x) ↔ (∀ x ∈ xs, P x) ∧ (∀ x ∈ ys, P x) := by
   simp only [Set.mem_union, or_imp, forall_and]
 
+/--
+@name Translated subsumption obligations
+@nl
+In a classical interpretation, satisfying $\tau(C\sqsubseteq D)$ means both that $\tau(C)$ is included in $\tau(D)$ and that some element satisfies both $\mu(C)$ and $\mu(D)$. The witness supplies an element where both source concepts differ from $\mathfrak{e}$.
+@formula
+$$I\models^{\mathsf{C}}\tau(C\sqsubseteq D)\iff(\tau(C))^I\subseteq(\tau(D))^I\land\exists x,\ (\mu(C))^I(x)\land(\mu(D))^I(x)$$
+@proof
+Expand the two translated sentences and use the nonemptiness characterization.
+-/
 theorem translateInclusion_iff (I : ℐᶜ σᵀ) (c d : 𝒞 σ) :
 (∀ ψ ∈ tauSubsumption c d, I ⊨ᶜ ψ) ↔
 (∀ x, ((τ c)^I) x → ((τ d)^I) x) ∧
@@ -1126,26 +1720,27 @@ theorem translateInclusion_iff (I : ℐᶜ σᵀ) (c d : 𝒞 σ) :
   rw [nonempty_iff]
   rfl
 
-private theorem allMemBind {α β : Type} (P : β → Prop) (f : α → β*)
-(xs : α*) :
-(∀ y ∈ Set.bind xs f, P y) ↔ ∀ x ∈ xs, ∀ y ∈ f x, P y := by
-  constructor
-  · intro h x hx y hy
-    exact h y (Set.mem_bind.mpr ⟨x, hx, hy⟩)
-  · intro h y hy
-    obtain ⟨x, hx, hy⟩ := Set.mem_bind.mp hy
-    exact h x hx y hy
-
 -- MARK: Encoding
 /-!
-In this section we prove:
-((τ Γ ∪ 𝒟 Γ ∪ 𝒟 Δ) ⊨ᶜ τ Δ) → (Γ ⊨ᵂᴷ Δ)
+The encoding yields the direction from translated classical entailment to
+weak Kleene entailment.
 -/
 
 /--
-Our □· construction maps WK interpretations
-to classical ALCH interpretations.
+@name Encode WK interpretations classically
+@nl
+Given a weak Kleene interpretation $\mathcal I$, the classical encoding uses the same domain and individual assignment. For each atomic concept $c\in N_C$ and atomic role $r\in N_R$, its truth copy holds exactly where the WK value is $\mathfrak{t}$, and its meaningfulness copy holds exactly where the WK value differs from $\mathfrak{e}$.
+@formula
+$$\begin{aligned}
+\Delta^{\Box\mathcal I}&:=\Delta^\mathcal I,\\
+a^{\Box\mathcal I}&:=a^\mathcal I,\\
+(c,\mathsf T)^{\Box\mathcal I}(x)&:=c^\mathcal I(x)=\mathfrak{t},\\
+(c,\mathsf M)^{\Box\mathcal I}(x)&:=c^\mathcal I(x)\ne\mathfrak{e},\\
+(r,\mathsf T)^{\Box\mathcal I}(x,y)&:=r^\mathcal I(x,y)=\mathfrak{t},\\
+(r,\mathsf M)^{\Box\mathcal I}(x,y)&:=r^\mathcal I(x,y)\ne\mathfrak{e}.
+\end{aligned}$$
 -/
+
 @[instance_reducible]
 def encodeWK [I : ℐᵂᴷ σ] : ℐᶜ σᵀ where
   D := Δᴵ
@@ -1162,6 +1757,15 @@ def encodeWK [I : ℐᵂᴷ σ] : ℐᶜ σᵀ where
 
 prefix:max "□" => λI => @encodeWK _ I
 
+/--
+@name Encoding preserves concept truth and meaning
+@nl
+For every concept $C$ and element $x$, the encoded classical extension of $\tau(C)$ agrees with whether $C^I(x)=\mathfrak{t}$, and the extension of $\mu(C)$ agrees with whether $C^I(x)\ne\mathfrak{e}$.
+@formula
+$$(\tau(C))^{\Box I}(x)\iff C^I(x)=\mathfrak{t},\qquad(\mu(C))^{\Box I}(x)\iff C^I(x)\ne\mathfrak{e}$$
+@proof
+Prove both claims together by structural induction on the concept; the quantified cases use the restricted-quantifier characterizations.
+-/
 theorem translateConceptEncode (I : ℐᵂᴷ σ) (c : 𝒞 σ) (x : I.D) :
 (((τ c)^(□I)) x ↔ (c^I) x = 𝔱) ∧
 (((μ c)^(□I)) x ↔ (c^I) x ≠ 𝔢) := by
@@ -1212,6 +1816,15 @@ theorem translateConceptEncode (I : ℐᵂᴷ σ) (c : 𝒞 σ) (x : I.D) :
       · exact exists_congr (λ y => and_congr Iff.rfl (ih y).2)
       · exact exists_congr (λ y => and_congr Iff.rfl (ih y).2)
 
+/--
+@name Encoded concept bridge
+@nl
+In the encoding of any WK interpretation, every element in an atomic concept's $\mathfrak{t}$ copy is also in its copy for values different from $\mathfrak{e}$, so each atomic concept bridge holds.
+@formula
+$$\Box I\models^{\mathsf{C}}\mathcal{D}(a)$$
+@proof
+Truth of an atomic value directly implies its meaningfulness.
+-/
 theorem encodedatomicConceptBridge (I : ℐᵂᴷ σ) (a : σ.Nc) :
 □I ⊨ᶜ 𝒟 a := by
   simp only [Interpret.current, Interpret.interpret,
@@ -1221,6 +1834,15 @@ theorem encodedatomicConceptBridge (I : ℐᵂᴷ σ) (a : σ.Nc) :
   rw [h]
   decide
 
+/--
+@name Encoded role bridge
+@nl
+In the encoding of any WK interpretation, every pair in an atomic role's $\mathfrak{t}$ copy is also in its copy for values different from $\mathfrak{e}$, so each atomic role bridge holds.
+@formula
+$$\Box I\models^{\mathsf{C}}\mathcal{D}(r)$$
+@proof
+Truth of an atomic role value directly implies its meaningfulness.
+-/
 theorem encodedatomicRoleBridge (I : ℐᵂᴷ σ) (r : σ.Nr) :
 □I ⊨ᶜ 𝒟 r := by
   simp only [Interpret.current, Interpret.interpret,
@@ -1230,6 +1852,15 @@ theorem encodedatomicRoleBridge (I : ℐᵂᴷ σ) (r : σ.Nr) :
   rw [h]
   decide
 
+/--
+@name Encoded concept bridges
+@nl
+The encoding satisfies every atomic bridge in $\mathcal D(C)$, because each bridge follows from the corresponding encoded valuation; structural recursion gathers exactly those bridges for the names used by $C$.
+@formula
+$$\forall\psi\in\mathcal{D}(C),\ \Box I\models^{\mathsf{C}}\psi$$
+@proof
+Induct on the concept, combining bridge sets at binary and quantified constructors.
+-/
 theorem encodedConceptBridges (I : ℐᵂᴷ σ) (c : 𝒞 σ) :
 ∀ φ ∈ 𝒟 c, □I ⊨ᶜ φ := by
   induction c with
@@ -1249,6 +1880,15 @@ theorem encodedConceptBridges (I : ℐᵂᴷ σ) (c : 𝒞 σ) :
         forall_and, forall_eq] using
         And.intro (encodedatomicRoleBridge I r) ih
 
+/--
+@name Encoded sentence bridges
+@nl
+For any sentence, the bridge set collects the atomic bridges for its concepts and roles. The encoding satisfies all of them, including both sides of inclusions and equivalences.
+@formula
+$$\forall\psi\in\mathcal{D}(\varphi),\ \Box I\models^{\mathsf{C}}\psi$$
+@proof
+Split by sentence constructor and use the concept and atomic role bridge results.
+-/
 theorem encodedSentenceBridges (I : ℐᵂᴷ σ) (φ : Φ σ) :
 ∀ ψ ∈ 𝒟 φ, □I ⊨ᶜ ψ := by
   cases φ with
@@ -1263,13 +1903,19 @@ theorem encodedSentenceBridges (I : ℐᵂᴷ σ) (φ : Φ σ) :
         And.intro (encodedConceptBridges I c)
         (encodedConceptBridges I d)
   | rsub r s =>
-      intro ψ hψ
-      simp only [sentenceBridges, BridgeTranslation.bridge,
-        Set.mem_union, Set.mem_singleton] at hψ
-      rcases hψ with rfl | rfl
-      · exact encodedatomicRoleBridge I r
-      · exact encodedatomicRoleBridge I s
+      simpa only [sentenceBridges, BridgeTranslation.bridge,
+        Set.mem_union, Set.mem_singleton, or_imp, forall_and, forall_eq] using
+        And.intro (encodedatomicRoleBridge I r) (encodedatomicRoleBridge I s)
 
+/--
+@name Encoded subsumption correspondence
+@nl
+For an inclusion $C\sqsubseteq D$, the encoded classical interpretation satisfies both translated obligations exactly when the weak Kleene sentence value is $\mathfrak{t}$. The extra nonemptiness obligation accounts for the restricted universal's requirement that some pair have no $\mathfrak{e}$ coordinate.
+@formula
+$$\Box I\models^{\mathsf{C}}\tau(C\sqsubseteq D)\iff\forall_K\{(C^I(x),D^I(x)):x\in\Delta^I\}=\mathfrak{t}$$
+@proof
+Expand the inclusion and meaningfulness witness, then apply concept encoding and the universal-quantifier truth theorem.
+-/
 theorem translateInclusionEncode (I : ℐᵂᴷ σ) (c d : 𝒞 σ) :
 (∀ ψ ∈ tauSubsumption c d, □I ⊨ᶜ ψ) ↔
 ∀ₖ {((c^I) x, (d^I) x) | x : I.D} = 𝔱 := by
@@ -1282,6 +1928,15 @@ theorem translateInclusionEncode (I : ℐᵂᴷ σ) (c d : 𝒞 σ) :
     (exists_congr (λ x => and_congr (translateConceptEncode I c x).2
       (translateConceptEncode I d x).2))
 
+/--
+@name Encoded sentence correspondence
+@nl
+For each $\mathcal{ALCH}$ sentence $\varphi$, the classical encoding satisfies every sentence in $\tau(\varphi)$ exactly when the original WK interpretation assigns $\mathfrak{t}$ to $\varphi$. The proof handles assertions, inclusions, equivalences, and role inclusions separately.
+@formula
+$$\Box I\models^{\mathsf{C}}\tau(\varphi)\iff I\models^{\mathsf{WK}}\varphi$$
+@proof
+Split by sentence form; use concept encoding, inclusion correspondence, and the role-overlap witness.
+-/
 theorem tauSentenceEncode (I : ℐᵂᴷ σ) (φ : Φ σ) :
 (∀ ψ ∈ τ φ, □I ⊨ᶜ ψ) ↔ I ⊨ᵂᴷ φ := by
   cases φ with
@@ -1313,17 +1968,44 @@ theorem tauSentenceEncode (I : ℐᵂᴷ σ) (φ : Φ σ) :
       simp only [Set.forall_mem_ofValues, Set.exists_mem_ofValues]
       simp only [Prod.forall, Prod.exists]
 
+/--
+@name Encoded knowledge-base correspondence
+@nl
+The encoding satisfies a translated knowledge base exactly when the WK interpretation satisfies the original knowledge base.
+@formula
+$$\Box I\models^{\mathsf{C}}\tau(\Gamma)\iff I\models^{\mathsf{WK}}\Gamma$$
+@proof
+Distribute satisfaction over the bound translation set and apply sentence correspondence pointwise.
+-/
 theorem translateKBEncode (I : ℐᵂᴷ σ) (Γ : (Φ σ)*) :
 (∀ φ ∈ τ Γ, □I ⊨ᶜ φ) ↔ ∀ φ ∈ Γ, I ⊨ᵂᴷ φ := by
   simp only [TauTranslation.tau, tauSentenceSet, allMemBind]
   exact forall_congr' (λ φ => imp_congr Iff.rfl (tauSentenceEncode I φ))
 
+/--
+@name Encoded knowledge-base bridges
+@nl
+For a knowledge base $\Gamma$, the encoding satisfies every bridge sentence in $\mathcal D(\Gamma)$. These are precisely the atomic concept and role constraints needed to interpret all names that occur in $\Gamma$.
+@formula
+$$\forall\psi\in\mathcal{D}(\Gamma),\ \Box I\models^{\mathsf{C}}\psi$$
+@proof
+Distribute bridge membership over the knowledge base and apply the sentence bridge theorem.
+-/
 theorem encodedKBBridges (I : ℐᵂᴷ σ) (Γ : (Φ σ)*) :
 ∀ ψ ∈ 𝒟 Γ, □I ⊨ᶜ ψ := by
   simp [BridgeTranslation.bridge]
   rw [sentenceSetBridges, allMemBind]
   exact λ φ _ => encodedSentenceBridges I φ
 
+/--
+@name Classical translation entails WK consequence
+@nl
+Suppose the classical translations of $\Gamma$ and $\Delta$, together with both bridge sets, entail $\tau(\Delta)$. Any WK interpretation satisfying $\Gamma$ can be encoded classically; the encoded model then satisfies the translated conclusions, which gives the required WK consequence.
+@formula
+$$\tau(\Gamma)\cup\mathcal{D}(\Gamma)\cup\mathcal{D}(\Delta)\models^{\mathsf{C}}\tau(\Delta)\implies\Gamma\models^{\mathsf{WK}}\Delta$$
+@proof
+Encode an arbitrary WK interpretation; its translated premises and both bridge sets hold, so the classical consequence decodes to the desired WK conclusions.
+-/
 theorem classical_imp_entailmentK (Γ Δ : (Φ σ)*) :
 ((τ Γ ∪ 𝒟 Γ ∪ 𝒟 Δ) ⊨ᶜ τ Δ) → (Γ ⊨ᵂᴷ Δ) := by
   intro h I hI
@@ -1335,26 +2017,61 @@ theorem classical_imp_entailmentK (Γ Δ : (Φ σ)*) :
 
 -- MARK: Decoding
 /-!
-In this section we prove
-((τ Γ ∪ 𝒟 Γ ∪ 𝒟 Δ) ⊨ᶜ τ Δ) → (Γ ⊨ᵂᴷ Δ)
+The decoding yields the direction from weak Kleene entailment to translated
+classical entailment.
 -/
 
-noncomputable def propValue (t m : Prop) : V₃ := by
+noncomputable def propValue (t m : V₂) : V₃ := by
   classical
   exact if t then 𝔱 else if m then 𝔣 else 𝔢
 
-@[simp] theorem propValue_truth (t m : Prop) :
+/--
+@name Decoded $\mathfrak{t}$ value
+@nl
+The decoding function $\delta(t,m)$ returns a WK truth value from the truth predicate $t$ and meaningfulness predicate $m$. It returns $\mathfrak{t}$ exactly when $t$ holds.
+@formula
+$$\delta(t,m)=\mathfrak{t}\iff t$$
+@proof
+Split on the two predicates in the definition of $\delta$.
+-/
+@[simp] theorem propValue_truth (t m : V₂) :
 propValue t m = 𝔱 ↔ t := by
   classical
   unfold propValue
   repeat (split) <;> simp_all
 
-@[simp] theorem propValue_meaningful (t m : Prop)
+/--
+@name Decoded meaningfulness
+@nl
+Assume $t$ implies $m$ in the decoder's two classical predicates. Then the decoded value differs from $\mathfrak{e}$ exactly when $m$ holds, so the second predicate records meaningfulness.
+@formula
+$$(t\rightarrow m)\implies(\delta(t,m)\ne\mathfrak{e}\iff m)$$
+@proof
+Split on the two predicates and use the bridge implication.
+-/
+@[simp] theorem propValue_meaningful (t m : V₂)
 (h : t → m) : propValue t m ≠ 𝔢 ↔ m := by
   classical
   unfold propValue
   repeat (split) <;> simp_all
 
+/--
+@name Decode classical interpretations as WK interpretations
+@nl
+Given a classical interpretation $\mathcal I$ of the truth and meaningfulness copies, decoding keeps its domain and individual assignment. For each atomic concept $c\in N_C$ and atomic role $r\in N_R$, it returns $\mathfrak{t}$ when the truth copy holds, $\mathfrak{f}$ when only the meaningfulness copy holds, and $\mathfrak{e}$ when neither holds.
+@formula
+$$\begin{aligned}
+\delta(t,m)&:=\begin{cases}
+\mathfrak{t}&t,\\
+\mathfrak{f}&\neg t\land m,\\
+\mathfrak{e}&\neg t\land\neg m,
+\end{cases}\\
+\Delta^{\blacksquare\mathcal I}&:=\Delta^\mathcal I,\\
+a^{\blacksquare\mathcal I}&:=a^\mathcal I,\\
+c^{\blacksquare\mathcal I}(x)&:=\delta\bigl((c,\mathsf T)^\mathcal I(x),(c,\mathsf M)^\mathcal I(x)\bigr),\\
+r^{\blacksquare\mathcal I}(x,y)&:=\delta\bigl((r,\mathsf T)^\mathcal I(x,y),(r,\mathsf M)^\mathcal I(x,y)\bigr).
+\end{aligned}$$
+-/
 @[instance_reducible]
 noncomputable def decodeTarget [I : ℐᶜ σᵀ] : ℐᵂᴷ σ where
   D := Δᴵ
@@ -1368,9 +2085,15 @@ noncomputable def decodeTarget [I : ℐᶜ σᵀ] : ℐᵂᴷ σ where
 prefix:max "■" => λ I => @decodeTarget _ I
 
 /--
-Bridges are needed only for the names occurring in the
-concept being decoded.
+@name Local concept decoding
+@nl
+For a concept $C$ in a classical interpretation satisfying $\mathcal D(C)$, the predicates $\tau(C)$ and $\mu(C)$ decode to the same WK value as evaluating $C$ in the interpretation decoded from that model.
+@formula
+$$I\models^{\mathsf{C}}\mathcal{D}(C)\implies\bigl((\tau(C))^I(x)\iff C^{\blacksquare I}(x)=\mathfrak{t}\bigr)\land\bigl((\mu(C))^I(x)\iff C^{\blacksquare I}(x)\ne\mathfrak{e}\bigr)$$
+@proof
+Use structural induction on the concept; atomic and quantified cases draw only on the bridges of names occurring in that concept.
 -/
+
 theorem decodeConceptLocal (I : ℐᶜ σᵀ) (c : 𝒞 σ)
 (h : ∀ ψ ∈ 𝒟 c, I ⊨ᶜ ψ) (x : I.D) :
 (((τ c)^I) x ↔ (c^■I) x = 𝔱) ∧
@@ -1440,6 +2163,15 @@ theorem decodeConceptLocal (I : ℐᶜ σᵀ) (c : 𝒞 σ)
       · exact exists_congr (λ y =>
           and_congr (propValue_meaningful _ _ (hr x y)).symm (hc y).2)
 
+/--
+@name Local inclusion decoding
+@nl
+For concepts $C,D$, assume the classical model satisfies their bridge sets. Then the translated inclusion and its witness hold exactly when the decoded WK interpretation gives $C\sqsubseteq D$ the value $\mathfrak{t}$.
+@formula
+$$I\models^{\mathsf{C}}\mathcal{D}(C)\cup\mathcal{D}(D)\implies\bigl(I\models^{\mathsf{C}}\tau(C\sqsubseteq D)\iff\blacksquare I\models^{\mathsf{WK}} C\sqsubseteq D\bigr)$$
+@proof
+Expand translated inclusion and its witness, then use local concept decoding and restricted universal truth.
+-/
 theorem decodeInclusionLocal (I : ℐᶜ σᵀ)
 (c d : 𝒞 σ)
 (hc : ∀ ψ ∈ 𝒟 c, I ⊨ᶜ ψ)
@@ -1455,6 +2187,15 @@ theorem decodeInclusionLocal (I : ℐᶜ σᵀ)
     (exists_congr (λ x => and_congr (decodeConceptLocal I c hc x).2
       (decodeConceptLocal I d hd x).2))
 
+/--
+@name Local sentence decoding
+@nl
+For any source sentence $\varphi$, assume the classical model satisfies $\mathcal D(\varphi)$. It satisfies every sentence in $\tau(\varphi)$ exactly when the decoded WK interpretation assigns $\mathfrak{t}$ to $\varphi$.
+@formula
+$$I\models^{\mathsf{C}}\mathcal{D}(\varphi)\implies\bigl(I\models^{\mathsf{C}}\tau(\varphi)\iff\blacksquare I\models^{\mathsf{WK}}\varphi\bigr)$$
+@proof
+Split by sentence form, using local concept decoding for concepts and atomic bridges for roles.
+-/
 theorem decodeSentenceLocal (I : ℐᶜ σᵀ) (φ : Φ σ)
 (h : ∀ ψ ∈ 𝒟 φ, I ⊨ᶜ ψ) :
 (∀ ψ ∈ τ φ, I ⊨ᶜ ψ) ↔ ■I ⊨ᵂᴷ φ := by
@@ -1506,6 +2247,15 @@ theorem decodeSentenceLocal (I : ℐᶜ σᵀ) (φ : Φ σ)
         λ x y => propValue_meaningful _ _ (hr x y),
         λ x y => propValue_meaningful _ _ (hs x y)]
 
+/--
+@name Local knowledge-base decoding
+@nl
+For a knowledge base $\Gamma$, assume the classical model satisfies all bridges in $\mathcal D(\Gamma)$. It then satisfies all sentences in $\tau(\Gamma)$ exactly when the decoded WK interpretation satisfies every sentence in $\Gamma$.
+@formula
+$$I\models^{\mathsf{C}}\mathcal{D}(\Gamma)\implies\bigl(I\models^{\mathsf{C}}\tau(\Gamma)\iff\blacksquare I\models^{\mathsf{WK}}\Gamma\bigr)$$
+@proof
+Distribute membership over the bound translation set and apply local sentence decoding to each source sentence.
+-/
 theorem decodeKBLocal (I : ℐᶜ σᵀ) (Γ : (Φ σ)*)
 (h : ∀ ψ ∈ 𝒟 Γ, I ⊨ᶜ ψ) :
 (∀ ψ ∈ τ Γ, I ⊨ᶜ ψ) ↔ ∀ φ ∈ Γ, ■I ⊨ᵂᴷ φ := by
@@ -1517,6 +2267,15 @@ theorem decodeKBLocal (I : ℐᶜ σᵀ) (Γ : (Φ σ)*)
   intro hφ
   exact decodeSentenceLocal I φ (λ ψ hψ => h ψ (Set.mem_bind.mpr ⟨φ, hφ, hψ⟩))
 
+/--
+@name WK consequence implies classical translation
+@nl
+Weak Kleene entailment implies classical entailment once the bridges of both knowledge bases are premises.
+@formula
+$$\Gamma\models^{\mathsf{WK}}\Delta\implies\tau(\Gamma)\cup\mathcal{D}(\Gamma)\cup\mathcal{D}(\Delta)\models^{\mathsf{C}}\tau(\Delta)$$
+@proof
+Decode an arbitrary classical interpretation satisfying the translated premises and bridges; use WK entailment and decode the conclusions.
+-/
 theorem entailmentK_imp_classical (Γ Δ : (Φ σ)*) :
 (Γ ⊨ᵂᴷ Δ) → ((τ Γ ∪ 𝒟 Γ ∪ 𝒟 Δ) ⊨ᶜ τ Δ)  := by
   intro h I hI
@@ -1527,7 +2286,16 @@ theorem entailmentK_imp_classical (Γ Δ : (Φ σ)*) :
 
 -- MARK: WK to C
 
-/-- Main WK to C entailment result -/
+/--
+@name WK and classical entailment coincide
+@nl
+For any premise and conclusion knowledge bases, the WK consequence holds exactly when their classical translations entail one another after adding the bridges for both sides. The two directions are proved by encoding WK models and decoding classical models.
+@formula
+$$\Gamma\models^{\mathsf{WK}}\Delta\iff\tau(\Gamma)\cup\mathcal{D}(\Gamma)\cup\mathcal{D}(\Delta)\models^{\mathsf{C}}\tau(\Delta)$$
+@proof
+Combine the encoding and decoding entailment directions.
+-/
+
 theorem entailmentK_iff_classical (Γ Δ : (Φ σ)*) :
 (Γ ⊨ᵂᴷ Δ) ↔ ((τ Γ ∪ 𝒟 Γ ∪ 𝒟 Δ) ⊨ᶜ τ Δ) :=
   Iff.intro
@@ -1535,10 +2303,18 @@ theorem entailmentK_iff_classical (Γ Δ : (Φ σ)*) :
   (classical_imp_entailmentK Γ Δ)
 
 -- MARK: AC to C
-/-! ## The composed AC translation -/
+/-! \subsection{The Composed AC Translation} -/
 
-/-- AC entailment is exactly classical entailment of the translated KBs,
-with the bridges of both KBs included among the premises. -/
+/--
+@name AC to classical entailment theorem
+@nl
+For any AC knowledge bases $\Gamma,\Delta$, entailment is equivalent to classical entailment from the translation of $\pi(\Gamma)$ plus the bridge sets for both projected knowledge bases to the translation of $\pi(\Delta)$. This composes the AC-to-WK and WK-to-classical results.
+@formula
+$$\Gamma\models^{\mathsf{AC}}\Delta\iff\tau(\pi(\Gamma))\cup\mathcal{D}(\pi(\Gamma))\cup\mathcal{D}(\pi(\Delta))\models^{\mathsf{C}}\tau(\pi(\Delta))$$
+@proof
+Compose the AC-to-WK and WK-to-classical entailment equivalences.
+-/
+
 theorem MainResult (σ : Signature) (Γ Δ : (Φ σ)*) :
 (Γ ⊨ᴬᶜ Δ) ↔ ((τ (π Γ) ∪ 𝒟 (π Γ) ∪ 𝒟 (π Δ)) ⊨ᶜ τ (π Δ)) := by
   calc
