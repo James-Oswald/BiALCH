@@ -29,62 +29,18 @@ jobs:
           test: 'false'
           lint: 'false'
 
-      - name: Install PDF tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends -y \
-            latexmk texlive-latex-recommended texlive-fonts-recommended
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
 
-      - name: Build with the Myne action
-        id: myne
+      - name: Build and upload site with PDF
         uses: James-Oswald/Myne/.github/actions/build-myne@main
         with:
           project-directory: src
           output-directory: myne-out
-
-      # The Myne action currently forces HTML output. Reuse its compiled Myne
-      # to also generate TeX and the built-in PDF links before packaging Pages.
-      - name: Generate HTML and TeX with elaborated dependencies
-        run: |
-          "$RUNNER_TEMP/myne-source/myne" \
-            -i "$GITHUB_WORKSPACE/src" \
-            -f both \
-            -o "$GITHUB_WORKSPACE/myne-out" \
-            --elaborated-deps
-
-      - name: Compile PDF
-        working-directory: myne-out/tex
-        run: latexmk -pdf -interaction=nonstopmode -halt-on-error Final.tex
-
-      - name: Include PDF in the published site
-        env:
-          SITE_DIRECTORY: ${{ steps.myne.outputs.site-directory }}
-        run: |
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
-          import shutil
-
-          site = Path(os.environ['SITE_DIRECTORY'])
-          pdf = site.parent / 'tex' / 'Final.pdf'
-          if not pdf.is_file():
-              raise SystemExit(f'Missing compiled PDF: {pdf}')
-          shutil.copy2(pdf, site / pdf.name)
-          for page in site.glob('*.html'):
-              html = page.read_text(encoding='utf-8')
-              old_link = 'href="../tex/Final.pdf"'
-              if old_link not in html:
-                  raise SystemExit(f'Missing PDF link in {page}')
-              page.write_text(html.replace(old_link, 'href="Final.pdf"'), encoding='utf-8')
-          PY
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload site and PDF
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: ${{ steps.myne.outputs.site-directory }}
+          build-pdf: true
+          tex-main-file: Final.tex
+          elaborated-deps: true
+          upload-pages-artifact: true
 
   deploy:
     needs: build
