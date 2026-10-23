@@ -62,6 +62,13 @@ The website is written to `myne-out/html/`, and the TeX source and PDF are
 written to `myne-out/tex/`. Each top-level section is a separate website page.
 Lean imports continue to support the proof build but are not Myne inputs.
 
+The [Myne Pages workflow](.github/workflows/myne_pages.yml) uses the Myne GitHub
+Action to publish the HTML documentation and a linked `Final.pdf` on pushes to
+`main`. It can also be run manually from the Actions tab. It builds `Final` with
+the pinned Lean toolchain and uses elaborated dependencies for the graph.
+In repository **Settings → Pages**, select **GitHub Actions** as the publishing
+source before the first deployment.
+
 The project is configured in `lakefile.toml`, with `src/` as its source directory and all six modules as library roots.
 
 For a finite indexed signature, `ALCHAC.ClassicalTableau.SmallModel.decideEntailment nc nr ni Γ Δ`

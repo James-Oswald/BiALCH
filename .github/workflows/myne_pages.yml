@@ -1,0 +1,101 @@
+name: Publish Myne documentation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: myne-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build Lean modules for the dependency graph
+        uses: leanprover/lean-action@v1
+        with:
+          build-args: Final
+          test: 'false'
+          lint: 'false'
+
+      - name: Install PDF tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            latexmk texlive-latex-recommended texlive-fonts-recommended
+
+      - name: Build with the Myne action
+        id: myne
+        uses: James-Oswald/Myne/.github/actions/build-myne@main
+        with:
+          project-directory: src
+          output-directory: myne-out
+
+      # The Myne action currently forces HTML output. Reuse its compiled Myne
+      # to also generate TeX and the built-in PDF links before packaging Pages.
+      - name: Generate HTML and TeX with elaborated dependencies
+        run: |
+          "$RUNNER_TEMP/myne-source/myne" \
+            -i "$GITHUB_WORKSPACE/src" \
+            -f both \
+            -o "$GITHUB_WORKSPACE/myne-out" \
+            --elaborated-deps
+
+      - name: Compile PDF
+        working-directory: myne-out/tex
+        run: latexmk -pdf -interaction=nonstopmode -halt-on-error Final.tex
+
+      - name: Include PDF in the published site
+        env:
+          SITE_DIRECTORY: ${{ steps.myne.outputs.site-directory }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import shutil
+
+          site = Path(os.environ['SITE_DIRECTORY'])
+          pdf = site.parent / 'tex' / 'Final.pdf'
+          if not pdf.is_file():
+              raise SystemExit(f'Missing compiled PDF: {pdf}')
+          shutil.copy2(pdf, site / pdf.name)
+          for page in site.glob('*.html'):
+              html = page.read_text(encoding='utf-8')
+              old_link = 'href="../tex/Final.pdf"'
+              if old_link not in html:
+                  raise SystemExit(f'Missing PDF link in {page}')
+              page.write_text(html.replace(old_link, 'href="Final.pdf"'), encoding='utf-8')
+          PY
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site and PDF
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ${{ steps.myne.outputs.site-directory }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
