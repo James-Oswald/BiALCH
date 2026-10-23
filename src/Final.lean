@@ -10,6 +10,8 @@ through weak Kleene semantics into classical $\mathcal{ALCHRU}$ entailment.
 
 namespace ALCHAC
 
+--myne:appendix_start Overloaded Notation Classes
+
 -- MARK: Notation
 class ToWK (α : Type u) (γ : outParam (Type w)) where
   wkIze : α → γ
@@ -48,9 +50,8 @@ class BridgeTranslation (α : Type u) (γ : outParam (Type w)) where
 
 prefix:max "𝒟" => BridgeTranslation.bridge
 
-
 postfix:max "*" => Set
---myne:end
+--myne:appendix_end
 
 -- MARK: Truth Values
 /-! \section{$\mathsf{WK}$ and $\mathsf{AC}$} -/
