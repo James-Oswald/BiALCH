@@ -1697,11 +1697,11 @@ For a predicate $P$ and sets $A,B$, every element of $A\cup B$ satisfies $P$ exa
 @formula
 $$(\forall x\in X\cup Y,\ P(x))\iff(\forall x\in X,\ P(x))\land(\forall x\in Y,\ P(x))$$
 @proof
-Expand membership in a union and distribute the universal implication.
+Apply the set utility theorem that universal membership distributes over union.
 -/
 theorem allMemUnion {α : Type} (P : α → Prop) (xs ys : α*) :
-(∀ x ∈ xs ∪ ys, P x) ↔ (∀ x ∈ xs, P x) ∧ (∀ x ∈ ys, P x) := by
-  simp only [Set.mem_union, or_imp, forall_and]
+    (∀ x ∈ xs ∪ ys, P x) ↔ (∀ x ∈ xs, P x) ∧ (∀ x ∈ ys, P x) :=
+  Set.forall_mem_union P xs ys
 
 /--
 @name Translated subsumption obligations

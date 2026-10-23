@@ -36,6 +36,11 @@ instance {α : Type u} : Union (Set α) := ⟨union⟩
 @[simp] theorem mem_union {α : Type u} {a : α} {X Y : Set α} :
     a ∈ X ∪ Y ↔ a ∈ X ∨ a ∈ Y := Iff.rfl
 
+/-- Universal membership distributes over union. -/
+theorem forall_mem_union {α : Type u} (P : α → Prop) (X Y : Set α) :
+    (∀ x ∈ X ∪ Y, P x) ↔ (∀ x ∈ X, P x) ∧ (∀ x ∈ Y, P x) := by
+  simp only [mem_union, or_imp, forall_and]
+
 theorem mem_union_left {α : Type u} {a : α} {X : Set α} (Y : Set α)
     (h : a ∈ X) : a ∈ X ∪ Y := Or.inl h
 theorem mem_union_right {α : Type u} {a : α} (X : Set α) {Y : Set α}
