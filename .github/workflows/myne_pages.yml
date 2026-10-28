@@ -1,4 +1,4 @@
-name: Publish Myne documentation
+name: Publish KR paper
 
 on:
   push:
@@ -32,15 +32,43 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Build and upload site with PDF
-        uses: James-Oswald/Myne/.github/actions/build-myne@main
+      - name: Build Myne
+        shell: bash
+        run: |
+          git clone --depth 1 --recurse-submodules --shallow-submodules \
+            https://github.com/James-Oswald/Myne.git "$RUNNER_TEMP/myne-source"
+          make -C "$RUNNER_TEMP/myne-source" CC=cc
+          "$RUNNER_TEMP/myne-source/bin/myne" -i . --elaborated-deps
+          cp src/kr.bst myne-out/tex/src/kr.bst
+
+      - name: Compile KR PDF
+        uses: xu-cheng/latex-action@v4
         with:
-          project-directory: src
-          output-directory: myne-out
-          build-pdf: true
-          tex-main-file: Final.tex
-          elaborated-deps: true
-          upload-pages-artifact: true
+          root_file: src/main.tex
+          working_directory: myne-out/tex
+          work_in_root_file_dir: 'false'
+
+      - name: Include PDF in site
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+
+          site = Path('myne-out/html')
+          pdf = site / 'src/main.pdf'
+          pdf.parent.mkdir(parents=True, exist_ok=True)
+          shutil.copy2('myne-out/tex/main.pdf', pdf)
+          old = 'href="../tex/src/main.pdf"'
+          for page in site.rglob('*.html'):
+              content = page.read_text(encoding='utf-8')
+              page.write_text(content.replace(old, 'href="src/main.pdf"'), encoding='utf-8')
+          PY
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: myne-out/html
 
   deploy:
     needs: build

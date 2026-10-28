@@ -1,6 +1,9 @@
-root = "Final.lean"
+root = "src/main.tex"
 format = "both"
-outputDir = "../myne-out"
+outputDir = "myne-out"
+
+[commandMap]
+"\\documentclass[letterpaper]{article}" = ""
 
 [declarationMap]
 "def∇" = "def"

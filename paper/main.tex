@@ -1,0 +1,1044 @@
+%File: anonymous-submission-latex-2026.tex
+\documentclass[letterpaper]{article} % DO NOT CHANGE THIS
+\usepackage[submission]{aaai2027}  % DO NOT CHANGE THIS
+\usepackage{times}  % DO NOT CHANGE THIS
+\usepackage{helvet}  % DO NOT CHANGE THIS
+\usepackage{courier}  % DO NOT CHANGE THIS
+\usepackage[hyphens]{url}  % DO NOT CHANGE THIS
+\usepackage{graphicx} % DO NOT CHANGE THIS
+\urlstyle{rm} % DO NOT CHANGE THIS
+\def\UrlFont{\rm}  % DO NOT CHANGE THIS
+\usepackage{natbib}  % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
+\usepackage{caption} % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
+\frenchspacing  % DO NOT CHANGE THIS
+\setlength{\pdfpagewidth}{8.5in} % DO NOT CHANGE THIS
+\setlength{\pdfpageheight}{11in} % DO NOT CHANGE THIS
+%
+% These are recommended to typeset algorithms but not required. See the subsubsection on algorithms. Remove them if you don't have algorithms in your paper.
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{amsfonts}
+\usepackage{todonotes}
+\usepackage{mathtools}
+
+\theoremstyle{definition}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}
+\theoremstyle{definition}
+\newtheorem{proposition}{Proposition}
+
+\theoremstyle{definition}
+
+%
+% These are are recommended to typeset listings but not required. See the subsubsection on listing. Remove this block if you don't have listings in your paper.
+\usepackage{newfloat}
+\usepackage{listings}
+\DeclareCaptionStyle{ruled}{labelfont=normalfont,labelsep=colon,strut=off} % DO NOT CHANGE THIS
+\lstset{%
+	basicstyle={\footnotesize\ttfamily},% footnotesize acceptable for monospace
+	numbers=left,numberstyle=\footnotesize,xleftmargin=2em,% show line numbers, remove this entire line if you don't want the numbers.
+	aboveskip=0pt,belowskip=0pt,%
+	showstringspaces=false,tabsize=2,breaklines=true}
+\floatstyle{ruled}
+\newfloat{listing}{tb}{lst}{}
+\floatname{listing}{Listing}
+%
+% Keep the \pdfinfo as shown here. There's no need
+% for you to add the /Title and /Author tags.
+\pdfinfo{
+/TemplateVersion (2026.1)
+}
+
+% DISALLOWED PACKAGES
+% \usepackage{authblk} -- This package is specifically forbidden
+% \usepackage{balance} -- This package is specifically forbidden
+% \usepackage{color (if used in text)
+% \usepackage{CJK} -- This package is specifically forbidden
+% \usepackage{float} -- This package is specifically forbidden
+% \usepackage{flushend} -- This package is specifically forbidden
+% \usepackage{fontenc} -- This package is specifically forbidden
+% \usepackage{fullpage} -- This package is specifically forbidden
+% \usepackage{geometry} -- This package is specifically forbidden
+% \usepackage{grffile} -- This package is specifically forbidden
+% \usepackage{hyperref} -- This package is specifically forbidden
+% \usepackage{navigator} -- This package is specifically forbidden
+% (or any other package that embeds links such as navigator or hyperref)
+% \indentfirst} -- This package is specifically forbidden
+% \layout} -- This package is specifically forbidden
+% \multicol} -- This package is specifically forbidden
+% \nameref} -- This package is specifically forbidden
+% \usepackage{savetrees} -- This package is specifically forbidden
+% \usepackage{setspace} -- This package is specifically forbidden
+% \usepackage{stfloats} -- This package is specifically forbidden
+% \usepackage{tabu} -- This package is specifically forbidden
+% \usepackage{titlesec} -- This package is specifically forbidden
+% \usepackage{tocbibind} -- This package is specifically forbidden
+% \usepackage{ulem} -- This package is specifically forbidden
+% \usepackage{wrapfig} -- This package is specifically forbidden
+% DISALLOWED COMMANDS
+% \nocopyright -- Your paper will not be published if you use this command
+% \addtolength -- This command may not be used
+% \balance -- This command may not be used
+% \baselinestretch -- Your paper will not be published if you use this command
+% \clearpage -- No page breaks of any kind may be used for the final version of your paper
+% \columnsep -- This command may not be used
+% \newpage -- No page breaks of any kind may be used for the final version of your paper
+% \pagebreak -- No page breaks of any kind may be used for the final version of your paperr
+% \pagestyle -- This command may not be used
+% \tiny -- This is not an acceptable font size.
+% \vspace{- -- No negative value may be used in proximity of a caption, figure, table, section, subsection, subsubsection, or reference
+% \vskip{- -- No negative value may be used to alter spacing above or below a caption, figure, table, section, subsection, subsubsection, or reference
+
+\setcounter{secnumdepth}{0} %May be changed to 1 or 2 if section numbers are desired.
+
+% The file aaai2026.sty is the style file for AAAI Press
+% proceedings, working notes, and technical reports.
+%
+
+% Title
+
+% Your title must be in mixed case, not sentence case.
+% That means all verbs (including short verbs like be, is, using,and go),
+% nouns, adverbs, adjectives should be capitalized, including both words in hyphenated terms, while
+% articles, conjunctions, and prepositions are lower case unless they
+% directly follow a colon or long dash
+% \title{AAAI Press Anonymous Submission\\Instructions for Authors Using \LaTeX{}}
+% \author{
+%     %Authors
+%     % All authors must be in the same font size and format.
+%     Written by AAAI Press Staff\textsuperscript{\rm 1}\thanks{With help from the AAAI Publications Committee.}\\
+%     AAAI Style Contributions by Pater Patel Schneider,
+%     Sunil Issar,\\
+%     J. Scott Penberthy,
+%     George Ferguson,
+%     Hans Guesgen,
+%     Francisco Cruz\equalcontrib,
+%     Marc Pujol-Gonzalez\equalcontrib
+% }
+% \affiliations{
+%     %Afiliations
+%     \textsuperscript{\rm 1}Association for the Advancement of Artificial Intelligence\\
+%     % If you have multiple authors and multiple affiliations
+%     % use superscripts in text and roman font to identify them.
+%     % For example,
+
+%     % Sunil Issar\textsuperscript{\rm 2},
+%     % J. Scott Penberthy\textsuperscript{\rm 3},
+%     % George Ferguson\textsuperscript{\rm 4},
+%     % Hans Guesgen\textsuperscript{\rm 5}
+%     % Note that the comma should be placed after the superscript
+
+%     1101 Pennsylvania Ave, NW Suite 300\\
+%     Washington, DC 20004 USA\\
+%     % email address must be in roman text type, not monospace or sans serif
+%     proceedings-questions@aaai.org
+% %
+% % See more examples next
+% }
+
+%Example, Multiple Authors, ->> remove \iffalse,\fi and place them surrounding AAAI title to use it
+\title{From Weak Kleene to Classical Description Logics: \\Faithful Translations for Neuro-Symbolic Reasoning}
+\author {
+    % Authors
+    Thomas Ferguson\textsuperscript{\rm 1},
+    James Oswald\textsuperscript{\rm 1},
+}
+\affiliations {
+    % Affiliations
+    \textsuperscript{\rm 1}Rensselaer Polytechnic Institute\\
+    oswalj@rpi.edu, tferguson
+}
+
+\newcommand{\strongneg}{\mathord{\sim}}
+\newcommand{\fusion}{\mathrel{\circ}}
+\newcommand{\isa}{\mathbin{{:}}}
+\newcommand{\modi}{\mathcal{I}}
+\newcommand{\vt}{\mathfrak{t}}
+\newcommand{\vf}{\mathfrak{f}}
+\newcommand{\vu}{\mathfrak{e}}
+\newcommand{\vm}{\mathfrak{m}}
+\newcommand{\vn}{\mathfrak{n}}
+\newcommand{\vtt}{\langle\vt,\vt\rangle}
+\newcommand{\vtf}{\langle\vt,\vf\rangle}
+\newcommand{\vtu}{\langle\vt,\vu\rangle}
+\newcommand{\vft}{\langle\vf,\vt\rangle}
+\newcommand{\vff}{\langle\vf,\vf\rangle}
+\newcommand{\vfu}{\langle\vf,\vu\rangle}
+\newcommand{\vut}{\langle\vu,\vt\rangle}
+\newcommand{\vuf}{\langle\vu,\vf\rangle}
+\newcommand{\vuu}{\langle\vu,\vu\rangle}
+
+
+\newtheorem{corollary}[theorem]{Corollary}
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+Recent research in the neuro-symbolic literature has empirically demonstrated that assessing large language model output with non-classical description logics (like $\mathcal{ALC}_\mathsf{AC}$ and $\mathcal{ALC}_{S^\star}$) leads to an increase in accuracy over traditional description logic methods. Left open, however, is the development of methods for the implementation of reasoning in these systems. In this work, we develop a linear-time translation scheme for embedding reasoning in a weak Kleene family of description logics within classical description logics, allowing us to make use of existing automated reasoners and optimization techniques. We prove the soundness and completeness of the translations and demonstrate that the complexity of the translation is linear time, addressing an open question from earlier work.
+
+%In this paper, we describe linear time translations from these non-classical systems to standard description logics that permit a user to embed reasoning in \emph{e.g.} $\mathcal{ALC}_\mathsf{AC}$ within a standard description logic reasoner.
+
+% Classical description logics are interpreted using standard two-value semantics. For applications involving intensional states, classical description logics may not be robust enough tools for representation. The description logics $\mathcal{ALC}_\mathsf{AC}$ and $\mathcal{ALC}{S^\star}$ begin to address this issue by using bilateral semantics with coordinates based on weak Kleene logic. 
+% In this work, we develop a linear-time translation scheme for translating reasoning in these logics to reasoning in classical description logics, allowing us to make use of existing automated reasoners and optimization techniques.
+
+
+\end{abstract}
+
+% Uncomment the following to link to your code, datasets, an extended version or similar.
+% You must keep this block between (not within) the abstract and the main body of the paper.
+% \begin{links}
+%     \link{Code}{https://aaai.org/example/code}
+%     \link{Datasets}{https://aaai.org/example/datasets}
+%     \link{Extended version}{https://aaai.org/example/extended-version}
+% \end{links}
+
+\section{Introduction}
+
+% \todo[inline]{
+%     \begin{itemize}
+%         \item What is ALCAC and ALCS\ast, where do they come from?
+%         \item Why is reasoning in them desireable?
+%         \begin{itemize}
+%             \item Mention Fuzzy description logics.
+%         \end{itemize}
+%         \item Why do we need a translation?
+%         \item Summary of what we do, main theorems, sections
+%     \end{itemize}
+% }
+
+Description logics (DLs) provide a well-established formal foundation for representing structured knowledge. Their model-theoretic semantics, favorable computational properties, and use for ontology languages such as OWL have enabled the development of mature automated reasoning systems \cite{DBLP:conf/ore/MatentzogluLHSP15,DBLP:series/faia/SinghBM23}. Standard description logics, such as those described in \cite{DBLP:conf/dlog/2003handbook}, are classical: every assertion is evaluated relative to a two-valued interpretation, and a knowledge base is normally expected to admit a classical model. These assumptions are appropriate in many applications, but they can be too strong when the represented information is partial, semantically indeterminate, or internally conflicting.
+
+Situations requiring the ability to handle non-classical reasoning like this arise naturally when a knowledge base represents information obtained from several agents or extracted from heterogeneous sources. For example, ontology-extraction systems, such as some of those described in \cite{DBLP:journals/csr/ArmaryVLN25}, may produce an assertion whose terminology is only partially aligned with that of an existing ontology. The assertion may conflict with the ontology without actually being false in the traditional sense: its failure may instead result from an undefined term, an unresolved mapping, or a lack of sufficient information. Similarly, when representing intentional states, an agent may accept one claim, reject another, and remain unable to evaluate a third. Treating all of these cases as ordinary classical falsity does not capture nuance that may be important for reasoning.
+
+A number of non-classical description logics have been proposed to address limitations of classical two-valued semantics. One such example are fuzzy description logics \cite{DBLP:conf/aaai/Straccia98,DBLP:conf/sum/BorgwardtP17} which assign degrees of truth or membership to concepts and assertions. Fuzzy description logics are useful when the phenomenon being represented is continuous, such as similarity, vagueness, or uncertain classification. The problem considered here is different. We are interested not primarily in how strongly an assertion is true, but in whether it is truth-evaluable at all and in how positive and negative information concerning it interact. Consequently, the semantic distinctions required in our setting cannot in general be represented by a single numerical degree of truth.
+
+The description logics $\mathcal{ALC}_\mathsf{AC}$ and $\mathcal{ALC}_{S^\ast}$, introduced as non-classical subsystems of $\mathcal{ALC}$ for modeling intentional states \cite{DBLP:conf/dlog/Ferguson21}, begin to address this problem. Their semantics are bilateral: formulas are evaluated using pairs of coordinates whose behavior is governed by weak Kleene operations. These coordinates permit different aspects of an evaluation, such as truth and meaningfulness, to be represented separately. These logics have recently acquired an additional motivation from neuro-symbolic reasoning with large language models. \cite{DBLP:conf/nesy/AllenCFIG25} propose grounding the interpretation function of a bilateral paraconsistent logic in a large language model, evaluating atomic formulas independently according to whether the model can verify and refute them. Their experiments show that bilateral factuality evaluation achieves higher macro-F1 than a unilateral factuality baseline. In domains in which factuality is critical---\cite{DBLP:conf/nesy/AllenCFIG25} considers examples from medical diagnosis---bilateral-based inference is a demonstrably useful tool.
+
+The work in \cite{DBLP:conf/nesy/AllenCFIG25}, however, stops at the atomic case and does not consider sentences with the full expressivity offered by description logics. Moving from mere \emph{extraction} of reliable data from large language models to \emph{reliably reasoning} about such data is an important component in this plan. Increasing the utility of description logics like $\mathcal{ALC}_\mathsf{AC}$ and $\mathcal{ALC}_{S^\ast}$ thus becomes a pressing matter. 
+
+
+%\todo[inline]{hard sell the connection here}
+% Weak Kleene semantics are used since we take undefinedness to be infectious. If the evaluation of a compound expression depends essentially on a semantically undefined component, the compound expression may itself remain undefined rather than being assigned an arbitrary classical value. 
+
+
+
+
+
+The additional expressive power in $\mathcal{ALC}_\mathsf{AC}$ and $\mathcal{ALC}_{S^\ast}$ creates a practical difficulty in terms of reasoning. Classical DLs benefit from several decades of work on reasoning procedures, optimization techniques, and highly developed software implementations. By contrast, specialized reasoners for $\mathcal{ALC}_\mathsf{AC}$ and $\mathcal{ALC}_{S^\ast}$ are not generally available. Implementing a new reasoning architecture directly from the non-classical semantics would require reproducing much of the infrastructure already present in classical description-logic reasoners. It would also make it more difficult to transfer advances in classical reasoning to the non-classical setting. We therefore investigate whether reasoning in these logics can instead be reduced to reasoning in a classical description logic. 
+
+% \section{A Motivating Example}
+
+% \todo[inline]{
+%     Something similar to the example from \cite{DBLP:conf/dlog/Ferguson21}, but new.
+
+%     Motivating example from CRAFT, when trying to extract and match ontologies, want to be able the degree to which something conflicts with a KB. 
+
+%     A way of getting an assessment of weather a semantic extraction is inconsistent with a KB is to examine weaker notions of consistency with weaker description logics.
+% }
+
+\section{A Motivating Example}
+
+Consider the following sample $\mathcal{ALCH}$ knowledge base about a person applying for a loan. Let $a$ be the loan applicant, $m$ be a mortgage account, and $c$ be a credit account.
+\begin{align*}
+R_1 ) \quad& \mathtt{hasCreditCardDebt} \sqsubseteq \mathtt{hasDebt}  \\
+R_2) \quad& \mathtt{hasMortgageDebt} \sqsubseteq \mathtt{hasDebt} \\
+A_1) \quad&\langle a,c \rangle : \mathtt{hasCreditCardDebt} \\
+A_2) \quad&\langle a,m \rangle : \mathtt{hasMortgageDebt} \\
+A_3) \quad&a:\forall \mathtt{hasDebt}.\mathtt{GoodStandingAcc} \\
+A_4) \quad&m:\mathtt{GoodStandingAcc} \sqcap \mathtt{SecureAcc} \\
+A_5) \quad&c : \lnot \mathtt{GoodStandingAcc}
+\end{align*}
+Statements in the knowledge-base may have been aggregated from multiple sources by a language model, leading to potential inconsistency. For example, $R_1$ and $A_1$ allow us to infer $\langle a,c\rangle : \mathtt{hasDebt} $ and together with $A_3$ this allows us to infer $c : \mathtt{GoodStandingAcc}$ which contradicts $A_5$. Under classical $\mathcal{ALCH}$ this knowledge base has no model and thus entails every formula including things like $m : \lnot \mathtt{SecuredAcc}$ or $a : \mathtt{FraudRisk}$ despite the knowledge base not containing evidence for either of these conclusions. By instead using paraconsistent $\mathcal{ALCH}$ variants we can represent that there is both evidence for and against the credit card account's good standing without allowing that conflict to spread arbitrarily.   
+
+
+% Description logics such as $\mathcal{ALC}_{\mathsf{AC}}$ were introduced in the context of closing knowledge bases representing agents' \emph{intentional states} (\emph{e.g.}, beliefs or goals) under an appropriately weak notion of consequence. As agentic paradigms in artificial intelligence grow more entrenched, we continue to 
+
+% A further motivating example is that of assessing the relative quality of semantic extraction from unstructured data. As Ma \emph{et al.} point out in \cite{DBLP:conf/dlog/MaQHL07},
+
+% What we find to be the most pressing motivation follows from the recent research in neurosymbolic reasoning in Allen \emph{et al.}'s \cite{DBLP:conf/nesy/AllenCFIG25,allenetal2026}
+
+% \todo[inline]{
+% \begin{itemize}
+%     \item For matching OWL, role subsumption is important so we're actually in ALC
+
+
+%     $\mathcal{}$
+% \end{itemize}
+
+% }
+
+\section{Background}
+
+Here, we lay the foundations for our current work, by covering some preliminaries related to description logics and their non-classical extensions.
+
+
+\subsection{Classical Description Logic}
+
+We assume some familiarity with description logics, but give a brief coverage here, for a full account, see \cite{DBLP:conf/dlog/2003handbook}. Our translation will be presented from paraconsistent versions of $\mathcal{ALCH}$ to classical $\mathcal{ALCH^+(\cap)}$, but we note that the technique also works for paraconsistent $\mathcal{ALC}$ to classical $\mathcal{ALC^+}$, thus we present classical description logics up to $\mathcal{ALCH(\cap)}$ in a language independent way.
+\begin{definition}[$\mathcal{ALC}$ Syntax] 
+Let $\Sigma=(N_C,N_R,N_I)$ be a description logic signature, where $N_C$ is a set of atomic concept names, $N_R$ is a set of role names, and $N_I$ is a set of individual names. The set of $\mathcal{ALC}$ concepts over $\Sigma$ is generated by the grammar:
+\[
+C,D ::= \top \mid \bot \mid A \mid \lnot C \mid C\sqcap D
+\mid C\sqcup D \mid \exists r.C \mid \forall r.C
+\]
+where $A\in N_C$ and $r\in N_R$. An $\mathcal{ALC}$ formula is defined by the following grammar where $a, b \in N_I$, $r \in N_R$ and $C, D$ are concepts. 
+\[
+\varphi ::= a \isa C \mid \langle a, b \rangle \isa r \mid C \sqsubseteq D \mid C \equiv D
+\] 
+\end{definition}
+\noindent Sentences 1) of the form $a \isa C$ are called {\it concept assertions}, read ``$a$ is a $C$'',
+2) of the form $(a, b) \isa r$ are called {\it role assertions}, read ``$a$ bears $r$ to $b$'', 3) of the form $C \sqsubseteq D$ are called {\it concept subsumptions}, read ``All $C$s are $D$s'', 4) of the form $C \equiv D$ are called {\it concept equivalences} read ``$C$ is equivalent to $D$''.
+
+\begin{definition}[$\mathcal{ALCH}$, $\mathcal{ALC}^+$ $\mathcal{ALCH^+}$, $\mathcal{ALCH^+(\cap)}$]
+Extending the sentence grammar of $\mathcal{ALC}$ with role inclusions $r \sqsubseteq s$ yields the language $\mathcal{ALCH}$. Sentences of this form can be read ``$r$ is a sub-role of $s$''. Removing the negation concept constructor $\lnot C$ from the concept gammer yields "positive version" of the language which we denote $\cdot^+$ (for readers familiar with DLs, note that $\mathcal{ALC^+}$ is not the same as the more restrictive $\mathcal{AL}$). Adding a role language $R,S::= A |R \sqcap S$ where $A \in N_R$ with a single constructor $R \cap S$ to any of these languages yields a $(\cap)$ version of that language, where roles can be joined, i.e. $(a, b) \isa r \cap s$ can be read ``$a$ bears $r$ to $b$ and $a$ bears $r$ and $s$ to $b$''. We note that for $(\cap)$ languages, we do not allow role intersection in concept restrictions.
+\end{definition}
+
+\begin{definition}[Knowledge Bases]
+    Given a language $L$ an $L$ \textit{knowledge base} $\mathcal{K} = \langle\mathcal{T}, \mathcal{A}\rangle$ is a pair composed of 1) An \textit{ABox}, $\mathcal{A}$, a finite set of $L$ sentences that are concept assertions and role assertions and 2) A {\it TBox}, $\mathcal{T}$, a finite set of $L$ sentences that are concept subsumptions, concept equivalences and role subsumptions in $\mathcal{H}$ languages.
+\end{definition}
+
+% We present now present the classical semantics in terms of the most expressive language we use in this work $\mathcal{ALCH}(\cap)$, less expressive variants can be obtained by just removing any interpretation conditions that contain a feature not present in the given language.  
+
+\begin{definition}[Classical Interpretations]\label{def:ALC-Interp-Non-Standard}\footnote{This is a nonstandard representation of interpretations, using the characteristic function of standard interpretations readers familiar with \cite{DBLP:conf/dlog/2003handbook} will know. This representation is meant to better prepare the reader for our later non-classical interpretations in Definitions \ref{def:wK-Interp} and \ref{def:Bilateral-Interp}.} Let $\mathcal{V}_2 = \{\vt,\vf\}$ be the set of classical truth values and let $L$ be our language. An $L$-interpretation consists of a nonempty domain $\Delta^{\mathcal{I}}$ and interpretation function $\mathcal{I}$ from $L$ formulae to $\mathcal{V}_2$ such that the following hold depending on $L$: For $\mathcal{ALC}$ Languages:
+\begin{itemize}
+		\item $\mathcal{I}(a\isa\top)=\vt$ and $\mathcal{I}(a\isa\bot)=\vf$
+		\item $\mathcal{I}(a\isa C)\in\mathcal{V}_{2}$ and $\mathcal{I}(\langle a,b\rangle\isa r)\in\mathcal{V}_{2}$
+        \item $\mathcal{I}(a\isa\neg C)=\lnot\mathcal{I}(a\isa C)$ (not in $\cdot^+$ languages)
+		\item $\mathcal{I}(a\isa C\sqcap D)=\mathcal{I}(a\isa C)\land\mathcal{I}(a\isa D)$
+		\item $\mathcal{I}(a\isa C\sqcup D)=\mathcal{I}(a\isa C)\lor\mathcal{I}(a\isa D)$
+		\item $\mathcal{I}(a\isa\exists r.C) =\exists {b\in\Delta^{\mathcal{I}}}, \left( \mathcal{I}(\langle a,b\rangle\isa r) \land \mathcal{I}(b\isa C) \right)$ \item $\mathcal{I}(a\isa\forall r.C) =\forall {b\in\Delta^{\mathcal{I}}}, \left( \mathcal{I}(\langle a,b\rangle\isa r) \rightarrow \mathcal{I}(b\isa C) \right)$ \item $\mathcal{I}(C\sqsubseteq D) =\forall{a\in\Delta^{\mathcal{I}}}, \left( \mathcal{I}(a\isa C) \rightarrow \mathcal{I}(a\isa D) \right)$ \item $\mathcal{I}(C\equiv D) =\mathcal{I}(C\sqsubseteq D) \land \mathcal{I}(D\sqsubseteq C)$
+    \end{itemize}
+    \noindent For $\mathcal{H}$ languages:
+    \begin{itemize}
+        \item $\mathcal{I}(r \sqsubseteq s) = \forall a,b \in \Delta^\mathcal{I}, \mathcal{I}(\langle a, b\rangle : r) \rightarrow \mathcal{I}(\langle a, b\rangle : s)$
+	\end{itemize}
+    \noindent For $(\cap)$ languages:
+    \begin{itemize}
+        \item $\mathcal{I}(\langle a, b\rangle : r \sqcap s) = \mathcal{I}(\langle a, b\rangle : r) \land \mathcal{I}(\langle a, b\rangle : s)$
+    \end{itemize}
+\end{definition}
+
+\begin{definition}[Satisfaction]\label{def:ALC-Sat}
+    Given an $L$-interpretation $\mathcal{I}$ and formula $\varphi$ in $L$, we say $\mathcal{I}$ satisfies $\varphi$, or conversely $\varphi$ holds in $\mathcal{I}$, written $\mathcal{I}\models_L\varphi$, iff $\mathcal{I}(\varphi) = \vt$. With this, we can say a $L$ knowledge base $\mathcal{K} = \langle \mathcal{T},\mathcal{A}\rangle$ holds under an $L$-interpretation $\mathcal{I}$, written $\mathcal{I}\models_L\mathcal{K}$ iff $\forall \varphi \in \mathcal{A}, \mathcal{I}\models_L\varphi \text{ and } \forall \varphi \in \mathcal{T}, \mathcal{I}\models_L\varphi$. 
+\end{definition}
+
+\noindent 
+\begin{definition}[Entailment]\label{def:ALC-Ent}
+We say a $L$ knowledge-base $\mathcal{K}$ entails a formula $\varphi$, written $\mathcal{K} \models_{L} $ iff for every interpretation $\mathcal{I}$, $\mathcal{I}\models_L\mathcal{K}$ implies $\mathcal{I}\models_L\varphi$.
+\end{definition}
+
+\subsection{Weak Kleene, $\mathsf{AC}$, and $\mathsf{S}^*$}
+To understand $\mathcal{ALCH}_\mathsf{AC}$ and $\mathcal{ALCH}_{\mathsf{S}^*}$ we must first discuss the underlying logics of \textit{analytic containment}, $\mathsf{AC}$, introduced in \cite{Angell1977-ANGTSO-9} and $\mathsf{S}^*$, introduced in \cite{Daniels1990-DANANO-3}, as well as their construction from weak Kleene logic. The syntax of both are the same as classical propositional logic with two additional restricted quantifier connectives. The truth values of $\mathsf{AC}$ and $\mathsf{S}^*$ are based on the three truth values, $\mathcal{V}_3 = \{\vt, \vu, \vf\}$, from weak Kleene logic $\mathsf{wK}$. Our semantics will also depend on the $\mathsf{wK}$ connectives and quantifiers.  
+\begin{definition}[$\mathsf{wK}$ Truth Tables]
+\leavevmode\par\noindent
+\begin{tabular}{c|c c c|ccc c c|ccc}
+    $\dot{\strongneg}$ & && $\dot{\wedge}$ & $\vt$ & $\vu$ & $\vf$ && $\dot{\vee}$ & $\vt$ & $\vu$ & $\vf$\\
+    \cline{1-2}\cline{4-7}\cline{9-12}
+    $\vt$ & $\vf$ && $\vt$ & $\vt$ & $\vu$ & $\vf$ && $\vt$ & $\vt$ & $\vu$ & $\vt$\\
+    $\vu$ & $\vu$ && $\vu$ & $\vu$ & $\vu$ & $\vu$ && $\vu$ & $\vu$ & $\vu$ & $\vu$\\
+    $\vf$ & $\vt$ && $\vf$ & $\vf$ & $\vu$ & $\vf$ && $\vf$ & $\vt$ & $\vu$ & $\vf$\\
+\end{tabular}
+\end{definition}
+\noindent Due to issues observed in \cite{DBLP:conf/tableaux/Ferguson21,DBLP:conf/dlog/Ferguson21} we use the following \textit{restricted Kleene quantifiers} that operate on sets of pairs of $\mathsf{wK}$ truth values. The motivation for these quantifiers is that restricted quantification statements such as "all $\varphi$s are $\psi$s" ($[\forall x\varphi(x)]\psi(x)$) are truth-evaluable only when the domains of $\varphi$ and $\psi$ can be compared.
+\begin{definition}(Restricted $\mathsf{wK}$ Quantifiers)
+    The \emph{restricted Kleene quantifiers} are functions $\dot{\exists}$ and $\dot{\forall}$ mapping a nonempty sets $X\subseteq\mathcal{V}_{3}^{2}$ to truth values from $\mathcal{V}_{3}$ as follows:
+	
+	\vspace{.1cm}
+
+    {\small
+	
+	\noindent $\dot{\exists}(X)=\begin{cases}
+	\vt & \mbox{ if }\langle\vt,\vt\rangle\in X\\
+	\vu & \mbox{ if }\forall\langle u,v\rangle\in X, u=\vu\lor v=\vu\\
+	\vf & \mbox{ if }\langle\vt,\vt\rangle\notin X \land (\exists \langle u,v\rangle\in X\mbox{, }u\neq\vu\land v\neq\vu)
+	\end{cases}$
+
+    	\noindent $\dot{\forall}(X)=\begin{cases}
+	\vt & \mbox{ if }\langle\vt,\vf\rangle,\langle\vt,\vu\rangle\notin X \land (\exists \langle u,v\rangle\in X\mbox{, }u\neq\vu\land v\neq\vu)\\
+	\vu & \mbox{ if } \forall\langle u,v\rangle\in X,u=\vu\lor v=\vu\\
+	\vf & \mbox{ if }
+    \begin{aligned}
+    \lbrace\langle\vt,\vf\rangle,\langle\vt,\vu\rangle\rbrace\cap X\neq\varnothing \mbox{ and }\\ \exists \langle u,v\rangle\in X\mbox{, }u\neq\vu\land v\neq\vu\\
+    \end{aligned}
+	\end{cases}$
+    }
+\end{definition}
+\noindent We now turn to the construction of $\mathsf{AC}$ from $\mathsf{wK}$. $\mathsf{AC}$ is \textit{bilateral} in that for its truth values, it assigns statements pairs of $\mathsf{wK}$ truth values, $\mathcal{V}^2_3 \: (\mathcal{V}_3 \times \mathcal{V}_3)$ where the first coordinate represents the degree of support (evidence) for a statement, while the second represents the degree of refutation of (evidence against) a statement. This yields nine possible truth values in $\mathsf{AC}$. One interpretation of these truth values is given as follows:
+\begin{align*} \langle\vt,-\rangle: & \text{ evidence exists for } \varphi \\ 
+\langle -,\vt\rangle: & \text{ evidence exists refuting } \varphi \\ 
+\langle\vu,-\rangle: & \text{ the truth conditions of } \varphi \text{ are undefined} \\
+\langle -,\vu\rangle: & \text{ the falsity conditions of } \varphi \text{ are undefined} \\ 
+\langle\vf,-\rangle: & \text{ no evidence exists for } \varphi \\
+\langle -,\vf\rangle: & \text{ no evidence exists refuting } \varphi 
+\end{align*}
+With these truth values, we now turn to defining connectives and quantifiers for them.
+\begin{definition}[$\mathsf{AC}$ Connectives]\label{def:AC-connectives}
+The $\mathsf{AC}$ truth functions $\ddot{\strongneg}$, $\ddot{\wedge}$, and $\ddot{\vee}$ are defined:
+	\begin{align*}
+	    \mathop{\ddot{\strongneg}}(\langle u,v\rangle)&:=\langle v,u\rangle \\
+		\langle u_{0},v_{0}\rangle\mathrel{\ddot{\wedge}}\langle u_{1},v_{1}\rangle&:=\langle u_{0}\mathrel{\dot{\wedge}}u_{1}, v_{0}\mathrel{\dot{\vee}}v_{1}\rangle \\
+		\langle u_{0},v_{0}\rangle\mathrel{\ddot{\vee}}\langle u_{1},v_{1}\rangle&:=\langle u_{0}\mathrel{\dot{\vee}}u_{1}, v_{0}\mathrel{\dot{\wedge}}v_{1}\rangle 
+	\end{align*}
+\end{definition}
+\begin{definition}[Restricted $\mathsf{AC}$ Quantifiers]\label{def:AC-quantifiers}
+Restricted quantifiers for $\mathsf{AC}$ are defined over sets $X$ of pairs of values from $\mathcal{V}^{2}_{3}$. Let $\pi^{i,j}$ map values $\langle\langle u_{0},v_{0}\rangle,\langle u_{1},v_{1}\rangle\rangle$ to the pair of the $i$th coordinate of $\langle u_{0},v_{0}\rangle$ and the $j$th coordinate of $\langle u_{1},v_{1}\rangle$ and let $\pi^{i,j}[X]$ be the image of $X$ under $\pi^{i,j}$. Then:
+The $\mathsf{AC}$ restricted quantifiers $\ddot{\exists}$ and $\ddot{\forall}$ are defined to work with:
+	\begin{align*}
+		\ddot{\exists}(X)&:=\langle \dot{\exists} (\pi^{0,0}[X]),\dot{\forall}(\pi^{0,1}[X])\rangle \\
+		\ddot{\forall}(X)&: =\langle \dot{\forall} (\pi^{0,0}[X]),\dot{\exists}(\pi^{0,1}[X])\rangle
+	\end{align*}
+\end{definition}
+\noindent Finally, we turn to $\mathsf{S}^*$. For truth values, $\mathsf{S}^*$ uses the five-valued subset $\{\langle \vt, \vt \rangle, \langle\vt,\vf\rangle,\langle\vu,\vu\rangle,\langle\vf,\vt\rangle,\langle \vf, \vf \rangle\}$ of $\mathcal{V}_3^{2}$, which we denote $\mathcal{V}_3^{2*}$. This set of truth values is given due to philosophical objections about the existence of truth values like $\langle \vt, \vu \rangle$ which suggest that one could be aware of the truth conditions for a statement without awareness of its falsity conditions, and vice-versa.\footnote{See \cite{b108fe03530e4bd0ab883a7a5c2b5cf2} for an argument something is meaningful precisely when its negation is meaningful.} We do not make a commitment either way, and present the rest of this work in terms of the availability of both. For connectives and restricted quantifiers, $\mathsf{S}^*$ uses the same ones presented for $\mathsf{AC}$ in Definitions \ref{def:AC-connectives} and \ref{def:AC-quantifiers} but with its restricted set of truth values $\mathcal{V}_3^{2*}$. We note that this works because $\mathcal{V}_3^{2*}$ is closed under the $\mathsf{AC}$ connectives and restricted quantifiers.
+
+\subsection{The Logics $\mathcal{ALCH^+(\cap)}_\mathsf{wK}$, $\mathcal{ALCH}_\mathsf{AC}$, and $\mathcal{ALCH}_{\mathsf{S}^*}$}
+
+We begin by presenting the description logic  $\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ which we will use as an intermediate step in our translations. $\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ uses the language of classical $\mathcal{ALCH(\cap)}$ but for semantics uses the following $\mathsf{wK}$ interpretations:
+
+\begin{definition}[$\mathsf{wK}$ Interpretations]\label{def:wK-Interp}
+An $\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ interpretation is a function $\mathcal{I}$ that maps $\mathcal{ALCH^+(\cap)}$ sentences to $\mathcal{V}_3$, paired with domain $\Delta^{\mathcal{I}}$, such that:
+	\begin{itemize}
+		\item $\mathcal{I}(a:\top)=\mathfrak{t}$ and $\mathcal{I}(a : \bot) = \vf$ for all $a\in\Delta^{\mathcal{I}}$.
+		\item $\mathcal{I}(a\isa C)\in\mathcal{V}_{3}$ and $\mathcal{I}(\langle a,b\rangle\isa r)\in\mathcal{V}_{3}$
+		% \item $\mathcal{I}(a\isa\neg C)=\mathop{\dot{\strongneg}}\mathcal{I}(a\isa C)$
+		\item $\mathcal{I}(a\isa C\sqcap D)=\mathcal{I}(a\isa C)\mathrel{\dot{\wedge}}\mathcal{I}(a\isa D)$
+		\item $\mathcal{I}(a\isa C\sqcup D)=\mathcal{I}(a\isa C)\mathrel{\dot{\vee}}\mathcal{I}(a\isa D)$
+		\item $\mathcal{I}(a\isa \exists r.C)=\mathop{\dot{\exists}}(\lbrace\langle\mathcal{I}(\langle a,b\rangle\isa r),\mathcal{I}(b\isa C)\rangle\mid b\in \Delta^{\mathcal{I}}\rbrace)$
+		\item $\mathcal{I}(a\isa \forall r.C)=\mathop{\dot{\forall}}(\lbrace\langle\mathcal{I}(\langle a,b\rangle\isa r),\mathcal{I}(b\isa C)\rangle\mid b\in \Delta^{\mathcal{I}}\rbrace)$
+		\item $\mathcal{I}(C\sqsubseteq D)=\mathop{\dot{\forall}}(\lbrace\langle\mathcal{I}(a\isa C),\mathcal{I}(a\isa D)\rangle\mid a\in \Delta^{\mathcal{I}}\rbrace)$
+		\item $\mathcal{I}(C\equiv D)=\mathcal{I}(C\sqsubseteq D)\mathrel{\dot{\wedge}}\mathcal{I}(D\sqsubseteq C)$
+        \item $\mathcal{I}(r \sqsubseteq s) = \mathop{\dot{\forall}}(\lbrace\langle\mathcal{I}(\langle a,b\rangle\isa r),\mathcal{I}(\langle a,b\rangle\isa s)\rangle\mid a,b\in \Delta^{\mathcal{I}}\rbrace)$
+        \item $\mathcal{I}(\langle a, b\rangle : r \sqcap s) = \mathcal{I}(\langle a, b\rangle : r) \mathrel{\dot{\wedge}} \mathcal{I}(\langle a, b\rangle : s)$
+	\end{itemize}
+\end{definition}
+\noindent From this, the definitions of \textsf{wK} satisfaction $\mathcal{I}\models_{\mathcal{ALCH^+(\cap)}_\mathsf{wK}}\varphi$ and entailment $\mathcal{K}\models_{\mathcal{ALCH^+(\cap)}_\mathsf{wK}}\varphi$ are defined identically to the classical versions Definitions \ref{def:ALC-Sat} and \ref{def:ALC-Ent} using $\mathsf{wK}$ Interpretations.
+% \begin{definition}[$\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ Satisfaction]\label{def:wK-Sat}
+%     An $\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ interpretation $\mathcal{I}$ satisfies a $\mathcal{ALCH(\cap)}$ formula $\varphi$, written $\mathcal{I}\models_{\mathcal{ALCH^+(\cap)}_\mathsf{wK}}\varphi$, iff $\mathcal{I}(\varphi) = \vt$. A knowledge base $\mathcal{K} = \langle \mathcal{T},\mathcal{A}\rangle$ holds under an $\mathsf{wK}$ interpretation $\mathcal{I}$, written $\mathcal{I}\models_{\mathcal{ALCH^+(\cap)}_\mathsf{wK}}\mathcal{K}$ iff $\forall \varphi \in \mathcal{A}, \mathcal{I}\models_{\mathcal{ALCH^+(\cap)}_\mathsf{wK}}\varphi \text{ and } \forall \varphi \in \mathcal{T}, \mathcal{I}\models_{\mathcal{ALCH^+(\cap)}_\mathsf{wK}}\varphi$. 
+% \end{definition}
+% \begin{definition}[$\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ Entailment]\label{def:wK-Ent}
+% A $\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ knowledge-base $\mathcal{K}$ entails a $\mathcal{ALCH(\cap)}$ formula $\varphi$, written $\mathcal{K} \models_{\mathcal{ALCH^+(\cap)}_\mathsf{wK}} \varphi $ iff for every $\mathcal{ALCH^+(\cap)}_\mathsf{wK}$ interpretation $\mathcal{I}$, $\mathcal{I}\models_{\mathcal{ALCH^+(\cap)}_\mathsf{wK}}\mathcal{K}$ implies $\mathcal{I}\models_{\mathcal{ALCH^+(\cap)}_\mathsf{wK}}\varphi$.
+% \end{definition}
+
+With our intermediate language defined, we now turn to defining the description logics $\mathcal{ALCH}_\mathsf{AC}$ and $\mathcal{ALCH}_{\mathsf{S}^*}$. They are both defined using $\mathcal{ALCH}$ as their underlying language. For their semantics we make use of our AC connectives and quantifiers from Definitions \ref{def:AC-connectives} and \ref{def:AC-quantifiers}.
+
+\begin{definition}[$\mathsf{AC}$ Interpretations]\label{def:Bilateral-Interp}
+	An $\mathcal{ALCH}_\mathsf{AC}$ interpretation is a function $\mathcal{I}$ from $\mathcal{ALCH}$ sentences to $\mathcal{V}_{3}^{2}$ paired with domain $\Delta^{\mathcal{I}}$, such that:
+	
+	\begin{itemize}
+		\item $\mathcal{I}(a\isa\top)=\langle\vt,v\rangle$ and $\mathcal{I}(a\isa\bot)=\langle v,\vt\rangle$ for some $v\in\mathcal{V}_{3}$
+		\item $\mathcal{I}(a\isa C)\in\mathcal{V}_{3}^{2}$ and $\mathcal{I}(\langle a,b\rangle\isa r)\in\mathcal{V}_{3}^{2}$
+		\item $\mathcal{I}(a\isa\neg C)=\mathop{\ddot{\strongneg}}\mathcal{I}(a\isa C)$
+		\item $\mathcal{I}(a\isa C\sqcap D)=\mathcal{I}(a\isa C)\mathrel{\ddot{\wedge}}\mathcal{I}(a\isa D)$
+		\item $\mathcal{I}(a\isa C\sqcup D)=\mathcal{I}(a\isa C)\mathrel{\ddot{\vee}}\mathcal{I}(a\isa D)$
+		\item $\mathcal{I}(a\isa \exists r.C)=\mathop{\ddot{\exists}}(\lbrace\langle\mathcal{I}(\langle a,b\rangle\isa r),\mathcal{I}(b\isa C)\rangle\mid b\in \Delta^{\mathcal{I}}\rbrace)$
+		\item $\mathcal{I}(a\isa \forall r.C)=\mathop{\ddot{\forall}}(\lbrace\langle\mathcal{I}(\langle a,b\rangle\isa r),\mathcal{I}(b\isa C)\rangle\mid b\in \Delta^{\mathcal{I}}\rbrace)$
+		\item $\mathcal{I}(C\sqsubseteq D)=\mathop{\ddot{\forall}}(\lbrace\langle\mathcal{I}(a\isa C),\mathcal{I}(a\isa D)\rangle\mid a\in \Delta^{\mathcal{I}}\rbrace)$
+		\item $\mathcal{I}(C\equiv D)=\mathcal{I}(C\sqsubseteq D)\mathrel{\ddot{\wedge}}\mathcal{I}(D\sqsubseteq C)$
+        \item $\mathcal{I}(r\sqsubseteq s)=\ddot{\forall}(\lbrace \langle\mathcal{I}(\langle a,b\rangle:r),\mathcal{I}(\langle a,b\rangle:s)\rangle\mid a,b\in\Delta\rbrace)$
+	\end{itemize}
+\end{definition}
+
+\begin{definition}[$\mathcal{ALCH}_\mathsf{AC}$ Satisfaction]\label{def:AC-Sat}
+    An $\mathsf{AC}$ interpretation $\mathcal{I}$ satisfies a formula $\varphi$, written $\mathcal{I}\models_{\mathcal{ALCH}_\mathsf{AC}}\varphi$, iff the first coordinate of $\mathcal{I}(\varphi)$ is $\vt$. A knowledge base $\mathcal{K} = \langle \mathcal{T},\mathcal{A}\rangle$ holds under an $\mathsf{AC}$ interpretation $\mathcal{I}$, written $\mathcal{I}\models_{\mathcal{ALCH}_\mathsf{AC}}\mathcal{K}$ iff $\forall \varphi \in \mathcal{A}, \mathcal{I}\models_{\mathcal{ALCH}_\mathsf{AC}}\varphi \text{ and } \forall \varphi \in \mathcal{T}, \mathcal{I}\models_{\mathcal{ALCH}_\mathsf{AC}}\varphi$. 
+\end{definition}
+\begin{definition}[$\mathcal{ALCH}_\mathsf{AC}$ Entailment]\label{def:AC-Ent}
+An $\mathcal{ALCH}_\mathsf{AC}$ knowledge-base $\mathcal{K}$ entails a formula $\varphi$, written $\mathcal{K} \models_{\mathcal{ALC}_{\mathsf{AC}}} \varphi$ iff for every $\mathsf{AC}$ interpretation $\mathcal{I}$, $\mathcal{I}\models_{\mathcal{ALCH}_\mathsf{AC}}\mathcal{K}$ implies $\mathcal{I}\models_{\mathcal{ALCH}_\mathsf{AC}}\varphi$.
+\end{definition}
+These $\mathsf{AC}$ definitions generalize to $\mathcal{ALCH}_{\mathsf{S}^*}$ definitions by restricting the truth values in $\mathcal{ALCH}_\mathsf{AC}$ interpretations to exclusively be in $\mathcal{V}_3^{2*}$. Now with our languages and their semantics defined, we turn to the core of this work, providing a faithful translation for converting entailment problems in $\mathcal{ALCH}_\mathsf{AC}$ and $\mathcal{ALCH}_\mathsf{S^*}$ knowledge bases to $\mathcal{ALCH^+(\cap)}$ entailment problems.  
+
+\section{Translation Framework}
+
+The primary contribution of this paper lies in our describing techniques for leveraging the above description logics that can take advantage of standard techniques and reasoners. We will accomplish this by a translation-based approach that allows one to encode $\mathcal{ALCH}_{\mathsf{AC}}$ and $\mathcal{ALCH}_{\mathsf{S}^*}$ into a classical language built on new copies of concept and role constructors.
+
+\subsection{Embedding $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$ in $\mathcal{ALCH}^+(\cap)$}
+
+We will proceed initially to provide some results concerning our intermediate $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$. We will encode inferences in this description logic into a language for $\mathcal{ALCH}^+(\cap)$ that for all concepts $C$ and roles $r$ in the base language creates copies $C^{\tau}$ and $C^{\mu}$ (and $r^{\tau}$ and $r^{\mu}$, respectively).
+
+On certain interpretations of weak Kleene (\emph{e.g.}, that of S\"{o}ren Halld\`{e}n in \cite{hallden}), the three truth values are rich enough to distinguish two distinct features of a sentence, namely, the matter of its \emph{truth} and the matter of its \emph{meaningfulness}. When translating from the weak Kleene setting to the classical two-valued setting, we wish to preserve this information. We do so by offering parallel translations $\cdot^{\tau}$ and $\cdot^{\mu}$ for a sentence $\varphi$, intuitively understood so that $\varphi^{\tau}$  and $\varphi^{\mu}$ are records if its truth and meaningfulness, respectively. 
+
+% A Weak Kleene interpretation is one in which for all individuals $a,b\in\Delta$ and concepts $C$ and roles $r$, $\mathcal{I}(a:C)\in\lbrace\mathfrak{t},\mathfrak{e},\mathfrak{f}\rbrace$ and $\mathcal{I}(\langle a,b\rangle:r)\in\lbrace\mathfrak{t},\mathfrak{e},\mathfrak{f}\rbrace$.
+
+% Special case, though, is that $\mathcal{I}(a:\top)=\mathfrak{t}$ and $\mathcal{I}(a:\bot)=\mathfrak{f}$ for all $a\in\Delta$.
+
+% We recursively extend $\mathcal{I}$ from the atomic language to all formulae in $\mathcal{ALC}$ as in the paper \cite[Definition 5]{}.
+% \todo[inline]{put this in.}
+
+%\todo[inline]{lead in here describing $I'$}
+
+
+
+%How do I define $\mathcal{I}'$? Well:
+
+%For all concepts $C$, create $C^{\tau}$ and $C^{\mu}$ and define for all $a\in\Delta$:
+
+%\begin{itemize}
+%    \item $\mathcal{I}'(a:C^{\tau})=\begin{cases}
+%        \mathfrak{t} & \mbox{ if }\mathcal{I}(a:C)=\mathfrak{t}\\
+%        \mathfrak{f} & \mbox{ otherwise}
+%    \end{cases}$
+
+%     \item $\mathcal{I}'(a:C^{\mu})=\begin{cases}
+%        \mathfrak{t} & \mbox{ if }\mathcal{I}(a:C)\neq\mathfrak{e}\\
+%        \mathfrak{f} & \mbox{ otherwise}
+%    \end{cases}$
+%\end{itemize}
+
+
+
+%And for all roles $r$:
+
+%\begin{itemize}
+%    \item $\mathcal{I}'(\langle a,b\rangle:r^{\tau})=\begin{cases}
+%        \mathfrak{t} & \mbox{ if }\mathcal{I}(\langle a,b\rangle:r)=\mathfrak{t}\\
+%        \mathfrak{f} & \mbox{ otherwise}
+%    \end{cases}$
+
+%     \item $\mathcal{I}'(\langle a,b\rangle:r^{\mu})=\begin{cases}
+%        \mathfrak{t} & \mbox{ if }\mathcal{I}(\langle a,b\rangle:r)\neq\mathfrak{e}\\
+%        \mathfrak{f} & \mbox{ otherwise}
+%    \end{cases}$
+%\end{itemize}
+
+%I.e. for a weak Kleene interpretation $\mathcal{I}$, we need to give a classical interpretation $\mathcal{I}'$ such that for all DL sentences $\varphi$ (in whatever positive language we use) will enjoy the following property:
+
+%\begin{lemma}
+%We have defined $\mathcal{I}'$ such that 
+
+
+%$\mathcal{I}(\varphi)=\begin{cases}
+%    \mathfrak{t} & \mbox{if }\mathcal{I}'(\varphi^{\tau})=\mathfrak{t}\mbox{ (and }\mathcal{I}'(\varphi^{\mu})=\mathfrak{t}\mbox{)}\\
+%    \mathfrak{e} & \mbox{if }\mathcal{I}'(\varphi^{\mu})=\mathfrak{f}\mbox{ (and }\mathcal{I}'(\varphi^{\tau})=\mathfrak{f}\mbox{)}\\ 
+%    \mathfrak{f} & \mbox{if }\mathcal{I}'(\varphi^{\tau})=\mathfrak{f}\mbox{ and }\mathcal{I}'(\varphi^{\mu})=\mathfrak{t}\mbox{}\\ 
+%\end{cases}$
+
+%\end{lemma}
+
+We begin by demonstrating an interesting feature of $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$ involving the following definition:
+
+
+\begin{definition}
+    For a weak Kleene interpretation $\mathcal{I}$, define a further interpretation $\mathcal{I}^{\star}$ so that
+
+    \begin{itemize}
+    \item $\mathcal{I}^{\star}(a:C)=\begin{cases}
+        \mathfrak{t} & \mbox{ if }\mathcal{I}(a:C)\neq\mathfrak{e}\\
+        \mathfrak{e} & \mbox{ otherwise}
+    \end{cases}$
+
+    \item $\mathcal{I}^{\star}(\langle a,b\rangle:r)=\begin{cases}
+        \mathfrak{t} & \mbox{ if }\mathcal{I}(\langle a,b\rangle:r)\neq\mathfrak{e}\\
+        \mathfrak{e} & \mbox{ otherwise}
+    \end{cases}$
+    \end{itemize}
+\end{definition}
+
+\noindent This new interpretation, defined at the atomic level, lifts to the entire language:
+
+\begin{lemma}
+    For a $\mathcal{ALCH^+(\cap)}$ sentence $\varphi$ , the following holds:
+
+\begin{center}
+    $\mathcal{I}^{\star}(\varphi)=\begin{cases}
+        \mathfrak{t} & \mbox{ if }\mathcal{I}(\varphi)\neq\mathfrak{e}\\
+        \mathfrak{e} & \mbox{ otherwise}
+    \end{cases}$
+    \end{center}
+\end{lemma}
+
+\begin{proof}
+    By induction on complexity of formulae. The basis step is guaranteed by the construction of $\mathcal{I}^{\star}$ for atomic formulae. Suppose for induction hypothesis that this property holds of all subformulae of the target formula $\varphi$. To illustrate, we establish the property in the case $\varphi$ is of the form $a:C\sqcap D$. We examine the exhaustive cases in which $\mathcal{I}(\varphi)\neq\mathfrak{e}$ or $\mathcal{I}(\varphi)=\mathfrak{e}$:
+
+    \vspace{.2cm}
+    
+    \noindent$\bullet$ Suppose that $\mathcal{I}(a:C\sqcap D)\neq \mathfrak{e}$. Then both $\mathcal{I}(a:C)\neq \mathfrak{e}$ and $\mathcal{I}(a:D)\neq \mathfrak{e}$. By induction hypothesis, $\mathcal{I}^{\star}(a:C)=\mathfrak{t}$ and $\mathcal{I}^{\star}(a:D)=\mathfrak{t}$, whence $\mathcal{I}^{\star}(a:C\sqcap D)=\mathfrak{t}$.
+
+    
+
+    \vspace{.2cm}
+    
+    \noindent$\bullet$ Now suppose that $\mathcal{I}(a:C\sqcap D)= \mathfrak{e}$. Then either $\mathcal{I}(a:C)=\mathfrak{e}$ or $\mathcal{I}(a:D)=\mathfrak{e}$ and by induction hypothesis, either $\mathcal{I}^{\star}(a:C)=\mathfrak{e}$ or $\mathcal{I}^{\star}(a:D)=\mathfrak{e}$. Whichever of these holds, $\mathcal{I}^{\star}(a:C\sqcap D)=\mathfrak{e}$.
+
+    \vspace{.2cm}
+    
+    \noindent Role intersection and union follow analogous arguments. The second illustration will show the result for existential role restriction based on the same two cases:
+
+     \vspace{.2cm}
+    
+    \noindent$\bullet$ Suppose that $\mathcal{I}(a:\exists r.C)\neq\mathfrak{e}$. Then by the semantic conditions there is an object $b$ such that $\mathcal{I}(\langle a,b\rangle: r)\neq\mathfrak{e}$ and $\mathcal{I}(b:C)\neq\mathfrak{e}$. By induction hypothesis, then, $\mathcal{I}^{\star}(\langle a,b\rangle: r)=\mathfrak{t}$ and $\mathcal{I}^{\star}(b:C)=\mathfrak{t}$. But this fact ensures that $\mathcal{I}^{\star}(a:\exists r.C)=\mathfrak{t}$.
+
+     \vspace{.2cm}
+    
+    \noindent$\bullet$ Suppose now that $\mathcal{I}(a:\exists r.C)=\mathfrak{e}$. Then for all individuals $b$, either $\mathcal{I}(\langle a,b\rangle:r)=\mathfrak{e}$ or $\mathcal{I}(b:C)=\mathfrak{e}$. But by induction hypothesis, this means that for any $b$, either $\mathcal{I}^{\star}(\langle a,b\rangle:r)=\mathfrak{e}$ or $\mathcal{I}^{\star}(b:C)=\mathfrak{e}$, whence $\mathcal{I}^{\star}(a:\exists r.C)=\mathfrak{e}$.
+    
+    
+\end{proof}
+
+\noindent We now outline the translation itself. Suppose that given a language for $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$, we have a classical language such that for all concept constructors $C$ in the original language, we add copies $C^{\tau}$ and $C^{\mu}$ (and likewise for role constructors).  Then we can define a translation between these languages. The translation, importantly, uses blank nodes (see \emph{e.g.} \cite{HOGAN201442}), where the notation $\_:C$ indicates that a blank node satisfies the concept $C$.
+
+\begin{definition}
+    We define two translations $\cdot^{\tau}$ and $\cdot^{\mu}$ in tandem. Let $C,D$ and $r,s$ be atomic concepts and roles, respectively. Then:
+
+\vspace{-.2cm}
+\begin{center}
+
+    {\small
+   
+    \begin{tabular}{ll}
+    $(a:\top)^{\tau}=a:\top$ & $(a:\top)^{\mu}=a:\top$\\
+    $(a:\bot)^{\tau}=a:\bot$ & $(a:\bot)^{\mu}=a:\top$\\
+    $(a:C)^{\tau}=a:C^{\tau}$ & $(a:C)^{\mu}=a:C^{\mu}$\\
+    $(\langle a,b\rangle:r)^{\tau}=\langle a,b\rangle:r^{\tau}$ & $(\langle a,b\rangle:r)^{\mu}=\langle a,b\rangle:r^{\mu}$\\
+$(a:C\sqcap D)^{\tau}=a:C^{\tau}\sqcap D^{\tau}$ & $(a:C\sqcap D)^{\mu}=a:C^{\mu}\sqcap D^{\mu}$\\
+
+$(a:C\sqcup D)^{\tau}=a:C^{\tau}\sqcup D^{\tau}$ & $(a:C\sqcup D)^{\mu}=a:C^{\mu}\sqcap D^{\mu}$\\
+
+$(a:\exists r.C)^{\tau}=a:\exists r^{\tau}.C^{\tau}$ & $(a:\exists r.C)^{\mu}=a:\exists r^{\mu}.C^{\mu}$\\
+
+$(a:\forall r.C)^{\tau}=a:\forall r^{\tau}.C^{\tau}$ & $(a:\forall r.C)^{\mu}=a:\exists r^{\mu}.C^{\mu}$\\
+
+$(C\sqsubseteq D)^{\tau}=C^{\tau}\sqsubseteq D^{\tau}$ & $(C\sqsubseteq D)^{\mu}=\_:C^{\mu}\sqcap D^{\mu}$\\
+
+$(C\equiv D)^{\tau}=C^{\tau}\equiv D^{\tau}$ & $(C\equiv D)^{\mu}=\_:C^{\mu}\sqcap D^{\mu}$\\
+
+$(r\sqsubseteq s)^{\tau}=r^{\tau}\sqsubseteq s^{\tau}$ & $(r\sqsubseteq s)^{\mu}=\langle\_,\_\rangle:r^{\mu}\sqcap s^{\mu}$\\
+
+
+\end{tabular}
+
+
+    $(\langle a,b\rangle: r\sqcap s)^{\tau}=\langle a,b\rangle: r^{\tau}\sqcap  s^{\tau}$ 
+    
+    $(\langle a,b\rangle: r\sqcap s)^{\mu}=\langle a,b\rangle: r^{\mu}\sqcap s^{\mu}$
+}
+\end{center}
+
+
+\noindent For a set of sentences $\mathcal{S}$, $\mathcal{S}^{\tau}=\lbrace\varphi^{\tau}\mid \varphi\in\mathcal{S}\rbrace$ and $\mathcal{S}^{\mu}=\lbrace\varphi^{\mu}\mid \varphi\in\mathcal{S}\rbrace$.
+\end{definition}
+
+\noindent This definition is sufficient to encode $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$ reasoning in classical $\mathcal{ALCH}^+(\cap)$, \emph{i.e.}:
+
+%Define I'. Show recursively that the property holds for all $\varphi$ in the language.
+
+%Definition. Let $\mathcal{I}$ be a weak Kleene interpretation of the $\mathcal{ALC}$ language and define $\mathcal{I}'$ to be a classical interpretation to be:
+
+\begin{lemma}\label{lem:alh-wk-to-alh}
+    The translations are faithful, \emph{i.e.},
+
+    \begin{center}
+    $\langle\mathcal{T},\mathcal{A}\rangle\vDash_{\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}}\varphi$ iff $\begin{cases}
+    \langle\mathcal{T}^{\tau},\mathcal{A}^{\tau}\rangle\vDash_{\mathcal{ALCH^+(\cap)}}\varphi^{\tau} \mbox{, and}\\
+    \langle\mathcal{T}^{\mu},\mathcal{A}^{\mu}\rangle\vDash_{\mathcal{ALCH^+(\cap)}}\varphi^{\mu}
+    
+    \end{cases}$
+    \end{center}
+\end{lemma}
+
+\begin{proof}
+    \noindent $\bullet$ For right-to-left, we prove the contrapositive. Suppose that $\langle \mathcal{T},\mathcal{A}\rangle\nvDash_{\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}}\varphi$ and that all formulae are positive. Then there is an $\mathcal{I}$ mapping all formulae in $\mathcal{T}\cup\mathcal{A}$ to $\mathfrak{t}$ and mapping $\mathcal{I}$ to either $\mathfrak{e}$ or $\mathfrak{f}$. Two cases hold:
+
+    \vspace{.1cm}
+    
+    \noindent$\circ$ Suppose that $\mathcal{I}(\varphi)=\mathfrak{f}$. Then by Lemma 1, for the valuation $\mathcal{I}'$, $\mathcal{I}'$ maps $\mathcal{T}^{\tau}\cup\mathcal{A}^{\tau}$ to $\mathfrak{t}$ although $\mathcal{I}'(\varphi)=\mathfrak{f}$, whence $\langle\mathcal{T}^{\tau},\mathcal{A}^{\tau}\rangle\nvDash_{\mathcal{ALCH^+(\cap)}}\varphi^{\tau}$.
+
+     \vspace{.1cm}
+    
+    \noindent$\circ$ Suppose that $\mathcal{I}(\varphi)=\mathfrak{e}$. Then consider $\mathcal{I}'$. As in the previous case, $\mathcal{I}'$ maps $\mathcal{T}^{\tau}\cup\mathcal{A}^{\tau}$ to $\mathfrak{t}$ and \emph{a fortiori} maps $\mathcal{T}^{\mu}\cup\mathcal{A}^{\mu}$ to $\mathfrak{t}$. But by Lemma 1, $\mathcal{I}'$ maps $\varphi^{\mu}$ to $\mathfrak{f}$, whence $\langle\mathcal{T}^{\mu},\mathcal{A}^{\mu}\rangle\nvDash_{\mathcal{ALCH}^+(\cap)}\varphi^{\mu}$.
+
+     \vspace{.2cm}
+    
+    \noindent$\bullet$ For left-to-right, suppose that $\langle\mathcal{T}^{\tau},\mathcal{A}^{\tau}\rangle\nvDash_{\mathcal{ALCH}^+(\cap)}\varphi^{\tau}$. There is then a two-valued interpretation $\mathcal{I}$ such that each of $\mathcal{T}^{\tau}\cup\mathcal{A}^{\tau}$ is $\mathfrak{t}$ but $\mathcal{I}(\varphi^{\tau})=\mathfrak{f}$. Define the  interpretation:
+
+    \begin{center}
+        \begin{itemize}
+        \item $\mathcal{I}''(a:C)=\mathcal{I}(a:C^{\tau})$
+        \item $\mathcal{I}''(\langle a,b\rangle:r)=\mathcal{I}(\langle a,b\rangle:r^{\tau})$
+        \end{itemize}
+    \end{center}
+
+    \noindent I.e. $\mathcal{I}''$ forgets the $\tau$ decoration. Then $\mathcal{I}''$ is a weak Kleene valuation in which $\mathcal{T}\cup\mathcal{A}$ each receives the value $\mathfrak{t}$ while $\mathcal{I}''(\varphi)=\mathfrak{f}$, whence $\langle\mathcal{T},\mathcal{A}\rangle\nvDash_{\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}}\varphi$.
+
+    Suppose that $\langle \mathcal{T}^{\mu},\mathcal{A}^{\mu}\rangle\nvDash_{\mathcal{ALCH}^+(\cap)}\varphi^{\mu}$. Then take a countermodel $\mathcal{I}$ and define a weak Kleene valuation such that: 
+
+        \begin{center}
+        \begin{itemize}
+        \item $\mathcal{I}'''(a:C)=\begin{cases}
+            
+        \mathfrak{t} & \mbox{ if }\mathcal{I}(a:C^{\tau})=\mathfrak{t}\\
+        \mathfrak{e} & \mbox{ if }\mathcal{I}(a:C^{\tau})=\mathfrak{f}\mbox{ and }\mathcal{I}(a:C^{\mu})=\mathfrak{f}\\
+        \mathfrak{f} & \mbox{ if }\mathcal{I}(a:C^{\tau})=\mathfrak{f}\mbox{ and }\mathcal{I}(a:C^{\mu})=\mathfrak{t}
+        \end{cases}
+        $
+        \end{itemize}
+    \end{center}
+
+    \noindent and define this for roles in the same way. Then by Lemma 1, $\mathcal{I}'''$ maps each of $\mathcal{T}\cup\mathcal{A}$ to a value other than $\mathfrak{e}$ but maps $\varphi$ to $\mathfrak{e}$. Now appeal to Definition 1 and Lemma 2; since the Tbox and Abox exclusively contain sentences in $\mathcal{ALCH^+(\cap)}$, $(\mathcal{I}''')^{\star}$ maps each of $\mathcal{T}\cup\mathcal{A}$ to $\mathfrak{t}$ although $(\mathcal{I}''')^{\star}(\varphi)=\mathfrak{e}$. This then is a countermodel showing that $\langle\mathcal{T},\mathcal{A}\rangle\nvDash_{\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}}\varphi$.
+\end{proof}
+
+\subsection{Embedding $\mathcal{ALCH}_{\mathsf{AC}}$ in $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$}
+
+Our interest in $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$ is, of course, functional. Its definition and the above lemma are subordinate to results concerning $\mathcal{ALCH}_{\mathsf{AC}}$ and $\mathcal{ALCH}_{\mathsf{S}^*}$. Given the bilateral analyses of such systems in \cite{DBLP:journals/logcom/Ferguson16}, however, the relationship between these systems is very close; we can treat \emph{e.g.} $\mathcal{ALCH}_{\mathsf{AC}}$ as a pair of \emph{positive} systems of $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$ working in parallel to calculate \emph{positive} and \emph{negative} semantic features concerning the verification or falsification of a formula.
+
+We proceed by building a pair of translations ($\cdot^{\pi}$ and $\cdot^{\nu}$) isolating positive and negative features of an $\mathcal{ALCH}_{\mathsf{AC}}$ formula by embedding it into a richer language for $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$. Such an enriched language includes for every concept constructor $C$ positive and negative versions $C^{\pi}$ and $C^{\nu}$, respectively, which may be thought of bilateral records of whether a formula $a:C$ has a verification or falsification. 
+
+%Then, abuse Gurevich-Kamide to get to AC
+
+%\begin{center}
+%    $\pi_{0}(\mathcal{I}(\varphi))=\begin{cases}
+%        \mathfrak{t} & \mbox{if }\mathcal{I}'(\varphi^{\pi})=\mathfrak{t}\\
+%        \mathfrak{e} & \mbox{if }\mathcal{I}'(\varphi^{\pi})=\mathfrak{e}\\ 
+%        \mathfrak{f} & \mbox{if }\mathcal{I}'(\varphi^{\pi})=\mathfrak{f}\\ 
+%    \end{cases}$
+%\end{center}
+
+%\begin{center}
+%    $\pi_{1}(\mathcal{I}(\varphi))=\begin{cases}
+%        \mathfrak{t} & \mbox{if }\mathcal{I}'(\varphi^{\nu})=\mathfrak{f}\\
+%        \mathfrak{e} & \mbox{if }\mathcal{I}'(\varphi^{\nu})=\mathfrak{e}\\ 
+%        \mathfrak{f} & \mbox{if }\mathcal{I}'(\varphi^{\nu})=\mathfrak{t}\\ 
+%    \end{cases}$
+%\end{center}
+
+%Then, add axioms to our TBox to move from AC to S-star
+
+
+
+\begin{definition}
+    We define two translations $\cdot^{\pi}$ and $\cdot^{\nu}$ in tandem. Let $C,D$ and $r,s$ be atomic concepts and roles, respectively, with $C_{\bot}^{\nu}$ and $C_{\top}^{\pi}$ new concepts added to the language:
+
+
+    \begin{center}
+    {\small
+   
+    \begin{tabular}{ll}
+
+$(a:\top)^{\pi}=a:\top$ & $(a:\top)^{\nu}=a:C_{\top}^{\nu}$ \\
+
+$(a:\bot)^{\pi}=a:C_{\bot}^{\pi}$ & $(a:\bot)^{\nu}=a:\top$ \\
+
+$(a:C)^{\pi}=a:C^{\pi}$ & $(a:C)^{\nu}=a:C^{\nu}$ \\
+
+$(\langle a,b\rangle:r)^{\pi}=\langle a,b\rangle:r^{\pi}$ & $(\langle a,b\rangle:r)^{\nu}=\langle a,b\rangle:r^{\nu}$ \\
+
+$( a:\neg C)^{\pi}=a:C^{\nu}$ & $(a:\neg C)^{\nu}=a:C^{\pi}$ \\
+
+$(a:C\sqcap D)^{\pi}=a:C^{\pi}\sqcap D^{\pi}$ & $(a:C\sqcap D)^{\nu}=a:C^{\nu}\sqcup D^{\nu}$\\
+
+$(a:C\sqcup D)^{\pi}=a:C^{\pi}\sqcup D^{\pi}$ & $(a:C\sqcup D)^{\nu}=a:C^{\nu}\sqcap D^{\nu}$\\
+
+$(a:\exists r.C)^{\pi}=a:\exists r^{\pi}.C^{\pi}$ & $(a:\exists r.C)^{\nu}=a:\forall r^{\pi}.C^{\nu}$\\
+
+$(a:\forall r.C)^{\pi}=a:\forall r^{\pi}.C^{\pi}$ & $(a:\forall r.C)^{\nu}=a:\exists r^{\pi}.C^{\nu}$\\
+
+$(C\sqsubseteq D)^{\pi}=C^{\pi}\sqsubseteq D^{\pi}$ & $(C\sqsubseteq D)^{\nu}=\_:C^{\pi}\sqcap D^{\nu}$\\
+
+
+
+
+$(r\sqsubseteq s)^{\pi}=r^{\pi}\sqsubseteq s^{\pi}$ & $(r\sqsubseteq s)^{\nu}=\langle \_,\_\rangle: r^{\pi}\sqcap s^{\nu}$\\
+\end{tabular}
+
+$(C\equiv D)^{\pi}=C^{\pi}\equiv D^{\pi}$ 
+
+$(C\equiv D)^{\nu}=\_:(C^{\pi}\sqcap D^{\nu})\sqcup(C^{\nu}\sqcap D^{\pi})$
+}
+\end{center}
+\end{definition}
+
+%The negative case is one in which $\langle a,b\rangle: r$ \emph{holds} and $\langle a,b\rangle:s$ \emph{fails}
+
+
+%\todo[inline]{
+%Need to guarantee that for all $\varphi$, $\varphi^{\pi\circ\mu}$ and $\varphi^{\nu\circ\mu}$ are equivalent.
+
+%This should correspond to TBox axioms
+
+%$C^{\pi\circ\mu}\equiv C^{\nu\circ\mu}$ and $r^{\pi\circ\mu}\equiv r^{\nu\circ\mu}$
+
+%}
+%\todo[inline]{
+%N.b. problem about existential quantifiers. DL doesn't really directly permit one to express ``the %concept C is populated.'' We can either introduce some anonymous individual tied only to the concept C or use bnodes \cite{HOGAN201442}. Hermit supports the latter.
+
+We first show that the translation $\cdot^{\pi}$ preserves the truth value of a formula and therefore acts as a sort of negation normal form as in \cite{DBLP:journals/logcom/Ferguson16}.
+
+\begin{lemma}\label{lem:ALCH-AC-interpretations}
+    Let $\mathcal{I}$ be an $\mathcal{ALCH}_{\mathsf{AC}}$ interpretation. Then $\mathcal{I}(\varphi)=\mathcal{I}(\varphi^{\pi})$
+\end{lemma}
+
+\begin{proof}
+    This follows from a simple induction on the complexity of $\varphi$. Atomic cases are immediate while the induction steps follow from basic semantic reasoning coupled with the details of the translations. 
+\end{proof}
+
+\noindent Lemma \ref{lem:ALCH-AC-interpretations} has the following two immediate corollaries that can be proven by an easy induction on complexity of $\varphi$:
+
+\begin{corollary}\label{cor:AC-to-wK}
+    For a $\mathcal{ALCH}_{\mathsf{AC}}$ interpretation $\mathcal{I}$, define an $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$ interpretation $\mathcal{I}^{\circ}$ so that:
+
+    \begin{center}
+   
+        $\mathcal{I}^{\circ}(a:C^{\pi})=\pi_{0}(\mathcal{I}(a:C))$ \& $\mathcal{I}^{\circ}(a:C^{\nu})=\pi_{1}(\mathcal{I}(a:C))$
+        
+    \end{center}
+
+    \noindent and
+
+    \begin{center}
+    
+        $\mathcal{I}^{\circ}(\langle a,b\rangle:r^{\pi})=\pi_{0}(\mathcal{I}(\langle a,b\rangle:r))$ \& $\mathcal{I}^{\circ}(\langle a,b\rangle:r^{\nu})=\pi_{1}(\mathcal{I}(\langle a,b\rangle:r))$
+        
+    \end{center}
+
+    \noindent Then for all $\mathcal{ALCH}_{\mathsf{AC}}$ sentences, $\pi_{0}(\mathcal{I}(\varphi))=\mathcal{I}^{\circ}(\varphi)$.
+\end{corollary}
+
+\begin{corollary}\label{cor:wk-to-AC}
+    For an $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$ interpretation $\mathcal{I}$, define a $\mathcal{ALCH}_{\mathsf{AC}}$ interpretation $\mathcal{I}^{\bullet}$ so that:
+
+    \begin{center}
+        $\mathcal{I}^{\bullet}(a:C)=\langle\mathcal{I}(a:C^{\pi}),\mathcal{I}(a:C^{\nu})\rangle$
+    \end{center}
+
+    \noindent and
+
+    \begin{center}
+        $\mathcal{I}^{\bullet}(\langle a,b\rangle:r)=\langle\mathcal{I}(\langle a,b\rangle:r^{\pi}),\mathcal{I}(\langle a,b\rangle:r^{\nu})\rangle$
+    \end{center}
+
+    \noindent Then for all $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$ sentences, $\pi_{0}(\mathcal{I}^{\bullet}(\varphi))=\mathcal{I}(\varphi)$.
+\end{corollary}
+
+\noindent With these corollaries in hand, we immediately infer the following lemma, following a technique due to Yuri Gurevich in \cite{gurevich1977} or Norihiro Kamide in \cite{kamide2010}:
+
+\begin{lemma}\label{lem:alch-ac-to-alh-wk}
+    The translation $\cdot^{\pi}$ faithfully translates $\mathcal{ALCH}_{\mathsf{AC}}$ into $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$, \emph{i.e.},
+
+    \begin{center}
+        $\langle\mathcal{T},\mathcal{A}\rangle\vDash_{\mathcal{ALCH}_{\mathsf{AC}}}\varphi$ iff $\langle\mathcal{T}^{\pi},\mathcal{A}^{\pi}\rangle\vDash_{\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}}\varphi^{\pi}$
+    \end{center}
+\end{lemma}
+
+\begin{proof}
+    By Corollaries \ref{cor:AC-to-wK} and \ref{cor:wk-to-AC}, any countermodel to one inference can be converted to a countermodel to the other, ensuring equivalence.
+\end{proof}
+
+\noindent This allows us the main theorem about translating $\mathcal{ALCH}_{\mathsf{AC}}$ into $\mathcal{ALCH}^+(\cap)$.
+
+\begin{theorem}
+    The translations $\cdot^{\tau\circ \pi}$ and $\cdot^{\mu\circ \pi}$ faithfully translate $\mathcal{ALCH}_{\mathsf{AC}}$ into classical $\mathcal{ALCH}^+(\cap)$, \emph{i.e.},
+
+    \begin{center}
+        $\langle\mathcal{T},\mathcal{A}\rangle\vDash_{\mathcal{ALCH}_{\mathsf{AC}}}\varphi$  iff
+        $\begin{cases}
+    \langle\mathcal{T}^{\tau\circ\pi},\mathcal{A}^{\tau\circ\pi}\rangle\vDash_{\mathcal{ALCH^+(\cap)}}\varphi^{\tau\circ\pi} \mbox{, and}\\
+    \langle\mathcal{T}^{\mu\circ\pi},\mathcal{A}^{\mu\circ\pi}\rangle\vDash_{\mathcal{ALCH^+(\cap)}}\varphi^{\mu\circ\pi}
+    
+    \end{cases}$
+    \end{center}
+\end{theorem}
+
+\begin{proof}
+    By chaining Lemmas \ref{lem:alh-wk-to-alh} and \ref{lem:alch-ac-to-alh-wk}.
+\end{proof}
+
+\noindent This theorem shows, then, that in order to conduct inferences in $\mathcal{ALCH}_{\mathsf{AC}}$, standard description logic reasoners will suffice. We can show the same thing, now, for $\mathcal{ALCH}_{\mathsf{S}^*}$. Now, as shown in \cite{DBLP:journals/logcom/Ferguson16}, the transition from $\mathcal{ALCH}_{\mathsf{AC}}$ to $\mathcal{ALCH}_{\mathsf{S}^{\ast}}$ is achieved semantically by eliminating any truth values in which $\mathfrak{e}$ appears in only one coordinate. 
+
+So in order to provide a method of embedding $\mathcal{ALCH}_{\mathsf{S}^{\ast}}$ in a classical description logic, we must provide a method of \emph{syntactically forcing} the models to rule out such truth values. We can take a cue from the work of Maier \emph{et al.} in \cite{DBLP:journals/semweb/MaierMH13}, in which they consider a related problem of adding axioms to a knowledge base in order to eliminate relevant truth values from their four-valued $\mathcal{SROIQ}4$.
+
+\begin{quote}
+    [I]nserting additional axioms into a $\mathcal{SROIQ}4$ knowledge base can selectively enforce [eliminating truth values], effectively making the knowledge base ``more classical.''\cite[p.~405]{DBLP:journals/semweb/MaierMH13}
+\end{quote}
+
+\noindent In this spirit, we syntactically induce a feature restricting models to only be those that assign formulae from relevant Tboxes and Aboxes to $\mathcal{V}_3^{2*}$. In the present case, we offer the following set of new axioms named after \cite{Daniels1990-DANANO-3}:
+
+
+
+\begin{definition}[Daniels emulation]\label{def:Daniels}
+    Let $\mathcal{X}$ be a set of $\mathcal{ALCH}_{\mathsf{AC}}$ sentences built from primitive concepts $C_{0},...,C_{m-1}$ and roles $r_{0},...,r_{n-1}$. Then a \emph{Daniels emulation for} $\mathcal{X}$ is a set of sentences
+
+    \begin{center}
+        $\mathcal{D}_{\mathcal{X}}=\lbrace C_{i}^{\mu\circ\pi}\equiv C_{i}^{\mu\circ\nu}\mid i < m\rbrace\cup\lbrace r_{i}^{\mu\circ\pi}\equiv r_{i}^{\mu\circ\nu}\mid i < n\rbrace$
+    \end{center}
+\end{definition}
+
+\noindent By adding an appropriate set $\mathcal{D}_{\mathcal{T},\mathcal{A},\varphi}$ tailored to a particular inference, we are thereby able to emulate five-valued reasoning in the nine-valued setting. Consequently, we get the following lemma:
+
+\begin{lemma}\label{lem:s-to-ac}
+    Let $\langle\mathcal{T},\mathcal{A}\rangle$ be an $\mathcal{ALCH}_{\mathsf{AC}}$ knowledge base and $\varphi$ an $\mathcal{ALCH}_{\mathsf{AC}}$ sentence. Then for any interpretation $\mathcal{I}$ satisfying $\mathcal{D}_{\mathcal{T},\mathcal{A},\varphi}$ and any $\psi\in\mathcal{T}\cup\mathcal{A}\cup\lbrace\varphi\rbrace$, $\mathcal{I}(\psi)\in\mathcal{V}_3^{2*}$.
+\end{lemma}
+
+\begin{proof}
+    Follows from Lemma 3.1 of \cite{DBLP:conf/dlog/Ferguson21}.
+\end{proof}
+
+\begin{lemma}\label{lem:s-to-wk}
+    The translation $\cdot^{\pi}$ faithfully translates $\mathcal{ALCH}_{\mathsf{S}^{\ast}}$ into $\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}$ in case an appropriate Daniels emulation is added to the knowledge base:
+
+    \begin{center}
+        $\langle\mathcal{T},\mathcal{A}\rangle\vDash_{\mathcal{ALCH}_{\mathsf{S}^{\ast}}}\varphi$ iff $\langle\mathcal{T}^{\pi}\cup\mathcal{D}_{\mathcal{T},\mathcal{A},\varphi},\mathcal{A}^{\pi}\rangle\vDash_{\mathcal{ALCH}^+(\cap)_{\mathsf{wK}}}\varphi^{\pi}$
+    \end{center}
+\end{lemma}
+
+\noindent And this provides us with sufficient knowledge to establish the theorem concerning translations from $\mathcal{ALCH}_{\mathsf{S}^*}$ to a classical description logic.
+
+\begin{theorem}
+    The translations $\cdot^{\tau\circ \pi}$ and $\cdot^{\mu\circ \pi}$ faithfully translate $\mathcal{ALCH}_{\mathsf{S}^*}$ into classical $\mathcal{ALCH}^+(\cap)$ in case an appropriate Daniels emulation is added to the knowledge base:
+
+    \begin{center}
+        $\langle\mathcal{T},\mathcal{A}\rangle\vDash_{\mathcal{ALCH}_{\mathsf{S}^{\ast}}}\varphi$ holds iff
+        
+        $\begin{cases}
+    \langle\mathcal{T}^{\tau\circ\pi}\cup\mathcal{D}_{\mathcal{T},\mathcal{A},\varphi},\mathcal{A}^{\tau\circ\pi}\rangle\vDash_{\mathcal{ALCH^+(\cap)}}\varphi^{\tau\circ\pi} \mbox{, and}\\
+    \langle\mathcal{T}^{\mu\circ\pi}\cup\mathcal{D}_{\mathcal{T},\mathcal{A},\varphi},\mathcal{A}^{\mu\circ\pi}\rangle\vDash_{\mathcal{ALCH^+(\cap)}}\varphi^{\mu\circ\pi}
+    
+    \end{cases}$
+    \end{center}
+\end{theorem}
+
+\begin{proof}
+    By chaining Lemmas  \ref{lem:alh-wk-to-alh} and \ref{lem:s-to-wk}.
+\end{proof}
+
+
+\subsection{Computational Complexity}
+We now turn to some complexity results for our translations, and the resulting complexity of entailment in these description logics. We note that while these bounds are important, the real strength of this translation is in leveraging existing heuristics and reasoners.
+\begin{lemma}[Translations are Linear Time]\label{lem:t-linear}
+Let $T$ be one of our translations ($\mu,\tau,\pi,\nu$) and let $\varphi$ be an $L$-formula. Let $|\varphi|$ be the syntactic size of $\varphi$, the number of nodes in its syntax tree. Then we have that computing $\varphi^T$ is $O(|\varphi|)$, linear with respect to the syntactic size of $\varphi$.
+\end{lemma}
+\begin{proof}
+The translations are computed by structural recursion. At an atomic concept, atomic role, or individual assertion, the translation introduces only a constant number of new symbols. At each compound concept or axiom, the translation recursively processes its immediate constituents and then introduces only a constant number of  constructors.
+\end{proof}
+\begin{corollary}[Finite Set Translation is Linear Time]\label{cor:Finset-Lin} 
+    Let $T$ be one of our translations ($\mu,\tau,\pi,\nu$). Given a finite set of $L$-formulae, $X$, translating the set is linear $X^T$ is $O(|X|)$. 
+\end{corollary}
+% \begin{proof}
+%     Since each sentence $\varphi \in X$ is translated in $O(|\varphi|)$ time, translating all of them takes $O(\sum_{\varphi\in X}|\varphi|) =O(|X|)$.
+% \end{proof}
+\begin{corollary}[Composed Translations are Linear Time]\label{cor:Comp-Lin} 
+    Let $T_1,T_2 \in {\mu,\tau,\pi,\nu}$. The composed translation $\cdot^{T_1 \circ T_2}$ is linear time.
+\end{corollary}
+
+\begin{lemma}\label{lem:DL-complexity}
+    Deciding entailment in $\mathcal{ALCH^+(\cap)}$ is \textsf{PSPACE}-complete for empty and acyclic TBoxes, for general TBoxes it is \textsf{EXPTIME}-complete. 
+\end{lemma}
+\begin{proof}
+    Deciding entailment for $\mathcal{ALC}$ is \textsf{PSPACE}-complete for empty and acyclic TBoxes, for general TBoxes it is \textsf{EXPTIME}-complete. The addition of a finite role hierarchy preserves these bounds. For empty TBoxes this follows directly from \cite[Theorem 1]{SahooThirunarayan2009ALCH}. For acyclic TBoxs role-hierarchy closure can be done in polynomial time via substitutions. For general TBoxes, the we have the \textsf{EXPTIME} upper bound due to subsumption by the more expressive $\mathcal{SHI}$ which has an \textsf{EXPTIME} procedure for entailment described in \cite{DBLP:journals/corr/abs-1106-2305}. Finally adding role intersection $(\cap)$ (not inside role restrictions) does not increase our complexity as it can be translated away in linear time in any TBox. Removing concept complement also does not impact the complexity as it can be emulated with a finite number of other constructors. 
+\end{proof}
+
+
+\begin{theorem}
+    Deciding entailment in $\mathcal{ALCH}_\mathsf{AC}$,  $\mathcal{ALC}_\mathsf{AC}$, $\mathcal{ALCH}_\mathsf{S^*}$, and $\mathcal{ALC}_\mathsf{S^*}$ \textsf{PSPACE}-complete for empty and acyclic TBoxes, and for general TBoxes it is \textsf{EXPTIME}-complete.
+\end{theorem}
+\begin{proof}
+    Follows from Corollaries \ref{cor:Finset-Lin} and \ref{cor:Comp-Lin} and Lemma \ref{lem:DL-complexity}. For the cases of $\mathcal{ALCH}_\mathsf{S^*}$ and $\mathcal{ALC}_\mathsf{S^*}$, one may think that due to additional axioms added to the TBox by the Daniels emulation (Definition \ref{def:Daniels}) that entailment would increase in complexity, but due to the fact that the Daniels' axioms in the destination language are merely a finite set of equivalences of atomic concepts and roles, we can perform a linear time substitution with them in the new knowledge-base and remove them, thus for the purposes of complexity, the TBox is effectively the same size as the one from the source knowledge base.    
+\end{proof}
+
+\noindent 
+
+
+
+\section{Discussion}
+
+One can immediately note relationships with the work of Maier \emph{et al.} in \cite{DBLP:journals/semweb/MaierMH13} on non-classical versions of OWL in the form of the four-valued description logic $\mathcal{SROIQ}_{4}$. The expressivity in the description logics in the present paper has increased that of \cite{DBLP:conf/dlog/Ferguson21}, and porting the present intuitions to such a language is an attractive goal. Considering such a transition of the work to a more expressive paradigm like $\mathcal{SROIQ}$ prompts us to acknowledge some extra-logical design decisions that go into the definition of a non-classical description logic.
+
+Note that in \cite{DBLP:journals/semweb/MaierMH13}, as in the present work, interpreting the falsification of an assertion of a role restriction $a:\forall r.C$ is essentially identified with the verification of the role restriction $a:\exists r.\neg C$. The details of \cite{DBLP:journals/semweb/MaierMH13} make explicit what we have assumed implicit in the present work, namely, that the interpretation essentially rests on a more primitive interpretation of the verification and falsification of \emph{the conditional}. Both the present and related work (not only \cite{DBLP:journals/semweb/MaierMH13} but also that of Norihiro Kamide in \cite{DBLP:conf/kes/Kamide11}) implicitly follow the lead of David Nelson's analysis of \emph{constructible falsity} in \emph{e.g.} \cite{DBLP:journals/jsyml/AlmukdadN84} through an identification of a negated conditional $\neg(\varphi\rightarrow\psi)$ with the conjunction of the antecedent $\varphi$ and the negation of the consequent $\neg\psi$. This observation presses two related degrees of freedom that are independent of the mere choice of truth values, \emph{i.e.}, the matter of the semantics of the conditional and those of the negated conditional.
+
+In the first case, the related context of the four-valued $\mathcal{ALC}4$ introduced by Ma \emph{et al.} in \cite{DBLP:conf/esws/MaHL07} explicitly acknowledges several options for the interpretation of the conditional to which role restrictions implicitly appeal. Such a context distinguishes between the \emph{material} implication and the \emph{intensional} conditional, each of which will induce a different semantics for role restrictions. It is \emph{e.g.} a different matter that $r\sqsubseteq s$ should hold in virtue of the fact that all pairs locally known to satisfy $r$ also satisfy $s$ than that $r\sqsubseteq s$ should encode a deeper relationship between the roles $r$ and $s$ beyond a contingent fact about known data.
+
+The present bilateral context also underscores the nontriviality of assessing the negation of a conditional, an account which must be solved for negated role restrictions. As Heinrich Wansing stresses in \cite{DBLP:conf/aiml/Wansing10}, the Nelsonian account is not inevitable and there are in fact several \emph{a priori} natural options. Wansing, for example, prefers an account in which $\neg(\varphi\rightarrow\psi)$ is identified with $\varphi\rightarrow\neg\psi$. Just as choice of conditional is an independent matter from the choice of truth values, so, too, is choice of negated conditional. 
+
+Our bilateral context stresses that both dimensions be taken seriously. As expressivity of the language grows when providing versions of OWL in line with the present approach, such design decisions become applicable to further cases. 
+
+
+This observation has consequences also for the role that the present work can play in enhancing the significant increase in accuracy won by adopting bilateral reasoning by Allen \emph{et al.} in \cite{DBLP:conf/nesy/AllenCFIG25,allenetal2026}. These papers show improved accuracy in distilling semantic information from a large language model but stop short at the atomic level. Extending such an analysis of factuality from the atomic level to the full language of $\mathcal{ALC}$ or $\mathcal{SROIQ}$ is thus important for two related reasons. As a natural extension to the scope of \cite{DBLP:conf/nesy/AllenCFIG25,allenetal2026}, empirically testing whether bilateral interpretations of \emph{e.g.} role restrictions should improve over classical description logic methods is worth pursuing. But from the other direction, such experiments should guide the design of description logics in the vicinity of $\mathcal{ALC}_{AC}$ as we confirm which design decisions concerning verification and falsification of conditionals are best suited to particular use-cases.
+
+\bibliography{refs}
+
+% Check whether the conference requires a reproducibility checklist to be included in the paper.
+% If so, you can uncomment the following line and ajust the path to include it.
+% \input{../../ReproducibilityChecklist/LaTeX/ReproducibilityChecklist.tex}
+
+% \appendix
+
+% \section{Classical Interpretations}\label{apdx:Classical-Interps}
+
+% \todo[inline]{Minutae, can probably remove}
+
+% We note that our presentation of interpretations given in Definition \ref{def:ALC-Interp-Non-Standard} is slightly different than that given in standard works such as \cite{DBLP:conf/dlog/2003handbook} which provide the following \textit{standard} interpretations: 
+
+% \begin{definition} [Classical $\mathcal{ALC}$ Interpretations]\label{def:ALC-Interp-Standard}
+% An $\mathcal{ALC}$ interpretation is a pair $\mathcal{I}=(\Delta^{\mathcal{I}},\cdot^{\mathcal{I}})$ where $\Delta^{\mathcal{I}}$ is a nonempty domain and $\cdot^{\mathcal{I}}$ is an interpretation function assigning to each individual name $a\in N_I$, an element $a^{\mathcal{I}}\in\Delta^{\mathcal{I}}$; each atomic concept name $A\in N_C$, a set $A^{\mathcal{I}}\subseteq\Delta^{\mathcal{I}}$; and each atomic role name $r\in N_R$, a binary relation $r^{\mathcal{I}}\subseteq\Delta^{\mathcal{I}}\times\Delta^{\mathcal{I}}$, such that:
+
+% \begin{center}
+% \begin{tabular}{ccc}
+% $\top^{\mathcal{I}} = \Delta^{\mathcal{I}}$
+% &
+% $\bot^{\mathcal{I}} = \varnothing$
+% &
+% $(\neg C)^{\mathcal{I}}
+% = \Delta^{\mathcal{I}} \setminus C^{\mathcal{I}}$
+% \\
+% $(C \sqcap D)^{\mathcal{I}}
+% = C^{\mathcal{I}} \cap D^{\mathcal{I}}$
+% &
+% \multicolumn{2}{c}{
+% $(C \sqcup D)^{\mathcal{I}}
+% = C^{\mathcal{I}} \cup D^{\mathcal{I}}$
+% }
+% \\
+% \multicolumn{3}{c}{
+% $\displaystyle
+% (\exists r.C)^{\mathcal{I}}
+% =
+% \left\{
+% x \in \Delta^{\mathcal{I}}
+% \;\middle|\;
+% \exists y \in \Delta^{\mathcal{I}}
+% \left(
+% (x,y) \in r^{\mathcal{I}}
+% \land
+% y \in C^{\mathcal{I}}
+% \right)
+% \right\}$
+% }
+% \\
+% \multicolumn{3}{c}{
+% $\displaystyle
+% (\forall r.C)^{\mathcal{I}}
+% =
+% \left\{
+% x \in \Delta^{\mathcal{I}}
+% \;\middle|\;
+% \forall y \in \Delta^{\mathcal{I}}
+% \left(
+% (x,y) \in r^{\mathcal{I}}
+% \rightarrow
+% y \in C^{\mathcal{I}}
+% \right)
+% \right\}$
+% }
+% \end{tabular}
+% \end{center}
+% \end{definition}
+
+% \begin{definition}[Classical Satisfaction]
+% A sentence $\varphi$ holds in an interpretation $\mathcal{I}$, written $\mathcal{I}\models\varphi$ is defined over sentences such that:
+% \begin{align*}
+%     \mathcal{I}\models a : C &\text{ iff } a^{\mathcal{I}} \in C  ^{\mathcal{I}} \\
+%     \mathcal{I}\models (a,b) : r &\text{ iff } (a^{\mathcal{I}},b^{\mathcal{I}}) \in r^{\mathcal{I}}\\
+%     \mathcal{I}\models C \sqsubseteq D &\text{ iff } C^{\mathcal{I}} \subseteq D^{\mathcal{I}}\\
+%     \mathcal{I}\models C \equiv D &\text{ iff } C^{\mathcal{I}} = D^{\mathcal{I}}\\
+%     \mathcal{I}\models r \sqsubseteq s &\text{ iff } C^{\mathcal{I}} = D^{\mathcal{I}}\\
+% \end{align*}
+% \end{definition}
+
+% Note that standard interpretations (Definition \ref{def:ALC-Interp-Standard}) and our non-standard interpretations (Definition \ref{def:ALC-Interp-Non-Standard}) are functionally equivalent in the sense that our non-standard interpretation is just the characteristic function of a standard interpretation, and that the two notions of satisfaction are equivalent.
+
+\end{document}

@@ -1,0 +1,80 @@
+\documentclass[letterpaper]{article}
+
+\usepackage{src/kr}
+\usepackage{times}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb,amsthm}
+\urlstyle{same}
+
+\pdfinfo{
+/TemplateVersion (KR.2026.0)
+}
+
+\title{From Weak Kleene to Classical Description Logics: Faithful Translations for Neuro-Symbolic Reasoning}
+\author{%
+Thomas Ferguson$^1$\and
+James Oswald$^1$ \\
+\affiliations
+$^1$Rensselaer Polytechnic Institute \\
+\emails
+oswalj@rpi.edu, tferguson
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+
+Recent research in the neuro-symbolic literature has empirically demonstrated that assessing large language model output with non-classical description logics (like $\mathcal{ALC}_\mathsf{AC}$ and $\mathcal{ALC}_{S^\star}$) leads to an increase in accuracy over traditional description logic methods. Left open, however, is the development of methods for the implementation of reasoning in these systems. In this work, we develop a linear-time translation scheme for embedding reasoning in a weak Kleene family of description logics within classical description logics, allowing us to make use of existing automated reasoners and optimization techniques. We prove the soundness and completeness of the translations and demonstrate that the complexity of the translation is linear time, addressing an open question from earlier work.
+
+\end{abstract}
+
+\section{Introduction}
+
+Description logics (DLs) provide a well-established formal foundation for representing structured knowledge. Their model-theoretic semantics, favorable computational properties, and use for ontology languages such as OWL have enabled the development of mature automated reasoning systems \cite{DBLP:conf/ore/MatentzogluLHSP15,DBLP:series/faia/SinghBM23}. Standard description logics, such as those described in \cite{DBLP:conf/dlog/2003handbook}, are classical: every assertion is evaluated relative to a two-valued interpretation, and a knowledge base is normally expected to admit a classical model. These assumptions are appropriate in many applications, but they can be too strong when the represented information is partial, semantically indeterminate, or internally conflicting.
+
+Situations requiring the ability to handle non-classical reasoning like this arise naturally when a knowledge base represents information obtained from several agents or extracted from heterogeneous sources. For example, ontology-extraction systems, such as some of those described in \cite{DBLP:journals/csr/ArmaryVLN25}, may produce an assertion whose terminology is only partially aligned with that of an existing ontology. The assertion may conflict with the ontology without actually being false in the traditional sense: its failure may instead result from an undefined term, an unresolved mapping, or a lack of sufficient information. Similarly, when representing intentional states, an agent may accept one claim, reject another, and remain unable to evaluate a third. Treating all of these cases as ordinary classical falsity does not capture nuance that may be important for reasoning.
+
+A number of non-classical description logics have been proposed to address limitations of classical two-valued semantics. One such example are fuzzy description logics \cite{DBLP:conf/aaai/Straccia98,DBLP:conf/sum/BorgwardtP17} which assign degrees of truth or membership to concepts and assertions. Fuzzy description logics are useful when the phenomenon being represented is continuous, such as similarity, vagueness, or uncertain classification. The problem considered here is different. We are interested not primarily in how strongly an assertion is true, but in whether it is truth-evaluable at all and in how positive and negative information concerning it interact. Consequently, the semantic distinctions required in our setting cannot in general be represented by a single numerical degree of truth.
+
+The description logics $\mathcal{ALC}_\mathsf{AC}$ and $\mathcal{ALC}_{S^\ast}$, introduced as non-classical subsystems of $\mathcal{ALC}$ for modeling intentional states \cite{DBLP:conf/dlog/Ferguson21}, begin to address this problem. Their semantics are bilateral: formulas are evaluated using pairs of coordinates whose behavior is governed by weak Kleene operations. These coordinates permit different aspects of an evaluation, such as truth and meaningfulness, to be represented separately. These logics have recently acquired an additional motivation from neuro-symbolic reasoning with large language models. \cite{DBLP:conf/nesy/AllenCFIG25} propose grounding the interpretation function of a bilateral paraconsistent logic in a large language model, evaluating atomic formulas independently according to whether the model can verify and refute them. Their experiments show that bilateral factuality evaluation achieves higher macro-F1 than a unilateral factuality baseline. In domains in which factuality is critical---\cite{DBLP:conf/nesy/AllenCFIG25} considers examples from medical diagnosis---bilateral-based inference is a demonstrably useful tool.
+
+The work in \cite{DBLP:conf/nesy/AllenCFIG25}, however, stops at the atomic case and does not consider sentences with the full expressivity offered by description logics. Moving from mere \emph{extraction} of reliable data from large language models to \emph{reliably reasoning} about such data is an important component in this plan. Increasing the utility of description logics like $\mathcal{ALC}_\mathsf{AC}$ and $\mathcal{ALC}_{S^\ast}$ thus becomes a pressing matter. 
+
+The additional expressive power in $\mathcal{ALC}_\mathsf{AC}$ and $\mathcal{ALC}_{S^\ast}$ creates a practical difficulty in terms of reasoning. Classical DLs benefit from several decades of work on reasoning procedures, optimization techniques, and highly developed software implementations. By contrast, specialized reasoners for $\mathcal{ALC}_\mathsf{AC}$ and $\mathcal{ALC}_{S^\ast}$ are not generally available. Implementing a new reasoning architecture directly from the non-classical semantics would require reproducing much of the infrastructure already present in classical description-logic reasoners. It would also make it more difficult to transfer advances in classical reasoning to the non-classical setting. We therefore investigate whether reasoning in these logics can instead be reduced to reasoning in a classical description logic. 
+
+\section{A Motivating Example}
+
+Consider the following sample $\mathcal{ALCH}$ knowledge base about a person applying for a loan. Let $a$ be the loan applicant, $m$ be a mortgage account, and $c$ be a credit account.
+$$\begin{aligned}
+R_1 ) \quad& \mathtt{hasCreditCardDebt} \sqsubseteq \mathtt{hasDebt}  \\
+R_2) \quad& \mathtt{hasMortgageDebt} \sqsubseteq \mathtt{hasDebt} \\
+A_1) \quad&\langle a,c \rangle : \mathtt{hasCreditCardDebt} \\
+A_2) \quad&\langle a,m \rangle : \mathtt{hasMortgageDebt} \\
+A_3) \quad&a:\forall \mathtt{hasDebt}.\mathtt{GoodStandingAcc} \\
+A_4) \quad&m:\mathtt{GoodStandingAcc} \sqcap \mathtt{SecureAcc} \\
+A_5) \quad&c : \lnot \mathtt{GoodStandingAcc}
+\end{aligned}$$
+Statements in the knowledge-base may have been aggregated from multiple sources by a language model, leading to potential inconsistency. For example, $R_1$ and $A_1$ allow us to infer $\langle a,c\rangle : \mathtt{hasDebt} $ and together with $A_3$ this allows us to infer $c : \mathtt{GoodStandingAcc}$ which contradicts $A_5$. Under classical $\mathcal{ALCH}$ this knowledge base has no model and thus entails every formula including things like $m : \lnot \mathtt{SecuredAcc}$ or $a : \mathtt{FraudRisk}$ despite the knowledge base not containing evidence for either of these conclusions. By instead using paraconsistent $\mathcal{ALCH}$ variants we can represent that there is both evidence for and against the credit card account's good standing without allowing that conflict to spread arbitrarily.   
+
+\input{Final.lean}
+
+\section{Discussion}
+
+One can immediately note relationships with the work of Maier \emph{et al.} in \cite{DBLP:journals/semweb/MaierMH13} on non-classical versions of OWL in the form of the four-valued description logic $\mathcal{SROIQ}_{4}$. The expressivity in the description logics in the present paper has increased that of \cite{DBLP:conf/dlog/Ferguson21}, and porting the present intuitions to such a language is an attractive goal. Considering such a transition of the work to a more expressive paradigm like $\mathcal{SROIQ}$ prompts us to acknowledge some extra-logical design decisions that go into the definition of a non-classical description logic.
+
+Note that in \cite{DBLP:journals/semweb/MaierMH13}, as in the present work, interpreting the falsification of an assertion of a role restriction $a:\forall r.C$ is essentially identified with the verification of the role restriction $a:\exists r.\neg C$. The details of \cite{DBLP:journals/semweb/MaierMH13} make explicit what we have assumed implicit in the present work, namely, that the interpretation essentially rests on a more primitive interpretation of the verification and falsification of \emph{the conditional}. Both the present and related work (not only \cite{DBLP:journals/semweb/MaierMH13} but also that of Norihiro Kamide in \cite{DBLP:conf/kes/Kamide11}) implicitly follow the lead of David Nelson's analysis of \emph{constructible falsity} in \emph{e.g.} \cite{DBLP:journals/jsyml/AlmukdadN84} through an identification of a negated conditional $\neg(\varphi\rightarrow\psi)$ with the conjunction of the antecedent $\varphi$ and the negation of the consequent $\neg\psi$. This observation presses two related degrees of freedom that are independent of the mere choice of truth values, \emph{i.e.}, the matter of the semantics of the conditional and those of the negated conditional.
+
+In the first case, the related context of the four-valued $\mathcal{ALC}4$ introduced by Ma \emph{et al.} in \cite{DBLP:conf/esws/MaHL07} explicitly acknowledges several options for the interpretation of the conditional to which role restrictions implicitly appeal. Such a context distinguishes between the \emph{material} implication and the \emph{intensional} conditional, each of which will induce a different semantics for role restrictions. It is \emph{e.g.} a different matter that $r\sqsubseteq s$ should hold in virtue of the fact that all pairs locally known to satisfy $r$ also satisfy $s$ than that $r\sqsubseteq s$ should encode a deeper relationship between the roles $r$ and $s$ beyond a contingent fact about known data.
+
+The present bilateral context also underscores the nontriviality of assessing the negation of a conditional, an account which must be solved for negated role restrictions. As Heinrich Wansing stresses in \cite{DBLP:conf/aiml/Wansing10}, the Nelsonian account is not inevitable and there are in fact several \emph{a priori} natural options. Wansing, for example, prefers an account in which $\neg(\varphi\rightarrow\psi)$ is identified with $\varphi\rightarrow\neg\psi$. Just as choice of conditional is an independent matter from the choice of truth values, so, too, is choice of negated conditional. 
+
+Our bilateral context stresses that both dimensions be taken seriously. As expressivity of the language grows when providing versions of OWL in line with the present approach, such design decisions become applicable to further cases. 
+
+This observation has consequences also for the role that the present work can play in enhancing the significant increase in accuracy won by adopting bilateral reasoning by Allen \emph{et al.} in \cite{DBLP:conf/nesy/AllenCFIG25,allenetal2026}. These papers show improved accuracy in distilling semantic information from a large language model but stop short at the atomic level. Extending such an analysis of factuality from the atomic level to the full language of $\mathcal{ALC}$ or $\mathcal{SROIQ}$ is thus important for two related reasons. As a natural extension to the scope of \cite{DBLP:conf/nesy/AllenCFIG25,allenetal2026}, empirically testing whether bilateral interpretations of \emph{e.g.} role restrictions should improve over classical description logic methods is worth pursuing. But from the other direction, such experiments should guide the design of description logics in the vicinity of $\mathcal{ALC}_{AC}$ as we confirm which design decisions concerning verification and falsification of conditionals are best suited to particular use-cases.
+
+\bibliographystyle{src/kr}
+\bibliography{../paper/refs}
+
+\end{document}

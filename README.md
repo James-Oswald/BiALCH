@@ -50,22 +50,31 @@ To display the complete translations and classical entailment comparisons of the
 lake build TranslationDemo
 ```
 
-To render the Myne document from only `src/Final.lean`, build a Myne version
-with `[declarationMap]` support and run:
+To render the KR paper through Myne, build a Myne version with
+`[declarationMap]` support and run from the repository root:
 
 ```sh
-myne -i src
-cd myne-out/tex && latexmk -pdf -interaction=nonstopmode -halt-on-error Final.tex
+myne -i .
+cd myne-out/tex && latexmk -pdf -interaction=nonstopmode -halt-on-error src/main.tex
 ```
 
-The website is written to `myne-out/html/`, and the TeX source and PDF are
-written to `myne-out/tex/`. Each top-level section is a separate website page.
-Lean imports continue to support the proof build but are not Myne inputs.
+For a live preview, run `myne --serve` from the repository root. With
+`format = "both"`, Myne compiles the PDF with `latexmk` on each rebuild and
+serves it from the paper's PDF link.
+
+The website is written to `myne-out/html/`, the generated TeX source to
+`myne-out/tex/src/`, and the compiled PDF to `myne-out/tex/`.
+The `src/main.tex` root retains the abstract, introduction, motivating example,
+discussion, and bibliography from
+`paper/main.tex` using the KR style. Its sole Myne Lean inclusion is
+`src/Final.lean`, which supplies the background and technical sections. Lean
+imports continue to support the proof build but are not Myne inputs.
 
 The [Myne Pages workflow](.github/workflows/myne_pages.yml) uses the Myne GitHub
-Action to publish the HTML documentation and a linked `Final.pdf` on pushes to
+build to publish the HTML documentation and a linked `main.pdf` on pushes to
 `main`. It can also be run manually from the Actions tab. It builds `Final` with
-the pinned Lean toolchain and uses elaborated dependencies for the graph.
+the pinned Lean toolchain, uses elaborated dependencies for the graph, and
+copies the KR BibTeX style into the generated TeX tree before compiling the PDF.
 In repository **Settings → Pages**, select **GitHub Actions** as the publishing
 source before the first deployment.
 

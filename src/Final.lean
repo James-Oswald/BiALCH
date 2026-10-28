@@ -2,7 +2,7 @@ import DefDel
 import Utils
 
 /-!
-# BiALCH: Analytic Containment to Classical $\mathcal{ALCHRU}$
+\section{Background}
 
 This document formalizes the translation of analytic-containment entailment
 through weak Kleene semantics into classical $\mathcal{ALCHRU}$ entailment.
@@ -164,10 +164,17 @@ infixl:70 " ∧ₖ " => andK
 infixl:65 " ∨ₖ " => orK
 --myne:end
 
+/-
+For the restricted
+
+-/
+
+
 /--
 @name Restricted weak Kleene existential
 @nl
-A restricted weak Kleene existential evaluates $\exists r.C$ at an element $x$ by combining the role and concept values for every candidate $y$. In interpretation $I$, its input is $X=\{(r^I(x,y),C^I(y)):y\in\Delta^I\}\subseteq V_3^2$, with the role value first. It returns $\mathfrak{t}$ if some candidate has pair $(\mathfrak{t},\mathfrak{t})$. If none does, it returns $\mathfrak{e}$ when every candidate's pair has an $\mathfrak{e}$ coordinate; otherwise it returns $\mathfrak{f}$. An empty candidate set yields $\mathfrak{e}$ by the universal condition.
+The restricted weak Kleene existential quantifier evaluates
+A
 @formula
 $$\exists_K X:=\begin{cases}
 \mathfrak{t} & \text{if }(\mathfrak{t},\mathfrak{t})\in X,\\
