@@ -54,6 +54,17 @@ def bind {α : Type u} {β : Type v} (X : Set α) (f : α → Set β) : Set β :
     {f : α → Set β} {b : β} :
     b ∈ bind X f ↔ ∃ a ∈ X, b ∈ f a := Iff.rfl
 
+/-- Universal membership distributes over a set-valued bind. -/
+theorem allMemBind {α : Type u} {β : Type v} (P : β → Prop)
+    (f : α → Set β) (xs : Set α) :
+    (∀ y ∈ Set.bind xs f, P y) ↔ ∀ x ∈ xs, ∀ y ∈ f x, P y := by
+  constructor
+  · intro h x hx y hy
+    exact h y (Set.mem_bind.mpr ⟨x, hx, hy⟩)
+  · intro h y hy
+    obtain ⟨x, hx, hy⟩ := Set.mem_bind.mp hy
+    exact h x hx y hy
+
 /-- The set of values obtained by varying an argument over its type. -/
 def ofValues {α : Type u} {β : Type v} (f : α → β) : Set β :=
   fun b => ∃ a, f a = b
