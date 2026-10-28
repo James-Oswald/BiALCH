@@ -54,8 +54,8 @@ postfix:max "*" => Set
 --myne:appendix_end
 
 -- MARK: Truth Values
-/-! \section{$\mathsf{WK}$ and $\mathsf{AC}$} -/
-/-! \subsection{Truth Values and Pairs} -/
+/-! \subsection{$\mathsf{WK}$ and $\mathsf{AC}$} -/
+/-! \subsubsection{Truth Values and Pairs} -/
 
 /--
 @name Truth values and pairs
@@ -110,7 +110,7 @@ instance : GetElem (V₃²) Side V₃ (λ _ _ => True) where
 
 
 -- MARK: WK Operators
-/-! \subsection{Weak Kleene Operators} -/
+/-! \subsubsection{Weak Kleene Operators} -/
 
 /--
 @name Weak Kleene connectives
@@ -164,6 +164,10 @@ infixl:70 " ∧ₖ " => andK
 infixl:65 " ∨ₖ " => orK
 --myne:end
 
+/-!
+These restricted weak Kleene quantifiers address problems with quantification in systems related to weak Kleene logic discussed by Ferguson \cite{DBLP:conf/tableaux/Ferguson21}.
+-/
+
 /-
 For the restricted
 
@@ -178,7 +182,10 @@ A
 @formula
 $$\exists_K X:=\begin{cases}
 \mathfrak{t} & \text{if }(\mathfrak{t},\mathfrak{t})\in X,\\
-\mathfrak{e} & \text{if }(\mathfrak{t},\mathfrak{t})\notin X\land\forall(v,w)\in X,\ v=\mathfrak{e}\lor w=\mathfrak{e},\\
+\mathfrak{e} & \text{if }\begin{gathered}
+(\mathfrak{t},\mathfrak{t})\notin X\land\\
+\forall(v,w)\in X,\ v=\mathfrak{e}\lor w=\mathfrak{e}
+\end{gathered},\\
 \mathfrak{f} & \text{if }(\mathfrak{t},\mathfrak{t})\notin X\land\exists(v,w)\in X,\ v,w\ne\mathfrak{e}
 \end{cases}$$
 -/
@@ -238,7 +245,7 @@ prefix:75 "∀ₖ " => forallK
 --myne:end
 
 -- MARK: AC Operators
-/-! \subsection{Analytic Containment Operators} -/
+/-! \subsubsection{Analytic Containment Operators} -/
 
 /--
 @name Analytic containment connectives
@@ -263,6 +270,10 @@ prefix:70 "∼ₐ " => negA
 infixl:70 " ∧ₐ " => andA
 infixl:65 " ∨ₐ " => orA
 --myne:end
+
+/-!
+Analytic-containment interpretations use two coordinates to represent bilateral evaluations. Related work analyzes these systems through parallel positive and negative components and characterizes $\mathsf{S}^*$ by excluding pairs with an undefined coordinate on only one side \cite{DBLP:journals/logcom/Ferguson16}.
+-/
 
 /--
 @name Analytic containment quantifiers
@@ -294,8 +305,8 @@ prefix:75 "∀ₐ " => forallA
 --myne:end
 
 -- MARK: Language
-/-! \section{$\mathcal{ALCH}$ and $\mathcal{ALCHRU}$ Languages} -/
-/-! \subsection{Signatures} -/
+/-! \subsection{$\mathcal{ALCH}$ and $\mathcal{ALCHRU}$ Languages} -/
+/-! \subsubsection{Signatures} -/
 /--
 @name Signature
 @nl
@@ -416,7 +427,7 @@ infix:50 " ⊑ᵣ " => Sentence.rsub
 --myne:end
 
 -- MARK: Interpretations
-/-! \section{Semantics} -/
+/-! \subsection{Semantics} -/
 
 /--
 @name Interpretations
@@ -490,7 +501,7 @@ notation "Δᴵ" => Interpret.domain
 --myne:end
 
 -- MARK: Classical Semantics
-/-! \subsection{Classical Semantics} -/
+/-! \subsubsection{Classical Semantics} -/
 
 /--
 @name Classical role semantics
@@ -586,7 +597,7 @@ notation Γ " ⊨ᶜ " Δ => entailmentC Γ Δ
 --myne:end
 
 -- MARK: WK Semantics
-/-! \subsection{Weak Kleene Semantics} -/
+/-! \subsubsection{Weak Kleene Semantics} -/
 
 /--
 @name Weak Kleene concept semantics
@@ -683,7 +694,7 @@ notation  Γ " ⊨ᵂᴷ " Δ => entailmentK Γ Δ
 --myne:end
 
 -- MARK: AC Semantics
-/-! \subsection{Analytic Containment Semantics} -/
+/-! \subsubsection{Analytic Containment Semantics} -/
 
 /--
 @name Analytic containment concept semantics

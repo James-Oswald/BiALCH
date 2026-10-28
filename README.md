@@ -68,7 +68,8 @@ The `src/main.tex` root retains the abstract, introduction, motivating example,
 discussion, and bibliography from
 `paper/main.tex` using the KR style. Its sole Myne Lean inclusion is
 `src/Final.lean`, which supplies the background and technical sections. Lean
-imports continue to support the proof build but are not Myne inputs.
+imports continue to support the proof build but are not Myne inputs. The website
+gives each section and subsection its own page.
 
 The [Myne Pages workflow](.github/workflows/myne_pages.yml) uses the Myne GitHub
 build to publish the HTML documentation and a linked `main.pdf` on pushes to

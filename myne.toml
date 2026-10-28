@@ -10,4 +10,4 @@ outputDir = "myne-out"
 "inductive∇" = "def"
 
 [web]
-pageHeading = "section"
+pageHeading = "subsection"
