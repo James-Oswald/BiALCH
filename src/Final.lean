@@ -392,7 +392,15 @@ notation "𝒰" => ALCHRU_Role.universal
 @name $\mathcal{ALCH}$ and $\mathcal{ALCHRU}$ Concepts
 @capture block
 @nl
-$\mathcal{ALCH}$ concepts over a signature $\sigma$ are built from atomic concepts $A \in N_C$, the top concept $\top$, the bottom concept $\bot$, Boolean connectives, and quantifiers over atomic roles $r \in N_R$. $\mathcal{ALCHRU}$ concepts extend this by allowing quantification over any role $r \in \mathcal{R}$ from the role grammar, including the universal role and intersections.
+$\mathcal{ALCH}$ concepts $ \mathcal{C} $ over a signature $\sigma$ are
+built from atomic concepts $A \in N_C$, the top concept
+$\top$, the bottom concept $\bot$, connectives concept
+negation $\neg$, conjunction $\sqcap$, disjunction $\sqcup$,
+and role restrictions (universal $\forall r.\mathcal{C}$ and existential $\exists r.\mathcal{C}$)
+over atomic roles $r \in N_R$.
+$\mathcal{ALCHRU}$ concepts $ \mathcal{C}^U $ extend this by allowing
+role restriction over any role $r \in \mathcal{R}$ from the
+$\mathcal{ALCHRU}$ role grammar.
 @formula
 $$
 \mathcal{C} ::= \top \mid \bot \mid A \mid \neg\mathcal{C} \mid \mathcal{C}\sqcap\mathcal{C} \mid \mathcal{C}\sqcup\mathcal{C} \mid \exists r.\mathcal{C} \mid \forall r.\mathcal{C}
@@ -437,7 +445,9 @@ notation "∀[" r "]" c:75 => Concept.all r c
 @name $\mathcal{ALCH}$ and $\mathcal{ALCHRU}$ Sentences
 @capture block
 @nl
-The grammar for $\Phi$ allows concept and role assertions, concept inclusions and equivalences, and inclusions between atomic roles. The grammar for $\Phi^U$ has the same sentence forms but allows any $\mathcal{ALCHRU}$ role in role assertions and role inclusions; here $r,s$ are atomic roles and $R,S$ are arbitrary $\mathcal{ALCHRU}$ roles.
+The set of $\mathcal{ALCH}$ sentences $\Phi$ are 1) of the form $a : C$ are called \textit{concept assertions}, read ``$a$ is a $C$'',
+2) of the form $(a, b) : r$ are called \textit{role assertions}, read ``$a$ bears $r$ to $b$'', 3) of the form $C \sqsubseteq D$ are called \textit{concept subsumptions}, read ``All $C$s are $D$s'', 4) of the form $C \equiv D$ are called \textit{concept equivalences} read ``$C$ is equivalent to $D$''. 5) of the form $r \sqsubseteq s$ are called \textit{role subsumptions}, can be read ``For any indivuals $x$ and $y$, if $x$ bears $r$ to $y$, then $x$ bears $s$ to $y$''.
+The set of $\mathcal{ALCHRU}$ sentences $\Phi^U$ are defined analogously, using $\mathcal{ALCHRU}$ concepts and roles.
 @formula
 $$\begin{aligned}
 \Phi &::= i:\mathcal{C} \mid (i,j):r \mid \mathcal{C}\sqsubseteq\mathcal{C} \mid \mathcal{C}\equiv\mathcal{C} \mid r\sqsubseteq s,\\

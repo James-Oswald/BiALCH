@@ -11,3 +11,6 @@ outputDir = "myne-out"
 
 [web]
 pageHeading = "subsection"
+
+[web.references]
+etAlAfter = 4
